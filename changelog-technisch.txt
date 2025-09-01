@@ -1,0 +1,1805 @@
+** CHANGELOG VOOR BEHERENBESTANDEN.PS1 **
+
+** INFO **
+
+Dit programma maakt gebruik van Semantic Versioning. Zie de website semver.org.
+De versienummer bestaat uit MAJOR. MINOR. PATCH. Verhogingen vinden plaats voor
+    MAJOR-versie wanneer we incompatibele API-wijzigingen aanbrengen,
+    MINOR-versie wanneer we functionaliteit toevoegen of grote wijzingen aanbrengen op een achterwaarts compatibele manier, en
+    PATCH-versie wanneer we achterwaarts compatibele bugfixes maken of kleine wijzigingen voor deze versie doorvoeren.
+    Onder kleine wijzigingen wordt o.a. verstaan : een eigenschap van een functie wordt veranderd (bv. tekst of lay-out). 
+
+Extra labels voor pre-release en build metadata zijn beschikbaar als uitbreidingen op de MAJOR. MINOR. PATCH-indeling:
+    -alpha : Alpha versies zijn nog niet af en moeten nog getest worden door de development team.
+	     bestaat uit -alpha.DATE
+    -beta  : Beta versies worden uitgebracht met als doel om door externen/ gebruikers getest te worden en hun feedback mee te nemen.
+	     bestaat uit -beta.DATE
+    +BUILDNUMMER : de nummer van de geuploade versie, elke nieuwe upload verhoogt deze. 
+	  	   Onafhankelijk van major, miner of revision telt de buildnummer door.
+		   bestaat uit +BUILDNUMBER.DATE
+    -test  : Een nieuwe functie of een wijziging wordt getest. In deze fase is het nog niet duidelijk of dit wordt geïmplementeerd.
+                
+In de change-log en mapnaam wordt de extra label toegevoegd aan de versienummer.
+
+
+** EINDE INFO **
+
+
+** BEGIN VAN DE CHANGELOG **
+
+versie 4.7.0+175.250625
+- Geüpload als versie 4.7.0+175
+- Changelog aangepast.
+
+versie 4.7.0+175.250624.2
+- BUGFIX : Functions showconsole en hide-console zijn aangepast naar de oude manier. Vanaf vandaag werkte de andere manier opeens niet.
+  Dit heeft als effect dat de console NIET wordt geopend als je dit wijzigt bij instellingen.
+  Als je bij instellingen kiest om de console te sluiten werkt het wel en bij het opstarten werkt het ook zoals het hoort.
+  Het werkt dus deels maar omdat dit een functie is die door normale gebruikers niet vaak gebruikt zal worden, is dit niet ernstig.
+  Omdat Functions showconsole toch niet wekt is een "return" toegevoegd aan het begin. 
+- Bij function Foutenloggen is de tekst Foutmelding veranderd naar Melding. Dit omdat het niet altijd een fout betreft.
+- Changelog aangepast met de hierboven genoemde bugfix.
+
+versie 4.7.0+175.250623
+- Woord gewijzigd "geüpdatet" bij functie updateuitvoeren naar geupdatet. In de console wordt de ü niet goed weergegeven.
+- Fout bij Instellingen op regel 3554: Omdat keuze Schuinemoppen niet meer gebruikt wordt (tijdelijk uitgeschakeld) krijg
+  je een foutmelding bij het instellen v.d. standaardwaarden. Hier werd deze nog wel gedefinieerd. Dit is verwijderd.
+- Readme.txt is aangepast. GPT heeft het aangepast en het verbeterd.
+- Een vraagteken is toegevoegd aan het venster met Moppen. Hiermee krijg je extra uitleg over dit venster.
+  De titel is veranderd naar Moppen.
+
+versie 4.7.0+175.250617
+- Toegevoegd batchbestand Wijzig_Executionpolicy_bypass.bat. Dit bestand wordt voortaan meegenomen met de update!! 
+  Met dit script kan de Executionpolicy wijzigen van PowerShell zodat scripts kunnen werken.
+  Het is toegevoegd nadat bleek dat dit gewijzigd kan worden door onze ICT of Windows.
+- Bij Function Foutenloggen wordt gecontroleerd of de logmap bestaat en anders aangemaakt.
+  Bij Function Uitvoerentaken wordt nu ook de nieuwe manier gebruikt om een map aan te maken. Dit gebeurt bij de
+  controle of de logmap aanwezig is.
+- Changelog aangepast
+
+versie 4.7.0.beta.1.250602
+- Geüpload als 4.7.0.beta.1 build 174
+- Changelog aangepast
+- Tekstuele aanpassingen in het gehele script.
+
+versie 4.7.0.beta.1.250601
+- Toegevoegde extensies voor icoontjes: 
+  pkt = packet tracer
+  csv, xlsm = excel
+  rar = zipbestand
+- Changelog aangepast en codering aangepast naar UTF-8 met BOM (Kladblok : opslaan als en onderaan codering wijzigen).
+  Nu zie je woorden zoals kopiëren zoals het hoort, bv bij Informatie over programma.
+- Tekstuele aanpassingen in het gehele script. Overal het woord student veranderd naar kandidaat, pc's naar homemappen kandidaat 
+  of naar RPC-nummers en kandidaatmappen naar homemappen kandidaat.
+
+versie 4.7.0.beta.1.250531
+- Bij functie Instellingen is de optie om schuine moppen weer te geven verwijderd omdat dit niet mogelijk is met Apekool.nl
+  De tab-instellingen zijn gewijzigd. De keuze "afbeelding wijzigen" stond niet juist.
+- Toegevoegde extensies voor icoontjes: 
+  py, ps1, js = programmeertaal (nieuw)
+  html, php, css, asp, xps = website (nieuw)
+  sql = database (nieuw)
+  ico = afbeelding
+
+versie 4.7.0.beta.1.250530
+- OVERIGE WIJZIGINGEN: Bij function Venstermetgrap is de try-catch methode toegepast en een eventuele fout wordt gelogd.
+  De grap wordt nu gehaald van de website Apekool.nl. 
+  Schuine moppen kan je niet meer selecteren omdat deze website dit niet doet.
+- Kleine tekstuele wijzigingen:
+  Regel 1139 . tekst bij uitvoeren taken, extra controle of bestanden aanwezig zijn in homemap veranderen - 
+  bij vraagdoorgaan -> "Een aantal studentmappen bevatten nog bestanden" en "Als u op doorgaan klikt worden ..."
+  Regel 3716 tekst bij foutmelding in catch wijzigen: Taak Verwijderen backups van de studentmappen....
+
+versie 4.7.0.alpha.2.250526
+- Geüpload als 4.7.0.alpha.2 build 173
+- Nieuwe icoontje gemaakt voor PowerPoint bestanden. 4 nieuwe extensies, mpg, bmp, pptx en vss toegevoegd aan de lijst met
+  icoontjes.
+- OVERIGE WIJZIGINGEN: Bij functie Backup is de optie wissen verplaatst naar boven de knoppen.
+
+versie 4.7.0.alpha.2.250524
+- BUGFIX : Er werd niet gecontroleerd of de individuele homemappen van de studenten wel bestonden. Alleen de hoofdmap met alle
+  homemappen werd gecontroleerd. Hierdoor kan het misgaan als een homemap niet goed geconfigureerd is.
+  Dit is aangepast en een extra controle die alle homemappen controleert is toegevoegd.
+  Dit is gedaan voor de functies backup, wissen en verplaatsen.
+  Bij kopiëren blijkt de controle die er nu is voldoende om fouten te herkennen.
+
+versie 4.7.0.alpha.2.250522
+- Console wordt nu ook geopend of gesloten als je dit wijzigt bij instellingen. (toevoegen aan nieuwe functie 1)
+- Nieuwe Function "venstermetvraag" vervangt de function "vraagvenster". Laatste is verwijderd. 
+- OVERIGE WIJZIGINGEN : Het venster om informatie te geven of de gebruiker een vraag te stellen is gewijzigd.
+  Je kan kiezen om een schuifbalk te gebruiken en het venster groter te maken waardoor het venster veel meer tekst kwijt. 
+- BUG met nog geen fix: Als het netwerkmap deels verkeert is kan je toch nog een backup uitvoeren. Je ziet het proces lopen
+  maar je krijgt geen foutmeldingen!
+
+versie 4.7.0.alpha.2.250520
+- Code van test.2.250519 meegenomen.
+- Function Showconsole aangepast zodat de focus naar de hoofdvenster gaat en "true" niet wordt getoond.
+  Dit wordt alleen toegepast bij de modus Online en Prerelease, ingesteld bij instellingen.
+  Bij instellingen ook de tekst voor deze optie aangepast zodat het duidelijker is dat de console ook wordt
+  verborgen.
+- De functie is getest op een Windows 10 pc van werk, docenten desktop pc, en het werkt.
+- Nieuwe Function toegevoegd genaamd venstermetvraag die hetzelfde moet doen als 
+  vraagvenster alleen werkt dit met parameters (param) die je met naam moet meegeven. 
+  Dit is een moderne manier, makkelijker aan te passen in de toekomst en backwards compatible.
+  De function is alleen toegepast bij de extra controle voordat je de taak bestanden klaarzetten gaat uitvoeren, 
+  function uitvoerentaken dus. 
+  Deze function is wat groter en heeft de optie om een schuifbalk toe te voegen.
+
+versie 4.7.0.test.2.250519
+- Test met openen en sluiten van console. Nieuwe function Showconsole en aangepaste Hide-Console.
+  Console wordt aangepast als je bij functie Instellingen op bewaren klikt.
+  Nog wijzigen : Tekst bij instellingen voor optie "Console sluiten" aanpassen : toevoegen "en nu gesloten houden".
+  OF : Button erbij : Console sluiten/ openen afhankelijk van of deze open of gesloten is.
+  - Zeker aanpassen : Functie werkt als mode = online. Wat te doen bij andere modes? bv mode = apha maar sluiten staat aan?
+  - eventuele wijzigen : In console zie je nog wel "true" verschijnen bij uitvoeren function!
+  - Testen : Werkt dit in Windows 10?
+
+versie 4.7.0.alpha.2.250516
+- OVERIGE WIJZIGINGEN : Systeemfouten worden nu ook gelogd. Dit is toegepast bij alle taken van het script.
+- Bij Functions vensterlogbestand, vensterverkenner en vensteropschonen worden fouten ook gelogd met Function Foutenloggen.
+
+versie 4.7.0.alpha.2.250515
+- Bij Function Uitvoerentaken worden fouten ook gelogd met Function Foutenloggen.
+- Bij Function vensterkopieren is de procedure inlezengekozenmap toegevoegd waarmee een map wordt ingelezen en de 
+  inhoud in een variabele wordt geplaatst. Hier vind een controle plaats met de try-cath methode en worden fout gelogd
+  met de nieuwe Foutenloggen Function.
+  Overal waar "Get-ChildItem -Path "$selectie" -Name | Sort-object " wordt deze procedure aangesproken.
+
+versie 4.7.0.alpha.2.250514
+- Bij Function opschonenlogsbijstart worden fouten bij inlezen van een map (2x) ook gelogd met Function Foutenloggen.
+
+versie 4.7.0.alpha.2.250512
+- Function Foutenloggen toegevoegd om ook foutmeldingen te loggen. Dit toegepast bij het updaten, bij de controles 
+  van de netwerkmappen (tijdens initialisatie) en bij Function uitvoerentaken.
+  Bij Function updateuitvoeren is dit op meerdere plaatsen aangepast.
+  Nog toepassen bij Function opschonenlogsbijstart en dan bij de Get-ChildItem aanvragen!
+  Ook nog in de gehele script bij alle Get-ChildItem aanvragen toepassen.
+
+versie 4.7.0.alpha.2.250509
+- OVERIGE WIJZIGINGEN : Bij de functies Verkenner en Bestanden klaarzetten worden nu voor 14 verschillende bestandstypen een 
+  andere icoontje weergegeven. Hierdoor zijn de verschillende bestanden beter te herkennen.
+- Bij Function Verkenner worden de nieuwe icoontje ook getoond.
+
+versie 4.7.0.alpha.2.250508
+- 8 nieuwe icoontje toegevoegd en 18 nieuwe extensies gekoppeld aan deze icoontjes.
+  Aangepast bij functions Declareericoontjes en Bepaalicoontjenr.
+  Omdat bestandsnamen met meerdere punten verkeerd worden bepaald, is dit bij Function Bepaalicoontjenr aangepast.
+
+versie 4.7.0.alpha.2.250415
+- Afhankelijk van bestandextensie wordt bij functie Bestanden Kopiëren een andere icoontje getoond.
+  Er zijn 4 nieuwe icoontje (voor Word, Excel, pdf en Visio- bestanden).
+  De 'file-icoon.png' wordt nu als standaard gebruikt als de extensie niet bekend is.
+  Function Declareericoontjes is aangemaakt om deze te declareren en Function Bepaalicoontjenr om de juiste icoon te selecteren.
+ 
+versie 4.7.0.alpha.2.250414
+- OVERIGE WIJZIGINGEN : Bij functie verkenner werd tot nu de bestanden op alfabetisch volgorde gerangschikt.
+  Nu kan je de bestanden ook sorteren op grootte en type. Een nieuwe Function, genaamd 'SortListView' is hiervoor aangemaakt.
+
+versie 4.7.0.alpha.2.250410
+- OVERIGE WIJZIGINGEN : Bij functie Bestanden klaarzetten is een optie bijgekomen om te controleren of de bestanden
+  in de studentmappen leeg zijn. Dit is gedaan om zeker te weten dat een studentmap leeg is. 
+  Als je bestanden wil toevoegen, bv voor de volgende opdracht, dan moet je dit uitzetten. Na de controle kan je, als
+  er mappen worden gevonden die niet leeg zijn, nog kiezen om door te gaan of te annuleren.
+  Standaard staat dit aan maar bij Instellingen kan je dit uit zetten.
+- Bij functie Bestanden klaarzetten is de optie om te controleren erbij gezet.
+- Bij functie gebruikersinstellingen is de variabele 'controlevoorklaarzetten' toegevoegd met 'ja' als standaardwaarde.
+- Bij functie Instellingen kan je de standaard optie voor controleren van de mappen voor het klaarzetten, wijzigen.
+  De knoppen zijn hiervoor verplaatst en de afbeelding voor het hoofdvenster is groter gemaakt.
+
+versie 4.7.0.alpha.2.250407
+- OVERIGE WIJZIGINGEN : Gebruikersbestand met persoonlijke instellingen krijgt vanaf nu een andere naam.
+  Een stukje code is toegevoegd die de oude naam verandert naar de nieuwe opzet.
+- NIEUWE FUNCTIE:
+  Bij instellingen is een optie erbij gekomen om de console open te houden voor testdoeleinden.
+  Deze mogelijkheid was al ingebouwd maar als gebruiker kon je dit nog niet wijzigen.
+- Extra controle of bestanden aanwezig zijn in de studentmappen bij functie Bestanden klaarzetten.
+  Je kan kiezen om door te gaan of terug te gaan.
+  De controle gebeurt bij functie Uitvoerentaken, regel 917.
+
+versie 4.6.2+172.250305
+- Geüpload als 4.6.2+172
+- Van de tool snelkoppeling_maken is weer een PowerShell-bestand (.ps1) gemaakt. Dit was een uitvoerbaar bestand.
+  Dit is gedaan omdat onbekende uitvoerbaar bestanden door de Zadkine-systemen worden geblokkeerd en dit bij het
+  updaten dan fout gaat. Bij de update wordt dit bestand meegenomen.
+  De tool snelkoppeling_maken.exe wordt bij de start verwijderd zodat alleen de .ps1 variant blijft.
+- Changelog aangepast.
+
+versie 4.6.2+172.250304
+- Niet geüpload als 4.6.2+172 omdat er een error komt over het blokkeren van een bestand bij het updaten.
+  Waarschijnlijk worden .exe- bestanden die worden uitgepakt uit een zipbestand door Zadkine systemen geblokkeerd.
+- Het venster voor het uitvoeren van een taak en het venster na het uitvoeren is hetzelfde. Hierdoor kan je niet 2
+  verschillende functies hebben voor de escapetoets. Dit gaf verwarring waardoor de functie vaak werd gewijzigd.
+  Er is gekozen om dan hier alles te sluiten en dus terug te gaan naar hoofdmenu.
+- Changelog aangepast.
+
+versie 4.6.2+172.250303
+- De tool snelkoppeling_maken.exe verwijderd omdat OneDrive deze niet wilt synchroniseren….
+- Foutje opgelost. Na indrukken Escapetoets, voor het starten van een taak, ging je terug naar hoofdmenu ipv de taak.
+  Aanpassing gedaan bij functie overzichttaken zodat je bij de taak blijft. 
+  Nu worden $Form2.Close() en $form.show() niet meer uitgevoerd.
+
+versie 4.6.2+172.250221
+- Kleine aanpassing gedaan bij updateproces zodat bepaalde variabelen maar 1 keer worden gedefinieerd.
+
+versie 4.6.2+172.250220
+- Changelog-bestand aangepast.
+
+versie 4.6.2+172.250219
+- Bij functie Uitvoerentaken gewijzigd hoe form3 wordt afgesloten. Nu met dispose ipv close.
+  De escapetoets werkt nu zoals het hoort en brengt je terug naar het hoofdvenster. 
+  Hiervoor ging je terug naar het uitvoeren van de taak. Dit is ook aangepast bij Uitvoerentaken.
+
+versie 4.6.2+172.250218
+- Aanpassing gedaan bij functie uitvoerentaken zodat de focus altijd terug wordt gezet op de huidige venster.
+  De aanpassing was de $form2.show() commando te verplaatsen naar beneden zodat het altijd werd uitgevoerd en niet
+  alleen bij taak kopiëren.
+  Nu is onderstaande BUGFIX helemaal verholpen.
+
+versie 4.6.2.alpha.250218
+- Geüpload als 4.6.2.alpha.1 build 171
+
+versie 4.6.2.alpha.250217
+- BUGFIX: De functie Netwerkmapaanwezig herstelde de netwerkmappen niet.
+  Dit kwam omdat het was ingesteld om dit alleen te doen in de mode "alpha". Dit is aangepast.
+
+versie 4.6.2.alpha.250210
+- OVERIGE WIJZIGINGEN : Met de Escapetoets kan je nu een venster verlaten en terug gaan bij de volgende vensters
+  Vensterverplaatsen, vensterwissen, vensterlogbestand, vensterinstellingen, vensteropschonen, informatieprogramma, 
+  Venstermetgrap en Overzichttaken.
+- BUGFIX : Na het uitvoeren van een taak lag de focus van het programma niet op de huidige venster. 
+  Hierdoor kon je niet met de Escape toets terug en überhaupt niet de toetsenbord gebruiken. 
+  Door het indrukken van de tabtoets te simuleren om de focus terug te brengen naar huidige venster is dit recht gezet. 
+  Dit is gedaan aan het einde van Function uitvoerentaken.
+
+versie 4.6.2.alpha.250207
+- Programma informatie aan begin v.d. script is aangepast m.b.t. versie weergave.
+
+versie 4.6.2.alpha.250206
+- Met de Escapetoets kan je nu een venster verlaten en terug gaan. Dit is dezelfde functie als de terugknop.
+  Dit is geïmplementeerd voor de functies vraagvenster, vensterkopieren, vensterbackup en alle infovensters.
+  Een function is gemaakt voor alle functies met form2. Dit moet dan ook nog bij alle form2 worden geïmplementeerd.
+- De functie Programmaasluiten wordt niet meer gebruikt. Hiervoor wordt nu de functie vraagvenster gebruikt.
+  Dit heeft dezelfde functie, alleen wordt nu meer met 1 functie gewerkt en heb je wat minder code nodig. 
+
+versie 4.6.2.alpha.250204
+- Bij Instellingen is voor de afbeelding ingesteld om info tekst weer te geven.
+
+versie 4.6.2.alpha.250203
+- OVERIGE WIJZIGINGEN : De programma uitvoer, console, kan open gehouden worden na het doorlopen van het initialisatie proces.
+  Dit doe je door in het initialisatie bestand de bijbehorende variabele een andere waarde te geven.
+  Het open houden is handig bij het zoeken naar fouten in het programma. 
+  Voor nu is dit alleen een beheerfunctie. Later kan een gebruiker dit instellen en dan is het een nieuwe functie.
+
+versie 4.6.2.alpha.250127
+- OVERIGE WIJZIGINGEN: map "\png\nieuwe map" verwijderen bij start. Deze zit in de update en is niet nodig!
+  En een icoontje te veel. Met de naam controleren-2.Png
+- Bij het updateproces de wachttijden als het fout gaat aangepast.
+- OVERIGE WIJZIGINGEN : Bij de infovenster kon de naam vd installatiemap wel eens niet passen. 
+  Oplossing was de venster van het object groter maken.
+
+versie 4.6.2.alpha.250124
+- BUGFIX: Als een andere proces van het script al draaide dan ging het mis bij het updaten.
+  Nu wordt bij de start van het updateproces gecontroleerd of het script al eerder is opgestart.
+  Tevens wordt er een backup gemaakt voor het updaten en deze teruggezet als het misgaat bij het updaten.
+
+versie 4.6.2.alpha.250123
+- Testen of het script Beherenbestanden meerdere keren is opgestart. Zie 1e regel na start script.
+- Testen met backup maken voor het updaten. Zie regel 2850. 
+  Er wordt eerst een bacup gemaakt. Het uitpakken is in een try-catch methode geplaatst.
+  Als het niet lukt wordt de backup teruggezet.
+  Dit nog goed testen!!
+
+versie 4.6.1+170.250121
+- Geüpload als 4.6.1+170
+- Helptekst voor het hoofdscherm is aangepast aan nieuwe indeling icoontjes.
+- Grootte van tekst blok in het informatievenster is aangepast. De tekst past er nu wel in.
+
+versie 4.6.1+170.250121
+- Icoontjes op hoofdscherm zijn verplaatst. Nu zie je aan beide kanten 4 kleine icoontjes. Tip van Marco.
+- De volgorde van de tabtoetsen is aangepast aan nieuwe indeling. Volgorde is nu met de klok mee.
+
+versie 4.6.1.beta.1.250119
+- Geüpload als 4.6.1.beta.1 build 169
+- De PowerShell versie wordt getoond in het informatievenster.
+- Function Hide-ConsoleWindow aangepast door tekst aan te passen en "$null =" toe te voegen bij 1e aanroep $ShowWindowAsync.
+- Changelog is aangepast.
+
+versie 4.6.1.beta.1.250118
+- BUGFIX: De console werd soms niet afgesloten en de error "Win32.NativeMethods]::ShowWindowAsync($hwnd, 4)" werd getoond.
+  Oplossing was het verwijderen van stukje code dat de venster op de voorgrond zet bij regelnr. 4462.
+  Dit stukje bleek overbodig te zijn.
+- Bij "Form wordt getoond. Dit is het hoofdvenster. Het programma is opgestart." het starten veranderd naar $null = $Form.ShowDialog()
+- De functies verplaatsen en wissen hebben een andere icoontje. Werk van Marco. En de achtergrond is nu wit.
+- Changelog is aangepast.
+
+versie 4.6.1.alpha.1.250109
+- Geüpload als 4.6.1.alpha.1 build 168
+- BugFIX: Tab en pijltjestoetsen bij hoofdvenster en ook bij andere vensters stonden niet goed.
+  Alle Tabtoetsen zijn gecontroleerd en de volgorde is nu correct.
+- Help tekst hoofdvenster is aangepast aan nieuwe indeling icoontjes.
+- Hoofdvenster is aangepast. Tekst bij 2 icoontjes rechts verwijderd.
+- Consequent de keuze terug, sluiten of annuleren gebruiken bij de betreffende vensters EN ook één kleur gebruiken!
+  Blauwe knoppen worden alleen gebruikt als je het venster niet verlaat.
+- Changelog is aangepast.
+
+versie 4.6.1.alpha.1.250108
+- Hoofdvenster is aangepast. Deze is kleiner gemaakt en icoontjes zijn verplaatst. 
+- In het venster met moppen kan je nu aangeven of je schuine moppen wilt zien.
+- De tool netwerkschijvencontroleren.exe wordt verwijderd bij de start nu er altijd hersteld wordt.
+
+versie 4.6.1.alpha.1.250105
+- Versie is aangepast omdat functie instellingen toch NIET wordt verwijderd.
+- Icoontje voor instellingen is weer terug op het hoofdscherm.
+  Andere icoontjes verplaatst en tekst bij 2 kleine hoofdtaken weer toegevoegd.
+  Hoofdscherm is groter in de hoogte.
+
+versie 4.7.0.alpha.1.250103
+- Hoofdscherm is aangepast. Alleen de functies Bestanden klaarzetten en Backup maken hebben een grote icoon. 
+  Andere icoontjes zijn verplaatst en het scherm is iets kleiner in de breedte.
+  Icoontje voor instellingen is verwijderd van hoofdscherm.
+
+versie 4.7.0.alpha.1.250102
+- Venster Verkenner aangepast om meerdere items, laatst gewijzigd en grootte, weer te geven.
+  Ook bij de mappen wordt de datum en tijd weergegeven (laatst gewijzigd)
+  De 2e en 3e kolommen worden rechts gecentreerd.
+
+versie 4.6.0+167.241108
+- Geüpload als 4.6.0+167
+- De tijdelijke oplossing voor de mappen Gif en Info is definitief! Door het updateproces aan te passen is dit opgelost.
+  De Gif bestanden kunnen in de map PNG blijven en de readme en changelog mogen voorlopig ook in de root blijven.
+  De variabele $infomap is verwijderd.
+- Infotekst bij functie Bestanden overzetten aangepast.
+
+versie 4.6.0+167.241107
+- De mappen Gif en Info worden niet gekopieerd bij het updaten. Probleem ligt bij updateproces waar alleen de map png wordt gekopieerd.
+  Tijdelijke oplossing : alle gifbestanden zijn gekopieerd naar de map png EN de readme en changelog staan nu in de root ipv de map 
+  Info. De variabele $gifjesmap is aangepast en de variabele $infomap wordt nu even niet gebruikt, maar blijf wel bestaan.
+- De updateproces is aangepast. Nu wordt bij het uitpakken de bestanden gelijk in de juiste map geplaatst. Het proces is nu gelijk als
+  bij script setup.ps1.
+- Readme aangepast bij het hoofdstuk Minor-Functions en bij File Manifest.
+
+versie 4.6.0+167.241106
+- Bij Venster Informatieprogramma is de tekst met informatie verplaatst.
+- Na feedback Marco de zin over het legen van de studentmap voor het verplaatsen, gewijzigd.
+  Dit gedaan bij functies verplaatsen en instellingen.
+
+versie 4.6.0.beta.241106
+- Infotekst bij verschillende functies aangepast.
+- Geüpload als 4.6.0.beta.1 build 166
+
+versie 4.6.0.beta.241105
+- Infotekst bij functie Backup aangepast.
+- Vraagteken met info over functie is toegevoegd bij functie Verkenner.
+- Test "De console word afgesloten", bij start script, zie je nu alleen als de console wordt afgesloten.
+
+versie 4.6.0.beta.241029
+- Changelog een foutje verbeterd. Startmap is installatiemap geworden.
+- Foutje eruit gehaald waardoor bij opstarten en als een netwerkmap niet gevonden werd, een venster werd getoond ipv alleen
+  tekst weergegeven.
+- Functie declarerenlijstlocaties is aangemaakt voor het inlezen van locaties ($lijstlocaties). 
+  Dit maakt de code overzichtelijker en makkelijker aan te passen. Wordt gebruikt bij 4 grote functies en verkenner.
+
+versie 4.6.0.beta.241025
+- Bij alle Functions wordt nu gebruikt gemaakt van de functie Netwerkmapaanwezig
+  Functie Netwerkmapaanwezig is aangepast om ook te werken als programma.mode=alpha
+- Bij start programma wacht je 5 seconden als een schijf niet gevonden wordt, zodat je de melding kan lezen.
+
+versie 4.6.0.beta.241023
+- Functie Netwerkmapaanwezig aangemaakt om netwerkmappen te controleren. Dit doet het bij de start van het programma en 
+   bij de betreffende functies.
+
+versie 4.6.0.beta.241021
+- Aangepast venstergrootte bij functie Verkenner
+- Icoontjes van verkenner en programma-info gewisseld van plaats.
+- Icoontje voor functie verkenner is verandert naar het verkenner figuur van stratego ;) Dankzij Marco.
+- Bij de functie verkenner is een controle toegevoegd voor de homemapstudenten.
+- Informatietekst van het hoofdprogramma aangepast met info over nieuwe functie Verkenner.
+
+versie 4.6.0.alpha.241016
+- Geüpload als 4.6.0.alpha.1 build 165
+- Nieuw functie: 1e werkende opzet voor de Functie Verkenner. Hiermee kan je de inhoud van de kandidaatmappen bekijken. 
+  Met de knoppen Home en Terug en door te dubbelklikken kan je navigeren. 
+
+versie 4.6.0.alpha.241015
+- Function maken van inlezen locaties ($lijstlocaties) is niet gelukt. Met de 2 beherenbestanden-bestanden is getest.
+- Eerste opzet voor functie Verkenner gemaakt.
+  Je kan de locatie kiezen, een rpc-nummer en de inhoud wordt weergegeven.
+  Je kan de submappen klikken en de inhoud zien. Alleen 1 item kan je klikken.
+  Een nieuwe icoon is toegevoegd. De vraagteken-icoon is naar beneden verplaatst.
+- Overige wijzigingen : Console wordt voortaan alleen afgesloten bij mode = prerelease en online. Zo worden eventuele foutmeldingen 
+  zichtbaar en hoef je niet steeds tijdelijk de console zichtbaar te maken.
+
+versie 4.6.0.alpha.241012
+- Nieuw functie: Je kan je naam, die in het hoofdvenster achter Welkom staat, wijzigen bij instellingen.
+- De standaard naam die wordt weergegeven bij Welkom is nu leeg.
+- Wijziging : Readme en Changelog worden lokaal bewaard in submap info en niet meer opgehaald van website.
+- Het venster Instellingen is gewijzigd om het e.e.a. mooier uit te laten zien.
+- Je kan in het venster "Instellingen" ook een andere afbeelding kiezen door erop te klikken.
+
+versie 4.6.0.alpha.241011
+- Infotekst bij start van het script gewijzigd.
+- Verwijderen filetransfer.gif bij opstarten.
+- Wijziging : De moppenbot geeft nu ook schuine moppen. Bij instellingen kan je dit aan of uit zetten.
+
+versie 4.6.0.alpha.241009
+- Voor het probleem dat de lijst met locaties niet goed werd weergegeven is een definitieve oplossing. 
+  De beheerinstellingen worden gedefinieerd met een Hashtable en staan nu boven bij het definieren van variabelen.
+  De locaties worden nu uit de hashtable gehaald. 
+  Function beheerinstellingendefinieren is niet meer nodig en dus verwijderd.
+  PScustomObject wordt toch niet gebruikt omdat dit weer andere problemen veroorzaakte. o.a. het geven van een
+  waarde aan $global:beheer bij start programma.
+- Overige wijzigingen : Infotekst bij start van het script gewijzigd.
+
+versie 4.6.0.alpha.241007
+- Probleem dat de lijst met locaties niet goed werd weergegeven is opgelost door het object $Global:beheer om te zetten naar json
+  en weer terug. Dit is voor nu de beste oplossing maar het kan beter. bv door gebruik te maken van PScustomObject.
+  https://www.sharepointdiary.com/2021/08/custom-objects-in-powershell.html#h-combining-powershell-custom-objects-and-arrays
+  Probleem is ontstaan toen de Beheerinstellingen niet meer bewaard werden.
+
+versie 4.6.0.alpha.241003
+- Nieuwe functie : Je kan in het venster "Instellingen" instellen welke afbeelding je wilt tonen in het hoofdvenster.
+- Overige wijzigingen : Beheerinstellingen worden niet meer bewaard. Verwijderen van beheer.ini bij opstarten is toegevoegd.
+- Variabelen en objecten opgeschoond en geordend.
+- Tekst aangepast bij de uitleg van het programma (afmelden verwijderd).
+
+versie 4.6.0.test.241002
+- Je kan in het venster "Instellingen" instellen welke afbeelding je wilt tonen in het hoofdscherm.
+  Posities van de objecten van dit venster zijn aangepast om het wat mooier te maken.
+  Van elke afbeelding wordt een naam (die wordt weergegeven) en bestandsnaam (om het bijbehorende bestand te vinden) bijgehouden. 
+- Hoofdvenster is iets groter gemaakt (langer) en gif-afbeelding wordt nu gezoomd in sizemode=zoom en autosize=false.
+
+versie 4.6.0.test.241001
+- Er zijn 7 nieuwe gif-afbeeldingen waaruit je kan kiezen voor het hoofdvenster. 
+  De keuze wordt bewaard in de gebruikers-initialisatiebestand.
+
+versie 4.5.3+164.240923
+- Geüpload als 4.5.3+164
+- Venster die de Readme en Changelog weergeeft is nog iets kleiner gemaakt.
+
+versie 4.5.3+164.240921
+- Na het updaten wordt weer de oude methode gebruikt om het programma opnieuw op te starten.
+  Dus nu met: powershell -file "$PSScriptRoot\$scriptnaam.ps1"
+  Het verschil met oude methode is wel dat hier de variabele $scriptnaam wordt gebruikt.
+- Helptekst bij het welkoms-woord weggehaald. Dit gaf info over ingelogde naam bij SharePoint.
+- Changelog aangepast bij versie 4.5.2 en de overige wijzigingen over SharePoint toegevoegd.
+- Venster die de Readme en Changelog weergeeft is iets kleiner gemaakt zodat de teksten niet te dichtbij elkaar komen.
+
+versie 4.5.3.alpha.240920
+- Geüpload als 4.5.3.alpha.2 build 163
+
+versie 4.5.3.alpha.240919
+- De beheerinstellingen worden nu aangemaakt als deze niet aanwezig zijn. Als het aanmaken niet lukt dan stopt het programma.
+  Variabele $beheerini is verwijderd van $global:programma. Variabele $global:beheerbestand was hiervoor al aangemaakt.
+  Overal waar beheer.ini staat verandert naar $global:beheerbestand.
+- Zoeken naar update voor pnp.powershell verwijderd.
+- Naam van de gebruiker wordt bewaard in het initialisatiebestand met gebruikersinstellingen en weergegeven in hoofdscherm bij Welkom.
+  Voor nu wordt de naam "gebruiker" gebruikt en kan deze niet gewijzigd worden.
+
+versie 4.5.3.alpha.240918
+- In het venster met programma informatie wordt de $startmap ook weergegeven.
+- Geüpload als 4.5.3.alpha.1 build 162
+
+versie 4.5.3.alpha.240917
+- Readme en Changelog worden gedownload van de website en bij het sluiten weer verwijderd.
+- Aan het begin wordt niet meer gecontroleerd of de nodige modules aanwezig zijn.
+- Bij function programmaafsluiten is de mogelijkheid om af te melden helemaal verwijderd.
+  Ook is de loop die nodig is bij het afmelden en nogmaals inloggen na het afmelden, verwijderd.
+- Function VerbindSharepoint en variabele $sharepoint verwijderd.
+- Overal waar beherenbestanden staat, wordt nu de scriptnaam gebruikt van $programma.naam
+
+versie 4.5.3.alpha.240916
+- Function bepaalpersoneelsnr verwijderd. Personeelsnummer wordt nu bepaald met $env:username.
+- BUGFIX : Logbestanden worden niet getoond omdat de bestandsnamen worden afgeleid van de inlognaam na aanmelding bij SharePoint.
+  Hersteld door bij de start vh programma de logbestanden die gemaakt zijn zonder personeelsnr aan te vullen. 
+  Dit was een bug bij versie 4.5.2.
+- Het testen van een update gebeurt nu weer via de map "test" op website. 
+  Variabele $updatwebsite verandert als $programma.mode=update
+- Beheerinstellingen staan vanaf nu alleen lokaal in dezelfde map als het programma. 
+  Variabele $beheerini is toegevoegd aan $global:programma.
+- In het hoofdvenster wordt je nu begroet met Welkom <gebruikersnaam pc> 
+
+versie 4.5.3.alpha.240914
+- Updaten gebeurt weer bij de start vh programma en via de website beherenbestanden.neveshuis.nl.
+  Er wordt nu in de map "latest" gekeken wat de laatste versie is, i.p.v. dit uit de beheer.ini te halen.
+  De laatste updateversie is dus ook uit de beheer.ini bestand verwijderd.
+- De scriptnaam wordt ah begin vh programma bepaald. Deze variabele wordt gebruikt bij het updaten.
+- Volgorde van informatie tekst en variabelen ah begin vh programma gewijzigd. Oa $global:programma staat nu bovenaan.
+
+versie 4.5.2+161.240911
+- geüpload als 4.5.2+161
+- BUGFIX: Inloggen via MFA is uitgezet omdat deze een foutmelding geeft en het programma niet meer opstart.
+  Op verschillende plaatsen is met de # stukjes tekst naar commentaar omgezet. Er is niets verwijderd aan code!
+  Deze versie dient alleen om snel weer gebruik te maken van de script nu inloggen met MFA niet lukt. 
+  Foutcode: AADSTS700016 sinds 10-9-2024.
+- Bij function programmaafsluiten is de mogelijkheid om af te melden uitgezet.
+- Enkele tekstuele fouten eruit gehaald. Het woord "geselecterde" bij functie Kopiëren en het woord "Progammeur" 
+   bij functie informatieprogramma, aangepast.
+- Tekst bij functie Bestanden klaarzetten gewijzigd van "Inhoud examenmap" naar "Geselecteerde mappen en bestanden".
+
+versie 4.5.1+160.240615
+- geupload als 4.5.1+160
+- Readme-bestand aangepast aan de wijzingen van deze versie.
+- 2 oude bestanden, beheren.ini en updateinfo.ini, worden verwijderd bij start programma.
+
+versie 4.5.1+160.240612
+- Weer te geven tekst bij het controleren van de netwerkschijven is aangepast.
+- De oude tool voor maken van snelkoppeling , als ps1-bestand, wordt verwijderd bij start programma.
+
+versie 4.5.1+160.240610
+- WIJZIGING : Van de 2 tools, netwerkschijvencontoleren en snelkoppelingmaken, zijn exe-bestanden gemaakt.
+  Nu kan je deze starten door er op te dubbelklikken.
+- De kleuren van de Afsluit- en Terugknoppen bij het scherm om het programma af te sluiten zijn terug gezet zoals
+  bij de vorige versie. Dus Afsluiten is weer groen en Terug is weer rood.
+
+versie 4.5.1+160.240523
+- WIJZIGING : Script Netwerkschijvencontroleren.ps1 is aangepast en wordt voortaan meegenomen met de update.
+- De versiemap van variabele $testmap is veranderd naar "releases", zoals het ook in Sharepointmap staat en variable SharePoint.
+- De verwijzing naar de lokale beheerinstellingen gewijzigd zodat deze altijd naar de startmap verwijst.
+  Zo krijg je geen foutmeldingen als de script extern wordt opgestart, oa. met powershell 7.
+- Kleuren bij afsluiten gewijzigd. Afsluiten is rood geworden en annuleren groen. Tekst is "terug".
+- function bepaalversiemap verwijderd.
+- Alles verwijderd dat met oude updateproces te maken heeft: variabele updatewebsite, function bepaalversiemap.
+
+versie 4.5.1.alpha.240521
+ - geupload als 4.5.1.alpha.1 build 159
+
+versie 4.5.1.alpha.240425
+- Bij het loggen is de volgorde van weer te geven tekst veranderd. De extra regel met info komt voor de rpc-nummers.
+
+versie 4.5.1.alpha.240423
+- Bij functie verbindsharepoint is de melding over geen verbinding met de alternatieve URL van Sharpoint opnieuw aangepast. 
+  Dat je geen changelog en readme kan bekijken, staat hier als informatie over het prgoramma, is toegevoegd.
+- Wijziging : De changelog en readme teksten worden opgehaald van SharePoint - voor de functie Informatie over programma.
+  Deze worden gedownload bij start programma en verwijderd bij afsluiten.
+
+
+versie 4.5.1.alpha.240418
+- Updateproces verplaatst na inlezen beheerinstellingen. Anders werkt het updaten niet.
+  De variabele $global:beheer.laatsteversie moet nl ingelezen zijn.
+
+versie 4.5.1.alpha.240416
+- Tekstuele fouten in changelog bestand aangepast.
+- Functie get-inicontent verwijderd. Deze is niet meer in gebruik.
+- Bij functie Updateuitvoeren weer te geven tekst als programma up to date is, aangepast.
+- Versiesmap veranderd naar  "/teams/RPCPAL_55/Gedeelde documenten/RPC Projecten/Beherenbestanden/releases"
+  Dit ook in de SharePoint gedaan.
+- NIET GELUKT om readme en changelog van SharePoint te downloaden.
+- FOUT: update verplaatsen naar beheerinstellingen downloaden.... anders werkt de mode "update" niet!
+
+versie 4.5.1.alpha.240411
+- Wijziging : Enkele kleine aanpassingen gedaan. Weer te geven tekst in console bij opstarten script. 
+  Elke item een eigen tekst i.p.v. Overige controles, zoals bij netwerkschijven controle - herstelde schijf weergeven.
+  Gebruikersinstellingen is één woord! Versie van script wordt weergeven bij opstarten!
+- Knoppen Verplaatsen en Wissen zijn van plaats verwisseld.
+
+versie 4.5.1.alpha.240410
+- De volgende veranderingen van de testfase worden meegenomen naar de alpha fase. Dit betreft
+  Bugfix    : Console wordt nu afgesloten i.p.v. verplaatst naar de taakbalk.
+  Wijziging : Updates worden gedownload van Sharepoint ipv de website. Updaten gebeurt nu gelijk na het inloggen.
+  	      Beheerder kan de mode 'update' instellen' om de updates te testen. 
+  Wijziging : Beheerinstellingen worden niet meer verwijderd na het inlezen en blijven dus lokaal nog aanwezig.
+  Wijziging : Als inloggen niet lukt omdat de RPC-Sharepoint is verbroken wordt nu de Zadkine-Sharepoint geprobeerd.
+              Als je hier wel kan inloggen kan je het programma gebruiken met beperkingen.
+              Dit lees je in het bericht dat verschijnt na inloggen.
+- Wijziging : Bij functie verbindsharepoint is de melding over geen verbinding met de alternatieve URL van Sharpoint aangepast. 
+  Dat je geen changelog en readme kan bekijken, is verwijderd.
+- Wijziging : Bij het uitvoeren van taken krijg je voor het wissen van bestanden een extra controle of je het zeker weet.
+- De naam 'alternatieve Sharepoint' is, bij functie verbindsharepoint, verandert naar Zadkine Sharepoint-site.
+
+versie 4.5.1.test.240207
+- Als de beheerinstellingen op Sharpoint niet zijn gevonden gaan het proces nog door. Deze kunnen nl nog lokaal staan.
+- Als je inlogt met het alternatieve url worden de gebruikersgegevens ook ingelezen en zie je dus je naam in het hoofdscherm.
+- Bij functie informatieprogramma zijn de meldingen dat je geen changelog en readme kan bekijken, gewijzigd.
+
+versie 4.5.1.test.240206
+- Als inloggen niet lukt omdat sharepoint is verbroken wordt nu de alternatieve url geprobeert.
+  Als je hier wel kan inloggen kan je het programma gebruiken met beperkingen.
+  Dit lees je in het bericht dat verschijnt na inloggen.
+  De beperkingen zijn deels ingebracht. Dus updaten en beheerinstellingen werken niet.
+  Nog zorgen dat de readme niet ingelezen kan worden (programma informatie).
+- Updaten gebeurt nu gelijk na het inloggen
+- Beheerinstellingen worden niet meer verwijderd na het inlezen en blijven dus lokaal nog aanwezig.
+
+versie 4.5.1.test.240201
+- Als je nu niet kan inloggen via mfa kan je het programma toch opstarten.
+  LET OP: dit is gewijzigd bij versie beherenbestanden - inclusief mfa wijziging.ps1 !!!!!
+  de normale versie heeft deze wijziging niet omdat nog niet beslist is of dit wordt doorgezet!!
+
+versie 4.5.1.test.240125
+- Function Hide-ConsoleWindow werkt nu goed. Hiervoor is naar opstarten van hoofdvenster een regel toegevoegd:
+  [Win32.NativeMethods]::ShowWindowAsync($hwnd, 4)
+- Mode "Update" werkt nu zoals het hoort. Zat nog een foutje bij variabele $global:sharepoint.
+
+versie 4.5.1.test.240118
+- De mode "Update" toegevoegd aan de modes van het programma om update te testen. Variabele testmap toegevoegd met de waarden
+  die hiervoor nodig zijn.
+- Updates worden gedownload van Sharepoint ipv de website.
+  Function updatevoorbereiden heet nu updateuitvoeren.
+
+versie 4.5.1.test.240116
+- function toegevoegd "Hide-ConsoleWindow" om de console te verbergen. Deze vervangt de oude manier en hierbij wordt de console
+  ook echt onzichtbaar.
+
+versie 4.5.0+158.240110
+- geupload als versie 4.5.0+158
+
+versie 4.5.0+158.240109
+- Readme.txt aangepast bij de hoofdstukken 2, 3 en 5.
+- Readme en changelog geupload naar website.
+
+versie 4.5.0+158.231221
+- Een andere manier is gevonden om de console te sluiten in Windows 11 die wel werkt. 
+  Hiervoor zijn 2 functies, ShowConsole en HideConsole, aangemaakt. HideConsole wordt uitgevoerd voor het starten vd hoofdscherm.
+
+versie 4.5.0+158.231220
+- LET OP: Het sluiten van de console werkt niet op de Zadkine Windows 11-laptops!!
+- De tekst in het venster met een grap heeft geen blauwe achtergrond meer en een scroll-bar is toegevoegd waardoor 
+  het duidelijker is wanneer de tekst niet in het vakje past en je dus naar beneden moet scrollen.
+- Bij de start van het programma zie je de powershell console en krijg je hier informatie over de processen die
+  worden uitgevoerd. Fouten worden met een rode kleur aangegeven.
+  Het venster met informatie verschijnt niet meer. De console wordt na het inloggen weer afgesloten.
+  Dit is gedaan door bovenaan het script een klasse, de naam API gegeven, toe te voegen en deze aan te roepen met API::ShowWindow
+- In het script updater.ps1 wordt de script snelkoppeling_maken.ps1 aangeroepen om de snelkoppeling te vernieuwen.
+  Deze moet nl het script aanroepen met console. De script snelkoppeling_maken.ps1 is aangepast hiervoor.
+- Het programma wordt na een update aangeroepen met Start-proces zodat er ook een andere proces wordt opgestart.
+  Hierdoor wordt het probleem dat de console, na de update, niet afsluit opgelost. Dit probleem komt pas naar boven als
+  vanaf versie 4.5.0 wordt geupdatet.
+
+versie 4.5.0+158.231218
+- Het programma controleert of de netwerkschijven bestaan en verbindt opnieuw als het nodig is.
+- Na het updaten krijg je een melding dat de update is voltooid en moet je op OK klikken om door te gaan.
+  Dit gaat pas gelden vanaf updaten met versie 4.5.0.
+  Je krijgt geen melding meer als programma up to date is.
+- Bij script snelkoppelingmaken.ps1 is de weer te geven tekst na het uitvoeren aangepast en netter gemaakt.
+- Script updater.ps1 wordt verwijderd bij start vh programma. Deze wordt niet meer gebruikt vanaf vesie 4.5.0.
+
+versie 4.5.0+158.231212
+- Infotekst voor moppenbot is aangepast omdat deze alleen een leuke grap laat zien.
+- Er wordt gecontroleerd of de logmap bestaat voordat het omzetten van de logbestanden naar nieuwe format begint.
+- Infotekst toegevoegd als het updaten begint bij venster Updatevoorbereiden.
+
+versie 4.5.0.beta.231210
+- geupload als beta.1.231210 build 157
+
+versie 4.5.0.beta.231209
+- OVERIGE WIJZIGINGEN : Function updatevoorbereiden aangepast om het programma zichzelf te updaten. 
+  Hierdoor is updater.ps1 niet meer nodig vanaf versie 4.5.0.
+  Updater.ps1 is nog wel nodig om oude versies, tm 4.4.1,  up te daten!
+- Infotekst als bij start de beheerinstellingen niet zijn gevonden is aangepast.
+- Updater.ps1 aangepast bij starten van beherenbestanden.ps1 na de update. Nu wordt deze met powershell -file "..." aangeroepen.
+  De oude manier werkte niet omdat hierdoor het programma vastliep na connectpnp-online uit te voeren.
+  
+
+versie 4.5.0.beta.231208
+- Function Logbestandtoevoegen aangemaakt om tijdelijke log toe te voegen aan eigen logbestand of te hernoemen als deze niet bestaat.
+- Na het inloggen wordt gecontroleerd of in de map Log de bestanden in de oude format aanwezig zijn en deze hernoemd.
+  De inlognaam van de gebruiker komt achter de logbestanden.
+
+versie 4.5.0.beta.231205
+- OVERIGE WIJZIGINGEN : De logs worden nu toegevoegd aan de bestaande logbestand waardoor de laatste log nu bovenaan komt te staan.
+  Hiervoor wordt nu alles in een tijdelijke logbestand bewaard en na het uitvoeren worden deze bestanden samengevoegd.
+  Dit is doorgevoerd bij uitvoerentaken en bij opschonenlogs.
+
+versie 4.5.0.beta.231204
+- Bij venster instellingen is een beveiliging toegevoegd zodat je het aantal dagen voor het verwijderen van de logbestanden niet op 0
+  kan instellen.
+- Function uitvoerenopschonen verwijderd. Deze is al lang niet meer nodig, sinds dit onder uitvoerentaken valt.
+
+versie 4.5.0.beta.231203
+- Wijzigingen van versie test.2.231202 zijn doorgevoerd naar huidige versie.
+- Function bepaaleigenlogbestanden gemaakt om op 1 plek de variabele te bepalen waarmee de eigen logbestanden worden weergegeven.
+- Bij opschonen logbestanden worden alleen eigen logs van ingelogde gebruiker verwijderd.
+- Function bepaaltijd gemaakt om de format voor de huidige tijd in functie in te stellen.
+
+versie 4.5.0.test.2.231202
+- OVERIGE WIJZIGINGEN : Logbestanden worden bewaard met inlognaam in de bestandsnaam.
+- Function bepaaldatumuitlognaam verplaatst naar function vensterlogbestand. Deze wordt alleen hier gebruikt.
+- Function bepaalpersoneelsnr gemaakt om de personeelsnummer te bepalen uit de variabele global:sharepoint
+- Function bepaallognaam verandert om personeelsnummer (inlognaam) toe te voegen aan bestandsnaam.
+
+versie 4.5.0.beta.231129
+- Function beheerinstellingen verwijderd. wordt nergens gebruikt en zit in initialisatiebestandmaken.ps1.
+- Executionpolicy automatisch wijzigen eruit gehaald. dit werkt niet op eigen surface laptop.
+
+versie 4.5.0.beta.231127
+- In de koptekst van het programma zie je de status van het programma als deze nog niet online is.
+  Als het programma is de testfase is verschijnt er bij het opstarten een info-venster.
+- Bij de gebruikersinstellingen worden de instellingen voor logbestanden weer bewaard. Deze staan nu dus niet meer
+  bij de beheerinstellingen. Venster instellingen is hiervoor aangepast.
+  Ook script initialisatiebestandmaken is aangepast omdat hier het bestand met alle beheerinstellingen wordt aangemaakt.
+
+versie 4.5.0.alpha.231123
+- geupload als 4.5.0.alpha.1 build 156
+- OVERIGE WIJZIGINGEN : Het venster met een grap/ weetje of advies geeft nu alleen moppen in het Nederlands.
+  Een knop is toegevoegd om een volgende mop te genereren.
+
+versie 4.5.0.alpha.231117
+- OVERIGE WIJZIGINGEN : Mogelijk om script in testmode uit te voeren. Variabele $programma.mode ingesteld hiervoor.
+  Programma modus:
+    alpha      : Logbestanden verwijderen is uit, Automatisch updates is uit en Lokale mappen worden gebruikt
+		 script uit test1.ps1 is hirevoor gebruikt.
+    beta       : Logbestanden verwijderen is uit, Automatisch updates is uit
+    prerelease : Wordt gebruikt om alles te testen, dus ook updates en verwijderen logbestanden
+    online     : Normale gebruik
+- hash-variabele programma bevat ook de versie en extralabel. Deze worden nu op de nieuwe manier weergegeven.
+
+versie 4.5.0.alpha.231116
+- De variabele $autoupdate verwijderd want deze is niet meer nodig.
+- Met test1.ps1 getest hoe de lokale mappen te gebruiken als programma in mode Alpha bevindt.
+
+versie 4.5.0.alpha.231115
+- bij script snelkoppeling_maken wordt de desktopmap nu anders ingesteld : $linkbureaublad = [Environment]::GetFolderPath("Desktop")
+  Dit moet zo omdat de link naar de desktop soms anders geconfigureerd kan zijn.
+- Bij infotekst over het programma aangepast dat je ook kan afmelden via de uit-knop.
+
+versie 4.5.0.alpha.231114
+- BUGFIX : Info tekst voor taak Opschonen en Instellingen aangepast. Deze gaven verkeerde informatie.
+- NIEUWE FUNCTIE: Optie om af te melden is ondergebracht onder knop Afsluiten. 
+  Nu kan je na klikken hierop kiezen tussen afsluiten, afmelden of annuleren.
+- Als je met je muis over het welkomswoord en je naam gaat, zie je met welke inlognaam je bent ingelogd.
+- Vraagteken-icoon is verplaatst naar iets boven om in lijn te zijn met andere icoontjes.
+  Gebruikersicoontje is verwijderd.
+
+versie 4.5.0.alpha.231113
+- OVERIGE WIJZIGINGEN : Initialisatie wordt bewaard met personeelsnr in naam. 
+  Dit moet nu omdat je inlogt als gebruiker en eigen instellingen kan bewaren.
+  Function bepaalinitnaamgebruiker is weer toegevoegd om dit te bewerkstelligen.
+  De oude initialisatiebestand wordt bij de start omgezet naar nieuwe naam.
+  Bij functie instellingen is dit ook veranderd.
+  Het inlezen van gebruikers instellingen is in aparte functie geplaatst, nl Inlezengebruikersinstellingen
+  Deze functie wordt bij de start ingelezen en na het uitloggen en opnieuw inloggen.
+- OVERIGE WIJZIGINGEN : zoeken naar update voor pnp.powereshell uitgezet door bovenaan te plaatsen:
+  $env:pnppowershell_updatecheck = 'off'
+
+
+versie 4.5.0.alpha.231110
+- wijzigingen vanuit versie test.1 en test.3 zijn geaccepteerd. Test.3 is een vervolg op test.1.
+- beheerbestand vanuit sharepoint wordt na download weer verwijderd.
+- volgorde opstarten van scriptonderdelen bij begin van programma is gewijzigd. 
+  Opstartvenster wordt later uitgevoerd.
+- het afsluiten van het programma gaat niet meer via aparte functie maar is onderdeel van $button7.
+- Icoontje toegevoegd in hoofdmenu om af te melden en gebruikersinformatie weer te geven.
+
+versie 4.5.0.test.3.231109
+- OVERIGE WIJZIGINGEN : Functie instellingen bevat alleen de persoonlijke instellingen: locatiekeuze, wissennabackup en 
+  maplegenvoorverplaatsen.
+  Dit betekent ook dat de instellingen voor automatisch updates, logbestanden en backups niet meer door gebruikers gewijzigd 
+  kunnen worden.
+  Venster instellingen is kleiner gemaakt.
+
+versie 4.5.0.test.3.231108
+- function bepaalinitnaamgebruiker eruit gehaald. Dit is pas van toepassing als gebruiker instellingen op SharePoint gaat bewaren.
+  De functie is als bestand met dezelfde naam bewaard.
+
+versie 4.5.0.test.3.231107
+- BUGFIX : Bij functie Opschonen wordt nu gecontroleerd of de backup-map aanwezig is. 
+  Deze beveiliging zat er niet in en zorgde ervoor dat het opstarten van de functie (als er geen verbinding is) lang duurde.
+- opschooninstellingen van variabele $global:beheer worden ingelezen uit initialisatibestand in SharePoint.
+- De volgende instellingen worden nu uit de beheerinstellingen weergegeven.
+  $homemapstudenten = $global:beheer.examenmappen.homemapstudenten
+  $digitalebestanden = $global:beheer.examenmappen.digitalebestanden
+  $backupmap = $global:beheer.examenmappen.backupmap
+  De origenele variabele namen worden behouden tbv leesbaarheid en gebruik in andere functies.
+  Deze instellingen worden aan het begin van de betreffende functies gedeclareerd.
+- OVERIGE WIJZIGINGEN : function bepaalinitnaamgebruiker gemaakt om de naam te bepalen van de initialisatiebestand van een gebruiker.
+
+versie 4.5.0.test.3.231106
+- NIEUWE FUNCTIE: beheerinstellingen worden gedownload van SharePoint
+
+versie 4.5.0.test.3.231104
+- locaties worden nu uit de beheerinstellingen weergegeven.
+
+versie 4.5.0.test.3.231103
+- OVERIGE WIJZIGINGEN : script initialisatiebestandmaken.ps1 aangemaakt om initialisatie bestand te maken met beheerinstellingen.
+  Dit bestand moet dan in SharePoint in de juiste map worden geplaatst.
+- variabele $global:beheer=@{} bevat nu alle beheerinstellingen en het bestand $global:beheerbestand wordt ingelezen 
+  vanuit de startmap.
+  Dit bevat de locaties-, examenmappen- en opschooninstellingen.
+
+versie 4.5.0.test.1.231005
+- NIEUWE FUNCTIE: functie VerbindSharepoint toegevoegd om te verbinden met het RPC-sharepoint via MFA
+  De connectie wordt in variabele $global:Sharepoint bewaard.
+  Foutmeldingen worden opgevangen en het programma sluit af als er het niet gelukt is om te verbinden.
+- controle of PNP.powershell module aanwezig is wordt bij de start uitgevoerd.
+- De inlognaam komt in het hoofdvenster.
+
+versie 4.4.1+155.230926
+- Geupload als 4.4.1+155
+- Bij updteinfo.txt de optie deprecated verwijderd. Deze functie is van de script verwijderd.
+  Omdat de URL is veranderd en dus alleen vanaf deze versie naar de nieuwe URL linkt zal het geen
+  problemen geven met oudere versies vande script.
+
+versie 4.4.1+155.230922
+- Icoontje voor Stap-terug bij taak Bestanden Overzetten veranderd.
+- Icoontje linksboven in programma, beheren.ico, zie je nu bij alle vensters.
+
+versie 4.4.1-beta.230921
+- Geupload als 4.4.1-beta.2 build 154
+
+versie 4.4.1-beta.230919
+- Readme.txt aangepast met de nieuwe URL. Enkele links waren nog niet aangepast.
+
+versie 4.4.1-beta.230918
+- Andere icoontjes voor de mappen en bestanden bij taak Bestanden Overzetten. Deze hebben nu de kleuren geel en groen.
+- Bij taak Bestanden Overzetten de kleur voor de geselecteerde examenmap gewijzigd naar blauw. Dit komt dan overeen
+  met de andere KOP-teksten.
+
+versie 4.4.1-beta.230914
+- Geupload als 4.4.1-beta.1 build 153
+- TAB-volgorde bij venster Opschonen gewijzigd.
+- WIJZIGING : Readme.txt en changelog aangepast met wijzigingen over snelkoppeling, nieuw URL en functie Opschonen logs.
+- Bij venster Bestanden klaarzetten wordt de info-text weergeven voor de venster met de geselecteerde examenmap.
+- Horizontaal scrollbar toegevoegd bij venster Opschonen met $global:listbox.HorizontalScrollbar = $true
+
+versie 4.4.1-beta.230913
+- Bij overzichttaken een aantal teksten gewijzigd om het duidelijker te maken.
+- Bij taak Bestanden overzetten is de layout aangepast. Nu zie je de geselecteerde examenmap staan in een venster en
+  zijn de icoontjes voor Terug en Home verpaatst. Je hebt nu 3 vensters die   n geheel vormen.
+
+versie 4.4.1-beta.230912
+- Uitleg tekst bij venster Opschonen en bij hoofdvenster aangepast, n.a.v. wijzing bij venster Opschonen.
+- Bij overzicht bestanden klaarzetten een verschil gemaakt tussen de mappen en bestanden. 
+  Hierdoor houdt je de inhoud als tekst en hoef je verder niet veel te wijzigen.
+  En tekst gewijzigd: geselecteerde bronmap naar Geselecteerde examenmap. Dit komt dan overeen met het venster hiervoor.
+
+versie 4.4.1-alpha.230908
+- geupload als 4.4.1-alpha.1 build 152
+- WIJZIGING : Icoontje (linksboven in programma) is nu hetzelfde als snelkoppeling-icoon, beheren.ico.
+- WIJZIGING : Update naar nieuwe url: beherenbestanden.neveshuis.nl
+- WIJZIGING : Optie om notificatie te geven voor updates is bij Venster Instellingen verwijderd.
+  Variabele Updatenotificatie is ook verwijderd bij functies Standaardinstellingen en Updatevoorbereiden.
+- Bij updatevoorbereiden de mogelijkheid om handmatig te updaten helemaal verwijderd. 
+  Dit was nog aanwezig met de variabele $opgestart.
+- WIJZIGING : Mogelijkheid om aan te geven of een bepaalde versie niet meer wordt geupdate, is verwijderd.
+  Variabele deprecated, aanwezig in updateinfo, is niet meer van belang en verwijderd.
+
+versie 4.4.1-alpha.230907
+- Taak Kopieren werkt nu volledig met de listview-variabele.
+- 2e venster is niet meer selecteerbaar bij taak Kopieren
+- WIJZIGING : Bij venster Overzichttaken wordt voor taak Kopieren de items beter weergegeven in het 2e venster en 
+  is dit aangepast voor de listview-variabele. 
+  Nu eerst de hoofd- of bronmap en daar onder de submappen of bestanden.
+  Functie Scriptrun is aangepast voor de listview-variabele.
+
+versie 4.4.1-alpha.230906
+- In het rechter venster in het venster Bestanden klaarzetten worden de icoontjes voor bestanden en mappen ook weergegeven.
+
+versie 4.4.1-alpha.230905
+- Alle knoppen en icoontjes om in de middelte venster te navigeren werken in het venster Bestanden klaarzetten.
+
+versie 4.4.1-alpha.230904
+- WIJZIGING : In het venster Bestanden klaarzetten zie je nu in het middelste vakje icoontjes voor de bestands- /mapnamen. 
+  De variabele listbox2 is hiervoor vervangen door een listview-variabele.
+
+versie 4.4.1-alpha.230830
+- WIJZIGING : functie opschonen is gewijzigd. Nu kan je hiermee alleen de backups verwijderen.
+  Als je deze taak kiest zie je meteen het aantal dagen voor het verwijderen van de backups en een overzicht met
+  te verwijderen mappen. Het aantal dagen kan je nog steeds wijzigen en met een knop Opnieuw inlezen wordt het overzicht
+  vernieuwd. Als je nu op Bevestigen klikt wordt er opnieuw ingelezen. Dit is een controle voor het geval je het aantal hebt 
+  gewijzigd en niet op Opnieuw inlezen hebt geklikt. Daarna wordt de functie Overzichttaken aangeroepen.
+  Functies Overzichttaken, uitvoerentaken en scriptrun zijn aangepast met de optie Opschonen.
+  Een extra controle, of je wilt doorgaan, vindt plaats bij de functie uitvoerentaken als je wilt opschonen.
+- BUGFIX : Door toevoeging van taak opschonen aan functie Uitvoerentaken, met Runspaces, is het probleem dat het programma niet 
+  reageert opgelost.
+
+versie 4.4.1-alpha.230829
+- WIJZIGING : Teksten voor logbestand bij functie uitvoerentaken is veranderd op enkele plaatsen van "uitgevoerd" naar "gestart". 
+  Dit is duidelijker.
+
+versie 4.4.0+151.230606
+-geupload als 4.4.0+151.230606
+
+versie 4.4.0+151.230605
+- Icoontje om alle keuzes te wissen en opnieuw te beginnen bij venster Bestanden overzetten is veranderd naar een icoon met een 
+  huisje en terug-icoontje is veranderd naar alleen een pijl naar links.
+- Bij venster Bestanden overzetten krijg je nu een horizontale scrollbar in het middelste venster als een bestandsnaam langer is dan 
+  de vensterbreedte.
+
+versie 4.4.0+151.230602
+- Er is voor gekozen om eventuele bestanden in de 1e 3 lagen ook weer te geven in de dropdownmenu's. Als je dit niet doet dan
+  is er een verschil tussen de lijst met bestanden van de dropdownmenus en de lijst van de middelste venster. 
+  En hierdoor kan je een verkeerde map selecteren. Bij de selectie van de dropdownmenu's wordt nu gekeken om de geselecteerde
+  een map is of een bestand en afhankelijk hiervan de map weergeven of de selectie ongedaan maken.
+- Icoontje om alle keuzes te wissen en opnieuw te beginnen bij venster Bestanden overzetten is veranderd naar een icoon met 
+  een vuilnisbak.
+- Tekst boven venster met inhoud van examenmappen veranderd.
+
+versie 4.4.0+151.230601
+- Weer mogelijk gemaakt om bestanden i.pv. alleen mappen te selecteren om over te zetten met functie Bestanden overzetten.
+  Nu zie je in het middelste venster ook eventuele bestanden in de 1e drie lagen van de 'Bijlagen kandidaten'-structuur.
+  Wijziging: Hiervoor dan ook mogelijk gemaakt om in de onderste map te komen bij het bladeren naar de gekozen map.
+
+  Probleem: eventuele bestanden in deze laag geven problemen met selecteren van een map, de index in nu niet meer altijd gelijk!
+
+versie 4.4.0-beta.230420
+- geupload als 4.4.0-beta.1 build 150
+
+versie 4.4.0-beta.230419
+- Melding als een update beschikbaar is gewijzigd, als een update niet mogelijk is wordt de initialisatiebestand verwijderd en
+  bij updateinfo.ini is toegevoegd om update-icoontje te verwijderen bij versie 4.4.0.
+- Bij venster Bestanden overzetten is bij de infotekst toegevoegd dat je nu kan dubbelklikken en bladeren door de mappen
+  en bij een icoon 'stap terug' wordt nu ook gecontroleerd of de startknop zichtbaar mag zijn.
+
+versie 4.4.0-alpha.230419
+- geupload als 4.4.0-alpha.1, build 149
+
+versie 4.4.0-alpha.230418
+- bugfix: volgorde tab-toetsen gewijzigd bij vensters 'logboek' en 'bestanden overzettten'.
+- bugfix: tekst bij taken 'Bestanden klaarzetten' en 'Backup' waren klikbaar. Nu niet meer.
+- Infotekst voor hoofdvenster gewijzigd omdat taak handmatig updaten niet meer beschikbaar is.
+
+versie 4.4.0-alpha.230411
+- handmatig update via de hoofscherm is verwijderd. Enkele icoontjes verplaatst.
+
+versie 4.4.0-alpha.230408
+- Icoontje bij venster kopieren om 1 stap terug te gaan werkt nu.
+
+versie 4.4.0-alpha.230405
+- Icoontje bij venster kopieren om opnieuw te beginnen werkt nu.
+
+versie 4.4.0-alpha.230404
+- 2 icoontje toegevoegd bij vensterkopieren om terug te gaan en opnieuw te beginnen met selecteren van mappen. 
+  Deze icoontjes doen nog niets.
+- Tekst gewijzigd bij vensterkopieren bij vakje met examenmappen naar "Examenmappen" ipv "Inhoud van geselecteerde .."
+  Idem dito bij vakje er naast.
+
+versie 4.4.0-alpha.230330
+- [bug-fix] Door een wijziging in het netwerk van Zadkine, kan met powershell geen bestanden meer goed worden gedonwload.
+  De bestanden worden als html gedownload in plaats van als initialisatie-bestand.
+  Dit is een tijdelijke oplossing. Het ophalen van de readme- en changelog-bestand lukt in het netwerk van Zadkine nog steeds niet. 
+  Je ziet ook hier alleen een html-bestand.
+  Oplossing : Bij function Get-IniContent een beveiliging ingebracht voor het geval het updateinfobestand niet goed is ingelezen.
+  En bij het updateproces wordt gecontroleerd of de update-informatie goed is ogehaald. Anders wordt een melding gegeven (alleen bij
+  handmatige update).
+- Bij het uitvoeren van een taak komt de taaknaam nu ook in de titelbalk van het venster.
+- bestanden worden nu ook gekopieerd naar de studentmappen. Er wordt nu gebruikt gemaakt van een array om de geselecteerde mappen te 
+  onthouden.
+  de variabelen keuzecrebonr, keuzekerntaak en keuzeexamen zijn dus niet meer nodig en verwijderd.
+
+versie 4.4.0-alpha.230321
+- het dubbelklikken en map openen als een crebonummer, kerntaak en examen zijn geselecteerd, werkt bij functie "Vensterkopieren".
+  Hierdoor kunnen ook de onderliggende submappen apart geselecteerd worden, bv als een examen ook varianten heeft.
+
+versie 4.4.0-alpha.230320
+- De dropdownmenu voor kerntaken en examens bij functie "Vensterkopieren" werkt nu ook.
+- beveiliging dat alleen de map wordt toegevoegd aan geselecteerde mappen als deze submappen heeft, is verwijderd. 
+  Dit kan toch problemen geven.
+- de foutmelding die je ziet als het updateproces wordt aangeroepen, komt niet meer voor, ook niet op schoolnetwerk. 
+  getest op 21-3-23.
+
+versie 4.4.0-alpha.230316
+- wijziging hoe examenopdrachten worden geselecteerd bij functie "Vensterkopieren".
+  Bij de start wordt inhoud al weergegeven in venster. Je ziet alleen mappen.
+  Met een dubbelklik wordt een map geselecteerd en geopend. Alleen als er submappen zijn!
+  Met een enkelklik zie je de inhoud rechts in een andere venster.
+  De dropdownmenu voor crebonummers werkt nu ook. Hiervoor moest wel het e.e.a. veranderd worden, nl bij het dubbelklikken in
+  het venster wordt nu alleen de geselecteerde indexnr veranderd van de betreffende dropdownmenu. Hierdoor wordt alles
+  nu uitgevoerd bij de dropdownmenu's zelf. Dit is nodig zodat dingen niet 2x worden uitgevoerd en scheelt weer tekst.
+- variabele $updateini was een global variabele maar is dit niet meer. Hiermee hoop ik de foutmelding weg te krijgen
+  die je ziet als het updateproces wordt aangeroepen. De foutmelding zag je als het programma op het schoolnetwerk draait!
+
+versie 4.4.0-alpha.230309
+- Als je nu op het afbeelding klikt in het hoofdvenster krijg je een venster met een leuke weetje, grap of advies.
+  Als je over de afbeelding gaat met je muis zie je de tekst "Klik hier voor een verrassing".
+  Als er geen verbinding is met de website krijg je een foutmelding.
+
+versie 4.3.2+148.230210
+-geupload als 4.3.2+148.230210
+
+versie 4.3.2-alpha.230210
+- geupload als 4.3.2-alpha.1, build 147
+
+versie 4.3.2-alpha.230124
+- Er wordt bij het backuppen niet meer gecontroleerd of er al een backup is gemaakt omdat met de huidige format 
+  dit niet meer nodig is.
+  de function backup_mapcontrole is nu verwijderd en ook niet meer nodig.
+- backups worden nu opgeslagen in de format "datum_tijd", format = "yyyy-MM-dd__HH-mm-ss"
+
+versie 4.3.1+146.230110
+-geupload als 4.3.1+146.230110
+
+versie 4.3.1-alpha.230110
+- geupload als 4.3.1-alpha.1, build 145
+
+versie 4.3.1-alpha.230109
+- bugfix: bij functie scriptrun  toegevoegd, onder de taken backup en wissen en verplaatsen, bij zowel copy-item als bij remove-item, 
+  \\?\ voor de variabele doelmap en bronmap. Dit zorgt ervoor dat lange namen - meer dan maximaal 256 tekens, geen 
+  foutmelding geven en dus het kopieren en verwijderen ook dan lukt.
+- wijziging: bij het kopi ren wordt standaard nieuwe bestanden toegevoegd aan de studentmappen. Er wordt niet meer gevraagd 
+  wat te doen als er al bestanden aanwezig zijn. Dit is gewijzigd door bij functie scriptrun, subonderdeel swith - kopi ren, 
+  een deel van de code te verwijderen.
+
+versie 4.3.0+144.221114
+- geupload als 4.3.0+144.221114
+- Kruisje weggehaald bij info over programma.
+- De knop om te wisselen tussen de changelog en readme bij venster informatie over programma gaf in het begin de
+  verkeerde bestand aan.
+
+versie 4.3.0+144.221111
+- Aanpassingen gedaan aan informatievenster voor de taken. Alles wordt nu in een function gedeclareerd.
+  Een knop Sluiten is toegevoegd om de informatievenster te sluiten.
+- Bij de vensters met een vraag-icoon is de vraag-icoontje nu klikbaar ipv met de muis er over heen.
+  Ook is de weer te geven tekst met uitleg aangepast bij deze vensters.
+
+versie 4.3.0+144.221110
+- Aanpassingen gedaan aan informatievenster van hoofdvenster. De vraag-icoontje is nu klikbaar. 
+  Met een knop Sluiten wordt nu de informatievenster gesloten.
+- function declareren_uitlegvenster aangepast om weer te geven bij muisklik op vraag-icoontje. 
+  Deze nog aanpassen om een knop om te sluiten weer te geven en eventueel bij de betreffende functions de grootte aan te passen.
+
+versie 4.3.0+144.221107
+- bugfix: Vensters op de achtergrond bleven zichtbaar na het uitvoeren van een taak en soms kon je niet meer terug naar
+  het overzicht. Opgelost door voor het uitvoeren de vensters te verbergen ( $form2.hide() ) en alleen bij de taak Kopieren
+  weer zichtbaar te maken na het uitvoeren.
+
+versie 4.3.0+144.221104
+- Voor locatie PAL de rpc-nummers gewijzigd naar 1 tm 60 (was 50).
+- Kleine layout aanpassingen gedaan aan venster Uitvoeren van Taak. Bij vraag wat te doen als er al bestanden zijn gevonden bij, 
+  venster grootte aangepast.
+  Knop Sluiten na het uitvoeren rood gemaakt. Tijdens uitvoeren van een taak de regel met tekst blijft GROEN. 
+  Als er een foutmelding is pas ROOD.
+
+versie 4.3.0-beta.221103
+- geupload als 4.3.0-beta.1, build 143
+
+versie 4.3.0-beta.221102
+- bij een aantal venster het vakje met extra informatie dezelfde achtergrondkleur gegeven - wit!
+- functions venster_werkinuitvoering en sluiten_werkinuitvoering verwijderd. Deze worden nergens gebruikt en
+  zullen ook voorlopig nergens gebruikt worden.
+  Wel zijn deze functies als ps1-bestand bewaard in de map Testen.
+- een aantal vensters worden nu ook gedeclareerd met de function voor een standaard venster.
+
+versie 4.3.0-alpha.221027
+- geupload als 4.3.0-alpha.1, build 142
+
+versie 4.3.0-alpha.221026
+- Nieuwe functie : Logbestanden worden verwijderd bij de start van het programma als dit is ingesteld. Hiertoe is nieuwe functie 
+  opschonenlogsbijstart aangemaakt. Dit wordt gelogd.
+- Bij het venster die uitleg geeft over het programma is $Global:Form_uitleg_taak.TopMost "$true" gemaakt.
+- Bij het venster informatieprogramma is een vraagteken die info geeft toegevoegd, wordt extra uitleg gegeven bij elke object 
+  als je met de muiscursor overheen gaat en is de knop om te sluiten rood gemaakt. 
+- Idem dito voor venster Logbestanden bekijken.
+- Bij venster Opschonen is na het uitvoeren niet meer mogelijk om bepaalde objecten te klikken. 
+  In het logbestand wordt het aantal bestanden die zijn verwijderd weergegeven.
+
+versie 4.3.0-alpha.221025
+- Bij Instellingen en opschonen wordt extra uitleg gegeven bij elke object als je met de muiscursor overheen gaat.
+- Bij Function declareren_uitlegvenster is de variabele Topmost "true" gemaakt zodat de uitleg altijd bovenaan komt.
+
+versie 4.3.0-alpha.221019
+- Vraagteken die info geeft wordt toegepast bij venster Opschonen. Layout venster Opschonen aangepast hierop.
+- Bij Instellingen begonnen om tekst met uitleg te geven bij elke object.
+
+versie 4.3.0-alpha.221018
+- Nieuwe functie : Bij instellingen worden nu de variabelen voor taak opschonen bewaard.
+  De keuzes ja en nee worden nu met hoofdletters bewaard in het initialisatiebestand. Bij een if-statement maakt dit geen verschil.
+  De script is op een aantal plaatsen nu verkort hierdoor (script optimalisatie).
+  Bij function standaardinstellingen hebben de keuzes nu ook hoofdletters.
+
+versie 4.3.0-alpha.221017
+- bugfix : bij taak bestanden overzetten, als er bestanden zijn in studentmap, wordt als je kiest om deze te verwijderen alles 
+  verwijderd.
+  Dit geeft een probleem als je alleen maar enkele bestanden of mappen hebt gekozen om over te zetten 
+  (alle mappen worden verwijderd!).
+  Opgelost door eerst het proces duidelijk te hebben. nl je kiest voortaan om deze bestanden te behouden, en dan het probleem op 
+  te lossen zodat bestaande mappen en bestanden wel worden overschreven. 
+  Dit laatste is gedaan door -Force toe te voegen aan copy-item bij de taak Overzetten.
+  Verder is ook benadrukt dat Alle bestanden in de studentmap worden verwijderd bij de keuze Verwijderen.
+  Voortaan dus kiezen voor behouden als je opnieuw bestanden gaat overzetten bij dezelfde pcs. Bestaande bestanden worden dan 
+  overschreven.
+
+versie 4.3.0-alpha.221016
+- De standaard functie om een venster te declareren wordt toegepast bij instellingen.
+- Vraagteken die info geeft wordt toegepast bij instellingen.
+- bij instellingen begin gemaakt om opties "opschonen logs bij start", de "dagen backup" en "dagen logs" toe te passen.
+
+versie 4.3.0-alpha.221015
+- toegevoegd bij function updatevoorbereiden onderaan om foutmelding te voorkomen bij het updaten:
+  $picturequestion.image.dispose() en $gifBox.Image.dispose()
+- declareren hoofdvenster en opstarttekst naar beneden verplaatst.
+- Function declareren_uitlegvenster aangepast. maakt gebruik van functie declareren_standaardvenster.
+- De standaard functie om een venster te declareren wordt toegepast bij vraagvenster, Vensterbackup, Vensterwissen, 
+  declareren_uitlegvenster en bij declareren venster met uitleg over hoofdprogramma.
+
+versie 4.3.0-alpha.221014
+- een standaard functie om een venster te declareren is aangemaakt. 
+  Standaard achtergrond is wit en venster is niet aan te passen. Nu nog alleen toegepast bij function Vensterkopieren.
+- aanpassingen gedaan aantal vensters mbt 3 knoppen rechtsboven. toegevoegd : $form.MaximizeBox = $False en
+  $form.ControlBox = $False
+  functie vraagvenster ook hierop aangepast.
+- GIF-image die als test is toegevoegd blijft staan. aanpassingen gedaan om mooi te maken.
+- vraagicoontje aangepast, positie en grootte.
+
+versie 4.3.0-alpha.221013
+- Een functie is gemaakt om voor alle vensters, behalve de hoofdvenster, het vraagtekenicoontje te
+  declareren. Toegevoegd aan vensterkopieren, vensterbackup en vensterwissen.
+  Deze vensters zijn verder ook aangepast qua layout (enkele icoontjes verplaatst).
+- GIF-image toegevoegd als test. De uiteindelijke image moet nog geplaatst worden. Deze mag max 620x230 pixels zijn.
+  En achtergrond kleur is nu wit.
+- Knop afsluiten in hoofdvenster heeft rode achtergrond.
+
+versie 4.3.0-alpha.221012
+- hoofdvenster anders ingericht. 
+  - 4 hoofdtaken hebben een groter en andere icoontje.
+  - andere taken hebben geen begeleidende tekst meer.
+  - info als je met de muis over een icoontje gaat
+  - afbeelding met vraagteken die info geeft als je met muiscursor overheen gaat.
+  - Inforegel verkort naar 1 regel en met hoofdletters.
+  - volgorde icoontjes bij gebruik van de TAB-toets aangepast.
+- venster bestanden overzetten anders ingericht.
+  - afbeelding met vraagteken die info geeft als je met muiscursor overheen gaat.
+  - minder tekst wordt weergegeven en e.e.a verplaatst.
+
+versie 4.2.2+141.220929
+- geupload, build 141
+
+versie 4.2.2-beta.220928
+- geupload als 4.2.2_beta.1, build 140
+- schoonheidsfoutje in naam Schiedamseweg weggehaald.
+- Info tekst bij de 4 belangrijke taken gewijzigd. E.e.a. is verduidelijkt.
+
+versie 4.2.2-alpha.220926
+- geupload als 4.2.2_alpha.1, build 139
+- Overige wijzigingen : bij updater.ps1 is de optie om een variabele toe te voegen via updaterinfo verwijderd.
+- function Out-IniFile is verwijderd. alleen bij functie vensterinstellingen wordt de initialisatiebestand bewaard.
+  gekozen is om hiervoor geen aparte functie voor te maken.
+- Bug fix : methode gevonden om variabelen in te lezen vanuit bestand en de standaardwaarden te behouden. 
+  tijdens het initialisatieproces wordt nu de initialisatiebesatnd ingelezen in een tijdelijke object.
+  daarna worden de variabelen ingelezen en overgezet naar $init, maar alleen als deze al bestaat in $init.
+  zo worden nieuwe waarden worden behouden en verwijderde waarden worden niet toegevoegd.
+- initialisatiebestand heet nu "initialisatie.ini". Dit is nodig om de hierboven beschreven bug te fixen.
+
+versie 4.2.2-alpha.220924
+- Overige wijzigingen: enkele schoonheidfoutjes eruit gehaald. a) de tekst updated verandert naar geupdatet in beherenbestanden.ps1 
+  en updater.ps1.
+  b) tekst op lijn 878, functie uitvoerentaken, $Description2.Text = "Taak worden uitgevoerd ..." is geworden 
+  "Taak wordt uitgevoerd .."
+  c) fouten in locatienamen aangepast: jan ligthartstraat en Prins Alexanderlaan
+
+versie 4.2.2-alpha.220923
+- Bugfix: voor de taken wissen en verplaatsen werkt nu de methode met runspaces. 
+  Hiermee is runspaces volledig geimplementeerd en het probleem dat het programma niet reageert hopelijk opgelost.
+- bij de taken backup, wissen en verplaatsen de regels weggehaald om de geselecteerde rpc-nrs te wissen.
+  dit heeft namelijk geen zin bij deze taken - bij opnieuw starten worden deze gereset.
+
+versie 4.2.2-alpha.220922
+- voor taak backup werkt nu de methode met runspaces.
+- function bepaaldatum gemaakt om 1 functie te hebben waar de format voor de datum wordt bepaald.
+- code toegevoegd voor runspaces. 
+  zie https://kamikazeadmin.net/2021/10/21/how-to-build-a-colourful-gui-for-powershell-using-winforms-runspacepools-and-hash-tables/
+- function scriptrun aangemaakt met code van switch-commando "$uitvoeren.taak".
+- voor taak kopi ren werkt nu de methode met runspaces.
+- code toegevoegd om voor taak backup met runspaces te laten werken.
+- hashtable $uitvoeren aangemaakt en enkele object/variabelen voorzien van "uitvoeren.", zoals  
+  $form3, progressbar, taak, homemapstudenten.
+  variabele taak weggehaald van function uitvoerentaken.
+  bij uitvoerentaken wordt gebruikt gemaakt van lokale variabelen doelmap, bronmap en doelmaproot om o.a. 
+  variabele $uitvoeren.doelmap, digitalebestanden op te vangen. anders worden test-path, remove-item en copy-item niet 
+  goed uitgevoerd.
+
+versie 4.2.2-alpha.220827
+- Overige wijzigingen: bij alle taken wordt nu gebruik gemaakt van functie vraagvenster bij de controle van de mappen aan het begin.
+  System.Windows.Forms.MessageBox wordt alleen gebruikt bij updatevoorbereiden en updaten
+
+versie 4.2.1+138.220825
+- geupload, build 138
+- tekst veranderd bij bestanden overzetten als er bestanden zijn in studentmap. Het e.e.a. verduidelijkt.
+
+versie 4.2.1-alpha.220822
+- geupload als 4.2.1-alpha.1, build 137
+- changelog.txt is nu compleet en is geupload. oude changelog is van de website afgehaald.
+
+versie 4.2.1-alpha.220821
+- layout venster informatieprogramma gewijzigd.
+- wijziging : bij functie opschonen wordt een controle uitgevoerd of de mappen log en backupmap bestaan.
+- de changelog heet nu 'changelog-technisch.txt' en een 2e changelog is gemaakt met gebruikersinformatie, 
+  genaamd 'changelog.txt'.
+  deze 2 variabelen worden nu bovenaan de script gedeclareerd.
+
+versie 4.2.1-alpha.220819
+- bij inlezen initialisatiebestand is de controle voor nieuwe variabelen verwijderd.
+  hiervoor is in de plaats komen, verwijderen van oude initialisatie als deze bestaat.
+- nieuwe hashvariabele gemaakt 'locaties', overal waar 'init[locaties]' stond is veranderd naar 'locatie'
+  en bij alle hooftaken, bij toevoegen locaties, staat nu locatie.$_.naam.
+  bij functie standaardinstellingen zijn de locaties verwijderd.
+- bij hashvariabele init zijn 2 variabele mbt opschonen onder een nieuwe key 'opschonen' geplaatst.
+- bestandsnaam voor initialisatie veranderd van config.ini naar gebruiker.ini. Dan is het probleem met bestaande initialisatie en
+  nieuwe variabelen meteen verholpen. bij start programma toegevoegd, verwijderen van oude initialisatiebestand als deze bestaat.
+  
+
+versie 4.2.0+136.220818
+- geupload, build 136
+
+versie 4.2.0+136.220817
+- enkele layout foutjes/ aanpassingen gedaan bij functies kopieren_mapcontrole en backup_mapcontrole
+- bugfix : bij overzichttaken werd de 2e regel van keuze verplaatsen, de optie om de doelmap te legen
+  voor verplaatsen, niet getoond. gewijzigd door hier $description3 voor te gebruiken.
+  Voor taak backup wordt nu $description3 bij overzichttaken inhoud gegeven zodat dit niet conflicteerd.
+
+versie 4.2.0+136.220816
+- enkele layout foutjes/ aanpassingen gedaan:
+  scherm van functie programmainfo kleiner gemaakt. zie scherm van functie logbestanden. nu is het te hoog!
+  bij opschonen, als geen bestanden zijn gevonden om op te schonen, wordt gebruik gemaakt van de nieuwe vraagvenster. 
+  alleen Ok knop is voldoende.
+  venster wissen iets kleiner gemaakt qua hoogte.
+  alle kleuren en posities van teksten in menus nagelopen. Dit getest door op werklaptop de script te draaien 
+  (omdat script op deze laptop moet werken!)
+  keuze gemaakt: groen is voor klikbaar tekst. blauw is info-tekst. dit bij functie kopieren, backup, verplaatsen, 
+  opschonen en informatie gewijzigd.
+
+versie 4.2.0+136.220815
+- enkele layout foutjes/ aanpassingen gedaan:
+  bij venster_backup - lettertype van keuzevakje "bestanden na backup wissen" groter gemaakt.
+  de layout van het venster met uitvoeren van taken veranderd. hiervoor bij de functies uitvoerentaken en overzichttaken
+  de nodige wijzigingen gedaan.
+  bij uitvoeren taken, tekst "klaar om de taak uit te voeren" naar onder de 1e infotekst.
+  bij uitvoeren zie je bovenaan de tekst "uitvoeren" en daarna "taak uitgevoerd" (of de errormelding)
+  progressbar is nu hieronder geplaatst.
+  bij venster "bestanden aanwezig in map", onderdeel van taak uitvoeren, de tekst "deze keuze herhalen .." is nu font 11 worden.
+  bij updaten programma, als geen update wordt gevonden, de kleur van het OK-knopje moet blauw worden. 
+  Hiervoor is bij functie vraagvenster, als de 1e knop Ok als naam heeft, deze de kleur blauw krijgt, en anders groen.
+- bugfix : in het logbestand zag je een herhaling vande tekst "u heeft gekozen deze keuze te herhalen" bij het uitvoeren 
+  van een backup.
+  bij functie uitvoerentaken is een errormelding verplaatst om dit maar 1 keer te laten zien.
+
+versie 4.2.0-alpha.220815
+- geupload als 4.2.0_alpha.1, build 135
+
+versie 4.2.0-alpha.220804
+- bij functie updatevoorbereiden toegevoegd ah eind om foutmelding te voorkomen bij updaten : $Button11.Image.Dispose()
+- bij functie infovenster wordt het laden van de changelog nu sneller gedaan.
+  als de changelog- of readme niet gevonden is krijg je bij de start en in het venster een melding te zien.
+  de grootte vd venster verandert en het vakje met infotekst. 
+- een function is aangemaakt om tekst te tonen als een proces in uitvoering is.
+  deze wordt nog nergens gebruikt.
+- een function om dit weer te sluiten is eronder aangemaakt en dient altijd samen gebruikt te worden.
+
+versie 4.2.0-alpha.220803
+- Nieuwe functie : venster gemaakt waarmee je informatie over het programma kan bekijken.
+  je ziet de versie, build, datum en programmeur en een venster met de inhoud van de readme.txt
+  met een knop kan je de changelog laten zien en met dezelfde knop ga je terug naar de readme.txt
+- readme.txt en changelog aangepast met extra info.
+
+versie 4.2.0-alpha.220731
+- nieuwe functie : functie uitvoerenopschonen werkt nu helemaal.
+  toegevoegd bij functie uitvoerenopschonen:
+  - tellen aantal logs en backups die worden opgeschoont
+  - dit zichtbaar maken met progressbar
+  - de knoppen wijzigen zodat na uitvoeren je kan afsluiten of logbestanden bekijken
+  - bij foutmelding dit weergeven
+
+
+versie 4.2.0-alpha.220725
+- aangegeven bij info over versienummering wat de extra labels betekenen.
+- bij functie logbestanden de minimaal aantal jaren voor de filters ingesteld op 2022.
+- bij uitvoerenopschonen worden de backups en logbestanden opgeschoont. dit wordt ook gelogd.
+
+versie 4.2.0-alpha.220723
+- wijzigingen voor versiebeheer 1) wanneer de versie wordt verhoogd, 2) afkorting om aan te geven dat aan een versie gewerkt wordt en 
+  3) wat bij PATCH wordt verstaan onder "kleine wijziging".
+  1. Vanaf nu wordt bij begin van nieuwe versie, na een upload, bepaald of de volgende versie een revision, minor of major wordt,
+  en de versie hieraan aangepast. In dit geval van 4.1.0 naar 4.2.0.
+  Standaard kan met een revision begonnen worden en tussendoor, nog in pre-alpha state, dit veranderen. bv van 4.1.2-alpha 
+  naar 4.2.0-alpha.
+  2. De afkorting dev staat voor development en development is een stadium voor de eerste release (1.0). Dit geeft dus een 
+  verkeerd beeld.
+  Vanaf nu staat er alpha achter versies waar aan gewerkt wordt omdat er naar een alpha-versie toe gewerkt wordt. 
+  Alpha versies zijn nog niet af en moeten nog getest worden door de developmentteam.
+  Zie deze versie.
+  Eventueel kan van een versie ook een beta-versie gemaakt worden als deze getest gaat worden door externen/ gebruikers.
+  3. Verduidelijkt bij INFO wat wordt verstaan onder "kleine wijziging":
+  Onder kleine wijzigingen wordt o.a. verstaan : een eigenschap van een functie wordt veranderd (bv. tekst of layout). 
+
+  voorbeelden versie nummering
+
+1.0.0+23 - upload
+
+1.0.1-alpha start veranderingen
+1.1.0-alpha nieuwe functie
+1.1.0-rc1 release candidate
+1.1.0+24 upload/ release
+
+1.1.1-alpha start veranderingen
+1.1.1-rc1 
+1.1.1+25 upload
+
+1.1.2-alpha 
+1.1.2+26
+
+1.1.3-alpha 
+1.2.0-alpha 
+1.2.0+27
+
+versie 4.1.0-dev.220720
+- begin gemaakt bij function opschonen met daadwerkelijk opschonen. er wordt 2 lijsten weergegeven met op te 
+  schonen bestanden en mappen.
+  Progressiebar toegevoegd.
+
+versie 4.1.0-dev.220718
+- een nieuwe procedure/ function is aangemaakt die een venster laat zien met 2 knoppen.
+  de titel, tekst en knopnamen kan je zelf aangeven.
+  deze function is als een algemene function aangemaakt zodat het door andere functions gebruikt kan worden.
+- venster om op te schonen is verder aangepast en verduidelijkt.
+  de nieuwe function wordt hier gebruikt.
+  Alleen het daadwerkelijk verwijderen wordt nog niet uitgevoerd!
+- bij start programma worden gecontroleerd of de variabelen dagen_opsch_backup en dagen_opsch_logs bestaan
+  en anders krijgen deze de standaard waarde.
+- bij initialiseren wordt nu eerst gekeken of initialisatiebestand bestaat, en deze ingelezen, en anders aangemaakt.
+  dus ipv eerst standaard aanamaken en dan kijken of bestand bestaat.
+- bij het aflsuiten van het programma en bij voorbereiden updaten wordt gebruikt gemaakt van de nieuwe function.
+- bij instellingen wordt als je de standaardinstellingen terugzet, niet meer alle locaties teruggezet. Alleen de keuze voor 
+  de standaardlocatie wordt gewijzigd als deze in de huidige instellingen bestaat.
+
+versie 4.1.0-dev.220715
+- Venster om logbestanden en backups te verwijderen, optie opschonen, aangemaakt.
+  Deze functie doet nog verder niets!! Een layout is gemaakt.
+- bij functie updatevoorbereiden aan het eind toegevoegd om foutmeldingen tegen te gaan:
+  $Button10.Image.Dispose()
+
+versie 4.1.0-dev.220714
+- bij functie updatevoorbereiden aan het eind toegevoegd om foutmeldingen tegen te gaan:
+  $Button9.Image.Dispose()
+- nieuwe functie : bij vensterlogbestanden kan je filteren op maand en jaar.
+
+versie 4.1.0-dev.220713
+- bij function vensterverplaatsen de beveiliging als variabele maplegenvoorverplaatsen leeg is, verwijderd.
+- nieuwe functie: bij instellingen kunnen de standaardinstellingen hersteld worden.
+
+versie 4.1.0-dev.220712
+- tekst bij keuze update in hoofdvenster veranderd.
+- nieuwe functie: instellingen kunnen gewijzigd en bewaard worden.
+- overal waar variabele init staat veranderd naar global:init. anders wordt de waarde niet goed overgenomen.
+
+versie 4.1.0-dev.220708
+- van variabele initbestand is een "global" variabele gemaakt.
+- nieuwe functie : bij updater.ps1 worden nu alle bewerkingen na de update ook uitgevoerd.
+  updatinfo-sample.ini aangepast omdat je nieuwe variabelen ook zonder aanhalingstekens kan toevoegen.
+
+versie 4.1.0-dev.220707
+- bij updater.ps1 aangepast om bestanden die je wilt verwijderen meteen onder de betreffende versie te plaatsen.
+  en hetzelfde geldt voor toevoegen nieuwe variabelen.
+- updateinfo.ini en updatinfo-sample.ini hierop aangepast. 
+
+versie 4.1.0-dev.220706
+- bij functie verplaatsen de keuze tussen verplaatsen en kopieren in een drop-downmenu gezet.
+  omschrijving bij functie verplaatsen in het hoofdmenu veranderd.
+  bij functies uitvoerentaken en overzichttaken de teksten hiervoor veranderd.
+  De optie "doelmap legen voor verplaatsen" wordt als variabele "maplegenvoorverplaatsen" bij de standaardinstellingen gedeclareerd.
+  bij functie verplaatsen wordt deze ingelezen als lokale variabele "keuzedoelmaplegen"
+- bij het initialiseren wordt variabele "maplegenvoorverplaatsen" toegevoegd aan initbestand als deze nog niet
+  gedeclareerd is. 
+  Vanaf nu kan dit met elke nieuwe variabele gedaan worden!
+
+versie 4.1.0+134.220704
+- geupload
+- nieuwe functie : bij de taken kopieren, backup en verplaatsen wordt gecontroleerd of de doelmap inhoud heeft en 
+  een actie gevraagd van de gebruiker. je kan de actie dan toepassen voor alle studentmappen. dit zie je ook in het logbestand.
+
+versie 4.0.0-dev.220704
+- feedback Marco: bij functie verplaatsten is een optie toegevoegd om de bestanden in de doelmap te legen.
+  deze is standaard aangevinkt.
+- Voor functie uitvoerentaken:
+  - voor taak backup werkt nu de functie om te controleren of een backup al gemaakt is van een studentmap
+  en te vragen wat te doen.
+  - voor de taken backup, kopieren en verplaatsen wordt nu extra info gegeven in het logbestand.
+  - in het logbestand wordt nu eerst de taak weergegeven en dan pas de starttijd.
+
+versie 4.0.0-dev.220701
+- de foutmelding die wordt gegeven in het logbestand bij functie uitvoerentaken, is gewijzigd.
+  nu staat alles in 1 regel, met rpcnr en soort melding (fout of info) erbij.
+- venster gemaakt om bij functie uitvoerentaken - taak backup, als doelmap inhoud heeft, te vragen hoe verder te gaan.
+  deze venster doet verder niets.
+
+versie 4.0.0-dev.220630
+- commmentaar bij elke functie geplaatst. dit was niet overal zo.
+- voor taak kopi ren werkt nu de functie om te controleren of een studentmap inhoud heeft
+  en te vragen wat te doen.
+- begin gemaakt om foutmeldingen anders weer te geven. zie functie uitvoerentaken - switch "kopieren".
+
+versie 4.0.0-dev.220629
+- overal is het woord taken verandert naar het woord taak.
+- feedback Edgar : venster gemaakt om bij taak kopi ren, als doelmap inhoud heeft, te vragen hoe verder te gaan.
+  deze venster doet verder niets.
+
+versie 4.0.0-dev.220626
+- bij updater.ps1 toegevoegd: De script hoort bij versie 4.0.0 van "Beherenbestanden.ps1"
+- aanpassingen gedaan aan readme.txt.
+
+versie 4.0.0-dev.220625
+- Readme.txt gemaakt en geupload naar de website.
+- naam van changelog verandert en changelog geupload naar de website.
+
+versie 4.0.0-dev.220624
+- variabele updatewebsite verandert naar "https://neveshuis.nl/beherenbestanden".
+- tekst verandert van taak kopieren.
+
+versie 4.0.0+133.220623
+- geupload 
+
+versie 3.9.7-dev.220623
+- bij functie uitvoerentaken, knop "Opnieuw" heet nu "Opnieuw bestanden klaarzetten" en deze is alleen zichtbaar bij taak kopieren.
+  positie en grootte van deze knoppen veranderd.
+
+versie 3.9.7-dev.220622
+-  Map "versies" op onedrive is "developments" geworden. Hier staan de versies waar aan gewerkt wordt.
+   Map builds aangemaakt met alleen de geuploadeversies.
+   De mappen "RC" (release candidates) en "prebuilds", met overeenkomstige inhoud, kunnen nog erbij komen.
+- wijziging in versiebeheer. alle developments krijgen de toevoeging "-dev", zie dit versienummer.
+  een mogelijke 2e paralelle development kan dan "-dev2" krijgen.
+
+versie 3.9.7+132.220620
+ - wijziging in versiebeheer. Nu volledig volgens Semantic Versioning (zie Semver.org)
+   Buildnummer als variabele toegevoegd. bv. 130.220620. Bedoeling is dat dit wordt weergegeven bij info over programma.
+   De volledige versie wordt dan 3.9.7+130.220620
+   De volledige versie zie je alleen in de change-log en mapnaam.
+   Regels toegevoegd aan de infotekst in het begin: 
+      Dit programma is beschermt met auteursplicht door middel van de GNU GPL (https://www.gnu.org/licenses)
+      Lees ook de readme.txt op https://neveshuis.nl/beherenbestanden/readme.txt
+   Readme.txt is aangemaakt maar nog niet geupload naar de website.
+
+versie 3.9.7.132.220618
+- bugfix: error als backup al bestaat opgelost ,denk ik maar nog uitgebreid testen, door "-container" toe te
+  voegen aan copy-item taak bij functie uitvoerentaken onder backup
+- tekst in hoofdscherm om te stoppen is nu rood
+- bugfix: bij de 4 taken verwijdert "-pathtype container" bij test-path in het begin omdit dit niet werkt!
+
+versie 3.9.7.132.220616.2
+- functies declareren_rpcnrs en lijstrpcnrsaanmaken aangepast om variable terug te geven. 
+  Hierdoor kan je deze functie ook gebruiken met andere variabelen.
+  Bij de 4 hoofdtaken is de aanpassing doorgevoerd.
+- Nieuwe functie: Nu kan je bij alle taken een locatie kiezen. bij functie verplaatsen is dit toegevoegd.
+
+versie 3.9.7.132.220616
+- geupload
+  deze versie is geupload om alvast voor locatie Schiedam de bestanden te kunnen klaarzetten
+  voor schiedam zijn de pc-nummers gewijzigd naar 131 tm 180.
+
+versie 3.9.5.130.220614
+- bij updatevoorbereiden wordt de melding dat er een update is, als deze niet op automatisch staat, niet getoond
+  als updatenotificatie=nee.
+- bij functies backup en wissen kan je nu ook je locatie kiezen.
+- bij functie backup, wissen en verplaatsen wordt ook een controle uitgevoerd op de belangrijke mappen.
+- bij functie kopieren is een controle op de home-map toegevoegd.
+
+*************************
+  versie 3.9.6.131.220614, doorgevoerd vanuit versie 3.9.5.130.220611, is geupload !
+  dit is niet de laatste versie en wordt geupload om iedereen alvast met het programma te laten werken.
+*************************
+
+versie 3.9.5.130.220612
+- bij standaardinstellingen toegevoegd locatie SHW - Schiedam en JLS - Janligthartstraat.
+- bij vensterkopieren toegevoegd selectie van locatie en info tekst hiervoor gewijzigd.
+- functie lijstrpcnrsaanmaken aangepast om de geselecteerde locatie te gebruiken
+- variabele global:listbox wordt nu in een functie gedeclareerd. anders werkt dit
+  niet bij het opnieuw declareren van lijst
+  function declareren_rpcnrs hiervoor aangemaakt. deze wordt bij de 4 taken in het begin 
+  aangeroepen voordat lijstrpcnrsaanmaken wordt aangeroepen.
+- functie startknopzichtbaar heet nu startknopklikbaar.
+
+versie 3.9.5.130.220611
+- bij het opstarten wordt de initialisatiebestand niet meer bewaard als deze niet gevonden is.
+- bestand beheren.ini verandert naar config.ini. dit maakt de bestandsnamen in de directorystrucuur duidelijker.
+- tekst van 2 taken rechts staan te dicht bij de rand vh venster. alle teksten zijn iets naar links opgeschoven.
+  button van de 2 taken rechts ook iets naar links.
+- icoontje voor taak wissen verandert naar icoont-delete.png. icoon icoon-clean.png gaat gebruikt worden voor taak opschonen.
+- bugfix : $form.Refresh() weer weggehaald bij updater.ps1, na elke button, omdat dit een error gaf - jitfoutmelding...
+
+versie 3.9.5.130.220610
+- onderstaande probleem opgelost door bij het afsluiten van form , voor het opstarten van updater.ps1, toe te voegen 
+  voor elke button: $Button1.Image.Dispose() en daarna $form.Refresh()
+
+  ** probleem bij script Updater **
+  Er wordt een foutmelding weergegeven in de shell ,bij uitvoeren copy-item van de map "png"
+  in de tempmap, maar het programma gaat toch door.
+  blijkbaar is bestand "icoon-backup.png" in de map png bezet door een programma (dat is de foutmelding).
+  de foutmelding wordt nu onderdrukt en er wordt geen gebruik gemaakt van de try-catch-methode, 
+  maar mss is een andere oplossing beter.
+
+versie 3.9.5.130.220608
+- bij updater.ps1 wordt nu de update volledig uitgevoerd. de bestanden worden vanuit de teampmap naar de root gekopieerd.
+  en de tempmap wordt leeggemaakt.
+  Echter blijft de melding dat backup_icoon.png in gebruik is door een andere proces.
+  Update wordt daarna toch uitgevoerd en de belangrijkste bestanden worden gekopieerd.
+  Verder enkele tekstuele wijzingen doorgevoerd.
+- bij beherenbestande.ps1 is " 1>$null " toegevoegd aan de mkdir commando op line 1650 
+  zodat geen info wordt weergegeven in de shell. 
+
+versie 3.9.5.130.220606
+- enkele tekstuele wijzigingen gemaakt bij functie updatevoorbereiden.
+- functie standaarinstellingen gemaakt om eerst deze instellingen te laden en vervolgens de initialisatiebestand te lezen
+
+versie 3.9.5.130.220604
+- enkele overbodige tekst weggehaald bij beherenbestanden en updater.
+- voor variabele updatewebsite en startmap is de tekst "global" weggehaald. Deze 2 zijn geen globale variabelen meer.
+- de updater wordt nu geupdated in functie updatevoorbereiden.
+- Bij de try-catch- methode in functie updatevoorbereiden is de catch-deel nu overal hetzelfde qua indeling.
+
+versie 3.9.5.130.220602
+- map op website voor updates is verandert. nu komt alles onder "/updates" ipv "/updates/versions".
+  dit bij variabele updatewebsite gewijzigd.
+- verschillende meldingen bij het updateproces verandert.
+- update van de website wordt gedownload, dit gaat via een try-catch methode, en uitgepakt in map "\temp".
+- script updater.ps1 is aangemaakt om het programma te updaten. de functie "updatevoorbereiden" roept deze op.
+  aan het eind van updater.ps1 wordt de hoofdprogramma weer opgestart.
+- aantal variabelen global-variabele gemaakt: Versie en updateinfo.
+
+versie 3.9.5.130.220531
+- nieuwe functie: een opstartvenster wordt getoond en toont info over de processen.
+- variabele $homemapkandidaten is vervangen voor $homemapstudenten en waar kandidaten stond staat nu studenten. 
+  behalve voor $backup!
+- functie "bepaalversiemap" gemaakt om de map te bepalen waar de versie op de website staat.
+- functie "updatevoorbereiden" gemaakt om update te voorbereiden. 
+  de functie wordt opgestart in het begin - keuze "begin" of via hoofdvenster, keuze "keuzemenu".
+  als bestand updateinfo.ini bestaat wordt verder niets gedaan. dit is een beveiliging tegen updaten na een update. (herhalen dus)
+  Er wordt verbinding gemaakt met website en gecontroleerd op nieuwe versie.
+  afhankelijk van opstart-keuze en instelling autoupdate ( deze staat nu in beheren.ini) wordt verder gehandeld.
+  LEt op de functie is nog niet af. na de controles stopt deze.
+
+  Op de website is updateinfo.ini geplaatst. Deze wordt nu gedownload.
+  Hieronder een voorbeeld met de benodigde elementen:
+
+****************** begin updateinfo.ini *****************
+
+# update info voor beherenbestanden.ps1
+
+# laatste versie van het programma
+[program]
+latest=3.9.6
+
+# revisies van versies
+[revision]
+3.9.1=3.9.4
+3.9.2=3.9.5
+3.9.3=3.9.6
+3.8.0=3.9.0
+
+# tot met deze versie, aangeven om te updaten omdat versie verouderd is.
+[deprecated]
+old=3.8.0
+
+# bewerkingen na het updaten voor bepaalde versies
+# de volgende bewerkingen kunnen worden uitgevoerd: 
+#    remove-files, bestanden verwijderen uit de gegeven lijst
+#    remove-init , initialisatiebestand verwijderen om daarna opnieuw in te lezen
+
+[3.9.6]
+remove-files=3.9.6.remove
+remove-init=true
+
+# lijst met bestanden om te verwijderen na update naar 3.9.6
+[3.9.6.remove]
+r1="file nummer 1.txt"
+r2="file nummer 2.txt"
+r3="file nummer 3.txt"
+
+****************** einde updateinfo.ini *****************
+
+versie 3.9.5.130.220529
+- nieuwe functie: Na uitvoeren van taken kan je de logbestanden bekijken.
+  hiervoor is een knop toegevoegd.
+- bij taak verplaatsten ontbrak de "-recurse -ErrorAction Stop" achter de kopieer- en verplaats-taak
+- nieuwe functie: de mappen worden nu gecontroleerd voordat je gaat uitvoeren bij functie uitvoerentaken.
+  Bij functie vensterkopieren is dit ook toegevoegd voor de map digitalebestanden.
+
+versie 3.9.5.130.220527
+- nieuwe functie: Bij alle taken wordt nu gelogd. De log bestaat uit standaard info over de taak en foutmeldingen.
+- functie "bepaallognaam" aangemaakt om 1 functie te hebben waarin deze bepaald wordt. 
+  kan later gebruikt worden bij logbestanden weergeven.
+- functie "bepaaldatumuitlognaam" aangemaakt om een datum uit de lognaam te halen.
+  een verandering in functie "bepaallognaam" moet ook in deze functie worden aangepast.
+- icoon voor Stoppen naar beneden verplaatst.
+- functie "stoppenclick" is van naam verandert naar "programmaafsluiten".
+- bij functie "overzichttaken" is de tekst van $EndButton verandert naar "sluiten". 
+  Dit komt overeen met andere functie "vensterlogbestand".
+- nieuwe functie : logbestanden kan je bekijken.
+- functie vensterlogbestanden aangemaakt om logbestanden te weergeven. 
+  in de hoofdscherm is een icoontje hiervoor bijgekomen.
+
+versie 3.9.5.130.220526
+- begin gemaakt van loggen van uitgevoerde taken in functie uitvoerentaken. 
+  Alleen bij taak kopieren en backup wordt gelogd.
+
+versie 3.9.5.130.220522
+- geupload
+- versiebeheer aangepast.
+  buildnummer is nu een aparte variabele en uit de versienummer gehaald. Reden is simpel houden. 
+  buildnummer zal niet verhoogd worden zonder ook revision te verhogen. Dit is een keuze die nu gemaakt is.
+  En buildnummer was toch meer extra info.
+  Waar buildnummer wel nodig wordt is bij het updaten. Dan is het handiger om versies te vergelijken.
+
+
+versie 3.9.4.129.220518
+- functie vensterverplaatsen werkt nu.
+  de aanpassingen bij de functies overzichttaken en uitvoerentaken zijn gedaan.
+  bij functie vensterverplaatsen kan je niet meer 2 dezelfde rpc-nrs kiezen.
+  een checkbox is aanwezig waarmee je kan aangeven of je de bestanden wilt kopieren ipv verplaatsen.
+- naam van functie vensterkopieren_itemszichtbaar verandert naar startknopzichtbaar.
+  Omdat alleen de startknop wordt bekeken hierin.
+
+versie 3.9.4.129.220517
+- functie vensterverplaatsen is verder ingevuld. 2 comboboxen zijn toegevoegd met de rpc-nummers.
+  2 knoppen voor start en escape zijn aanwezig. alleen als de bron en doel is geselecteerd kan je op start klikken.
+  Let op, de functie werkt nog niet. er wordt nog niets verplaatst
+- bij functie uitvoerentaken wordt de opnieuw-knop (dezefde als de escape-button) groen na het uitvoeren vd taak. 
+  Dit leek mij handig omdat je bij het klikken op de opnieuw-knop, opnieuw gaat uitvoeren.
+
+versie 3.9.4.129.220516
+- functie "Overige opties bekijken." is gedisabled met hekjes.
+  besloten is om alle andere functies rechts te zetten en dan is dit niet nodig
+  functie "stoppen" is dan op deze plaats gekomen (stukje omhoog)
+- functie vensterverplaatsen aangemaakt om bestanden naar een andere rpc-nummer te verpaatsen.
+  functie moet ook de optie "Maak een kopie vd bestanden ipv verplaatsen" hebben.
+  alleen de venster is gemaakt. er wordt nog niets verplaatst en werkt dus nog niet!
+
+versie 3.9.4.129.220513
+- wijziging in de uitleg van versiebeheer, regel erbij bij buildnumber.
+- bugfix Rene: variabele $backupmap = "B:\HR_TM_T2000\backup kandidaten" geworden. dus spatie erbij tussen backup en kandidaten.
+- aanvraag Rene: bij aanmaken initialisatiebestand wordt tm rpc-050 aangemaakt door $init["PAL"]["laatstenr"]=50
+- na uitvoeren taken worden de geselecteerde rpc-nummers gewist, zodat je opnieuw moet selecteren en niet direct weer 
+  op bevestigen kan klikken.
+- bij overzicht taken zie je nu de tekst "De bestanden worden na de backup gewist." als deze is aangevinkt.
+- start- en bevestigen knoppen bij vensters kopieren, wissen en backup de kleuren groen, voor bevestigen, 
+  of rood, voor annuleren, gegeven.
+- feedback Marco: bij venster kopieren: eerst selectie van crebo, kerntaak en examen en dan erachter de tekst. En uitlijnen!
+- feedback Robby : uitleg tekst bij venster kopieren korter.
+  tekst die inhoud weergeeft van geselecteerde submap staat nu boven het venster.
+- volgorde van items bij gebruik van tab-toets gewijzigd voor venster kopieren, overzicht taken en backup
+- variabele $tekstinhoudmap="Er is nog geen examen geselecteerd." verwijderd uit vensterkopieren.
+- 2 taken die nog niet gebruikt worden in hoofdscherm zijn uitgeschakeld.
+- de teksten in het hoofdscherm wordt blauw als de muis erover gaat en je kan op deze ook klikken.
+- mogelijkheid ingebouwd om met optie "Overige opties bekijken." de overige opties rechts te krijgen.
+  Zowel met de knop als op de tekst te klikken. dit is voor nu gedisabled met hekjes.
+
+versie 3.9.4.129.220506
+- geupload
+- nieuwe versienummer bestaat uit : major.miner.revision.buildnummer.date.
+   	major       = grote veranderingen, niet meer compatible met vorige versie.
+  	miner       = kleine veranderingen, nieuwe functies.
+  	revision    = een bugfix of specifieke wijziging voor deze versie. een 0 betekent nog geen revisie.
+  	buildnumber = de nummer van de geuploade versie. elke nieuwe upload verhoogt deze. 
+  		      onafhankelijk van major, miner of revision telt de buildnummer door.
+        date        = de datum van de wijziging van de script.
+  	
+  In de change-log en mapnaam wordt de uploaddatum weergegeven, in de script niet.
+
+- bij functie ovezichttaken aan het eind de if -else functie gewijzigd. 
+  hier was niet nodig dat form2 zichtbaar wordt gemaakt met $form2.show().
+- introductietekst bij de vensters kopieren, backup en wissen gewijzigd en de kleur blauw gegeven.
+
+versie 3.9.3.220503
+- bij vensters backup en wissen de text voor de startknop gewijzigd naar bevestigen
+- bij functie overzichttaken krijg je eerst een overzicht van de geselecteerde rpc-nummers en indien taak kopieren is
+  geselecteerd, ook van de geselecteerde bestanden of mappen, voordat je de taak gaat uitvoeren.
+- Functies "Start-backup" en "Start-wissen" verwijderd.
+- Bij vensterbackup en vensterwissen is form3, resp. form4 vervangen door form2. 
+  Dit is nodig om bij overzichttaken terug te kunnen naar deze venster.
+- taken backup en wissen maken gebruik van de functies "overzichttaken" en "uitvoerentaken".
+- Er was een probleem met kopieren "mijn documenten"map naar de backup, alles kwam in de root en de mijn documentenmap was leeg.
+  Gefixt door de copy-item commando te wijzigen naar 
+  - Copy-Item -path "$homemapkandidaten\$rpcitem" -destination "$backupmap\$datumvandaag\$rpcitem" -recurse -Force
+  Dus de \* verwijderd bij -path!
+
+versie 3.9.3.220502
+- Als je nu op start uitvoeren van de taak Kopieren klikt krijg je eerst een venster met de vraag 
+  "Klaar om de taken uit te voeren?" Vervolgens kan je starten of terug. Na het starten zie je een progressiebalk van de taak.
+  Na het uitvoeren kan je OK klikken en terug naar hoofdvenster of Opnieuw en terug naar venster om te kopieren.
+  Hiervoor zijn de functies "overzichttaken" en "uitvoerentaken" aangemaakt. functie Start-kopieren vervalt nu en is verwijderd.
+  De bedoeling is dat bij de taken backup en wissen ook met deze nieuwe functies gebruik wordt gemaakt.
+  De variabele "$taak" die je meegeeft aan deze functies bepaalt de uit te voeren taak.
+- bij functies, vensterkopieren, vensterbackup en vensterwissen, is aan het eind form2.dispose gewijzigd
+  voor form2.close. Dit om eventuele errors te voorkomen. Zie google "powershell difference between dispose and close".
+
+versie 3.9.3.220501
+- aangepaste procedures (functions) : 
+	- venster-kopieren, je moet nu een crebonummer, kerntaak en examen selecteren. 
+	vervolgens kan je een submap of bestand selecteren om te kopieren.
+	als een submap is geselecteerd wordt de inhoud rechts in een nieuwe textvak weergegeven
+	- Start-kopieren, de geselecteerde items worden in een array geplaatst.
+	als niets uit het examenmap is geselecteerd dan wordt de gehele map gekopieer, anders 
+	alleen de geselecteerde mappen en of bestanden.
+	- vensterkopieren_itemszichtbaar, alleen voor de start-knop wordt een controle uitgevoerd.
+- de checkbox bij venster-kopieren en de bijbehorende variabele bronmapaanmaken verwijderd.
+- verwijderde procedures : selecteermappen
+- array $geselecteerdemappen verwijderd.
+- venstergrootte form aangepast tot 900x600. idem aan venster-kopieren nu.
+- bij initialiseren van programma verwijderd: $init["algemeen"]["submapaanmaken"]="nee"
+
+versie 3.9.3.220424
+- tekst "verwijder map"en "maak lijst leeg" in venster kopi ren veranderen naar "Verwijder geselecteerde map" 
+  en "verwijder alle mappen".
+- Bij venster-kopieren worden de knoppen start, verwijder geselecteerde map en verwijder alle mappen alleen zichtbaar
+  als je hierop kan klikken 
+  Hiervoor is de functie vensterkopieren_itemszichtbaar aangemaakt.
+- bij start-kopieren wordt nu afhankelijk van aantal geselecteerde mappen en "of checkbox is aangevinkt", de submap aangemaakt.
+
+versie 3.9.3.220423
+- Alle items van initialisatiebestand worden nu gebruikt in script.
+  Bij vensterkopieren en vensterbackup is het vinkje voor resp. "submap aanmaken" en "wissen na backup" 
+  afhankelijk van initialisatibestand.
+ 
+versie 3.9.3.220421
+- aanpassingen gemaakt aan initialisatie bestand.
+  de initialisatie-script staat nu onderaan, net boven uitvoeren van de (hoofd)form.
+- de items van listbox, de lijst met rpcnrs, wordt nu afgeleid van de initialisatiebestand.
+
+versie 3.9.3.220420
+- initialisatie bestand wordt ingelezen, of als deze niet bestaat aangemaakt, met instellingen die
+  bewaard moeten worden.
+  2 functies zijn hiervoor toegevoegd : Get-IniContent en Out-IniFile.
+- bij function Out-IniFil wordt eerst gecontroleerd of bestand bestaat voor het verwijderen.
+  dit is de enige aanpassing met het originele script.
+
+versie 3.9.3.220416
+- geupload
+- versienummer wordt weergegeven in titelbalk
+
+versie 3.9.2.220414
+- form2 naar voren brengen door even als voorgrond in te stellen. toegevoegd onderaan de functie selecteermappen.
+  	$Form2.TopMost = $true
+  	$Form2.TopMost = $false
+- declareren rpcnummers is nu in een function geplaatst. Wordt aangeroepen bij de andere functies
+
+versie 3.9.2.220413
+- rpcnummers aangemaakt tm rpc-049
+- venster kopi ren wordt gedisabled als je een map gaat toevoegen.
+  hierdoor krijg je niet meer 2x het venster map toevoegen.
+- positie van de forms is gezet op centreren met optie " $Form.StartPosition = 'CenterScreen' ".
+- de lijst met geselecteerde mappen wordt leeggemaakt bij begin van functie "venster kopi ren"
+  Nu kan je wel dezelde map weer selecteren nadat je deze heb verwijderd of na het uitvoeren van taak.
+
+versie 3.9.2.220409
+- geupload
+- afbeelding beheren.ico in de map geplaatst. Deze wordt weergegeven als snelkoppeling
+- een zipbestand gemaakt van de hoofdprogramma, afbeelding en map "png" zodat de setupprogramma dit kan downloaden.
+
+versie 3.9.1.220405
+- Wissen van bestanden is nu ook mogelijk. de functies vensterwissen en start-wissen erbij.
+- bij vensterkopieren, vensterbackup en vensterwissen enkele wijzigingen doorgevoerd die verder geen effect hebben
+  maar wel het programma duidelijker maakt. het volgende is namelijk niet nodig:
+  - de regel if result = form2. ....enz is niet nodig omdat bij add_click de functie wordt aangeroepen.
+  - hierdoor kunnen de vensters worden aangeroepen met $null = form2.showdialog ipv $result = form2.showdialog.
+
+versie 3.9.1.220404
+- Functie "backup maken" maakt een backup naar de backupmap.
+  Als "bestanden na de backup ook wissen" is aangevinkt wordt eerst de map mijn documenten gewist en daarna
+  de root van de rpc-map, exclusief de map mijn documenten.
+- tekstkleur in hoofdvenster verandert. inleidende tekst is blauw. uitleg is groen.
+- volgorde van Form2.controls.AddRange veranderd. Als je de Tab-toets gebruikt ga je van boven
+  naar beneden door de items heen. Dit is een logische volgorde.
+
+versie 3.9.1.220402
+- In de script wordt maar 1 keer listbox, voor weergeven rpcnummers, gedeclareerd.
+  hierdoor moest wel bij einde van form2 en form3, form2.hide en resp, form3.hide komen ipv .close,
+  ander krijg je foutmelding dat variabele niet gevonden is.
+- LET OP. Dit moet nog goed getest worden!
+
+versie 3.9.1.220401
+- script "start beherenbestanden.cmd" aangepast met variabele om powershell te openen.
+
+versie 3.9.1.220331
+- Voor de 2e keuze "backup maken" is een venster gemaakt. Het backuppen werkt nog niet.
+  Wel is de functie backup-maken al deels gemaakt.
+
+versie 3.9.1.220330
+- een knop om programma te sluiten is toegevoegd. Als je op deze knop "stoppen" klikt krijg je de vraag "weet u het zeker?".
+- bij het verwijderen van een map bij optie kopi ren, wordt gekeken of een map is geselecteerd.
+- variabelen netjes boven geplaatst.
+- overal System.Windows.MessageBox vervangen voor System.Windows.Forms.MessageBox. Als de script buiten PowershellCE wordt uitgevoerd dan
+  krijg je een foutmelding en wordt de messagebox niet getoond.
+
+versie 3.9.1.220329
+- script is aangemaakt en heeft deze versienummer gekregen zodat 1) het geen conflict geeft met de oude beherenbestanden en
+  2) de definitieve versie gaat versie 4.0.0. krijgen, dus alle versies ervoor moeten een niveau lager zitten.
+- het script laat een hoofdvenster zien met 5 keuzes (kopi ren, backup maken, wissen, verplaatsen en overige opties) waarvan alleen de keuze
+  kopi ren nu werkt. elke keuze heeft een passende icoontje en uitleg gekregen.
+- keuze kopi ren werkt volledig. je kan in het linker kolom de rpcnummers kiezen en in het rechter kolom de mappen toevoegen.
+  De mappen kunnen ook verwijderd worden (per map of hele lijst). Als een map wordt toegevoegd dan komt deze in een lijst met mapnamen (een array) 
+  en in een lijst met het volledige pad naar de map. Hiervoor is gekozen zodat het weergeven van de mappen veel eenvoudiger is en de volledige 
+  pad nodig is voor het kopi ren. Het poweshell-item "listbox" geeft geen andere mogelijkheid.
+  Als je een map selecteer wordt de inhoud in een box eronder getoond.
+  een optie om van elke bronmap een map aan te maken is aanwezig dmv een checkbox. 
+  Het selecteren van   n of meerdere rpcnummers kan eenvoudig met de muis. 
+  Een knop Annuleren is aanwezig waarmee je terug gaat naar de hoofdvenster.
+  Een knop Start is aanwezig waarmee het kopi ren wordt gestart. Er wordt eerst gecontroleerd of rpcnummers zijn geselecteerd en mappen zijn
+  toegevoegd. Het kopi ren van de bestanden gebeurt in 2 loops met opdracht Copy-Item.
+  Een map genaamd "png" is gemaakt met alle icoontjes van het programma.
