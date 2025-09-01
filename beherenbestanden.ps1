@@ -48,9 +48,9 @@ $scriptnaam = Split-Path -leaf $scriptnaam
 $scriptnaam = $scriptnaam.Replace(".ps1","")
 # de naam van het programma wordt ook gebruikt in de titelbalk van het hoofdvenster.
 $global:programma = @{
-    versie = '4.7.0'
-    extralabel = '175.250625'
-    mode = 'online' # alpha, beta, update, prerelease of online
+    versie = '4.7.1'
+    extralabel = 'alpha.250901'
+    mode = 'alpha' # alpha, beta, update, prerelease of online
     naam = $scriptnaam
 }
 
