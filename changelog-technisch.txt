@@ -27,6 +27,9 @@ In de change-log en mapnaam wordt de extra label toegevoegd aan de versienummer.
 
 ** BEGIN VAN DE CHANGELOG **
 
+versie 4.7.1.alpha.250902
+- De mode Online is gewijzigd naar Release.
+
 versie 4.7.1.alpha.250901
 - Script gekoppeld aan GitHub. Vanaf nu werk ik in GitHub maar staan de updates nog op de eigen website.
 
