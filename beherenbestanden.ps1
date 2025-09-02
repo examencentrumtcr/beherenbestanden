@@ -21,7 +21,7 @@ Extra label =  Een extra label wordt weergegeven bij info over dit programma
    Een extra label kan een pre-release of een build zijn
    Een pre-release wordt aangegeven met alpha, beta of pre-release
    De build geeft aan hoe vaak het programma is uitgebracht en is een oplopende getal
-   Een build wordt alleen meegegeven als een versie online gaat
+   Een build wordt alleen meegegeven als een versie naar release gaat
 
 DATE wordt gegeven als JJMMDD (jaar, maand en dag)
 
@@ -30,7 +30,7 @@ Modes:
     beta       : Logbestanden verwijderen is uit, Automatisch updates is uit en Console blijft open
     update     : Een update wordt getest en de map "test" op website wordt gebruikt hiervoor. Console blijft open
     prerelease : Wordt gebruikt om alles te testen, dus ook updates en verwijderen logbestanden
-    online     : Normale gebruik
+    release    : Normale gebruik
 
     De modus hoeven niet persé allemaal doorlopen te worden!
     Bij het opstarten krijg je een melding als je in een testfase zit (modes alpha, beta of prelease)
@@ -50,7 +50,7 @@ $scriptnaam = $scriptnaam.Replace(".ps1","")
 $global:programma = @{
     versie = '4.7.1'
     extralabel = 'alpha.250902'
-    mode = 'alpha' # alpha, beta, update, prerelease of online
+    mode = 'alpha' # alpha, beta, update, prerelease of release
     naam = $scriptnaam
 }
 
@@ -3738,7 +3738,7 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
     $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
 
     # Console open houden of sluiten
-    if (($global:programma.mode -eq 'online') -or ($global:programma.mode -eq 'prerelease')) {
+    if (($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'prerelease')) {
         if ($keuzeoptie9.Selectedindex -eq 0) {
         Hide-ConsoleWindow;
         } else {
@@ -4768,15 +4768,15 @@ opschonenlogsbijstart;
 
 write-host "Opstarten hoofdvenster."
 
-# Hide Console. Alleen bij mode = online of prerelease
-if (( ($global:programma.mode -eq 'online') -or ($global:programma.mode -eq 'prerelease')) -and ($global:init.algemeen.consolesluiten -eq 'Ja')) { 
+# Hide Console. Alleen bij mode = release of prerelease
+if (( ($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'prerelease')) -and ($global:init.algemeen.consolesluiten -eq 'Ja')) { 
     write-host "De console wordt afgesloten..."
     Hide-ConsoleWindow 
     }
 
 # Hoofdvenster declareren --------------------------------------------------------------------
 
-if ($global:programma.mode -eq 'online') {
+if ($global:programma.mode -eq 'release') {
     $koptekst = "Beheren bestanden versie " + $global:programma.versie
     } else {
     $koptekst = "Beheren bestanden versie " + $global:programma.versie + ". LET OP : Programma heeft de status " + $global:programma.mode
@@ -5059,7 +5059,7 @@ $Form.Controls.Add($gifbox)
 # Als het programma in testfase is, dan venster tonen met melding
 $form.add_Shown({ 
     $mode=$global:programma.mode
-    if ($global:programma.mode -ne 'online') {
+    if ($global:programma.mode -ne 'release') {
         $null = venstermetvraag -titel "Programma is nog in testfase" -vraag "`r`nLET OP : Programma is nog in testfase $mode.`r`nGebruik het programma nu alleen voor testdoeleinden."
     }
  } )
