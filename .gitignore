@@ -2,3 +2,5 @@ release/
 prerelease/
 test/
 setup/
+*.txt
+*.ini
