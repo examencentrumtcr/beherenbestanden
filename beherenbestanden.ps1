@@ -49,7 +49,7 @@ $scriptnaam = $scriptnaam.Replace(".ps1","")
 # de naam van het programma wordt ook gebruikt in de titelbalk van het hoofdvenster.
 $global:programma = @{
     versie = '4.7.1'
-    extralabel = 'alpha.250916'
+    extralabel = 'alpha.1.250916'
     mode = 'alpha' # alpha, beta, update, prerelease of release
     naam = $scriptnaam
 }
