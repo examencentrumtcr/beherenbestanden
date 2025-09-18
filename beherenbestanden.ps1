@@ -49,7 +49,7 @@ $scriptnaam = $scriptnaam.Replace(".ps1","")
 # de naam van het programma wordt ook gebruikt in de titelbalk van het hoofdvenster.
 $global:programma = @{
     versie = '4.7.1'
-    extralabel = 'alpha.2.250916'
+    extralabel = 'alpha.1.250918'
     mode = 'alpha' # alpha, beta, update, prerelease of release
     naam = $scriptnaam
 }
@@ -63,19 +63,6 @@ write-host "Initialiseren van het programma."
 <# Manier om console af te sluiten en weer te openen.
    Het sluiten wordt uitgevoerd voor het starten van de hoofdscherm.
 #>
-
-<# # Voor het sluiten van de console window wordt de volgende code gebruikt.
-Add-Type -Name Window -Namespace Console -MemberDefinition '
-[DllImport("Kernel32.dll")]
-public static extern IntPtr GetConsoleWindow();
-
-[DllImport("user32.dll")]
-public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
-'
-#>
-
-# $ShowWindowAsyncCode = '[DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);'
-# $ShowWindowAsync = Add-Type -MemberDefinition $ShowWindowAsyncCode -name Win32ShowWindowAsync -namespace Win32Functions -PassThru
 $code = '[DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);'
 $ShowWindowAsync = Add-Type -MemberDefinition $code -Name myAPI -PassThru
 $hwnd = (Get-Process -PID $pid).MainWindowHandle
@@ -111,8 +98,8 @@ $foutmeldingsbestand = -join ("$logmap","\","Foutmeldingen.txt")
 $Global:init=@{}
 
 # de 2 bestanden met info voor venster informatieprogramma
-$readmebestand="readme.txt"
-$changelogbestand="changelog.txt"
+$readmebestand="readme.md"
+$changelogbestand="changelog.md"
 
 # nodig voor werken met hashtabels. zie functies uitvoerentaken en overzichttaken
 $uitvoeren = [hashtable]::Synchronized(@{})
