@@ -5,7 +5,7 @@ Programma om bestanden op pc's in een netwerk te beheren, dus bestanden klaarzet
 
 Zie voor versienummer hier onder de comments.
 
-Versienummer wordt volgens Semantic Versioning uitgevoerd (zie https://Semver.org)
+Versienummer wordt volgens Semantic Versioning uitgevoerd (zie https://semver.org/lang/nl/)
 
 Dit programma is beschermt met auteursplicht door middel van de GNU GPL (https://www.gnu.org/licenses)
 
@@ -49,8 +49,8 @@ $scriptnaam = $scriptnaam.Replace(".ps1","")
 # de naam van het programma wordt ook gebruikt in de titelbalk van het hoofdvenster.
 $global:programma = @{
     versie = '4.7.1'
-    extralabel = 'alpha.1.250918'
-    mode = 'alpha' # alpha, beta, update, prerelease of release
+    extralabel = 'alpha.1.250921'
+    mode = 'prerelease' # alpha, beta, update, prerelease of release
     naam = $scriptnaam
 }
 
@@ -191,6 +191,39 @@ if ($global:programma.mode -eq "alpha") {
 
 # functions ---------------------------------------------------------------------------------
 # hieronder de kleine functies die door andere functies gebruikt worden ---------------------
+
+function ShowHide-ConsoleWindow($mode) {
+  
+  if ($hwnd -ne [System.IntPtr]::Zero) {
+    # When you got HWND of the console window:
+    # (It would appear that Windows Console Host is the default terminal application)
+    $null = $ShowWindowAsync::ShowWindowAsync($hwnd, $mode)
+  } else {
+    # When you failed to get HWND of the console window:
+    # (It would appear that Windows Terminal is the default terminal application)
+
+    # Mark the current console window with a unique string.
+    $UniqueWindowTitle = New-Guid
+    $Host.UI.RawUI.WindowTitle = $UniqueWindowTitle
+    # $StringBuilder = New-Object System.Text.StringBuilder 1024
+
+    # Search the process that has the window title generated above.
+    $TerminalProcess = (Get-Process | Where-Object { $_.MainWindowTitle -eq $UniqueWindowTitle })
+    # Get the window handle of the terminal process.
+    # Note that GetConsoleWindow() in Win32 API returns the HWND of
+    # powershell.exe itself rather than the terminal process.
+    # When you call ShowWindowAsync(HWND, 0) with the HWND from GetConsoleWindow(),
+    # the Windows Terminal window will be just minimized rather than hidden.
+    $hwnd = $TerminalProcess.MainWindowHandle
+    if ($hwnd -ne [System.IntPtr]::Zero) {
+      # afsluiten terminal. Met $null zie je ook geen resultaat op he scherm. dus het woord "true" verschijnt niet.  
+      $null = $ShowWindowAsync::ShowWindowAsync($hwnd, $mode) 
+      
+    } else {
+      Write-Host "Niet gelukt om de status van de console window te wijzigen naar waarde $mode." -ForegroundColor Red
+    }
+  }
+} # einde ShowHide-ConsoleWindow
 
 function ShowConsole {
 
@@ -586,7 +619,6 @@ $algemeen=@{
     maplegenvoorverplaatsen = 'Ja'
     gebruiker = ''
     afbeelding = 'Samenwerken'
-    schuinemoppen = 'Nee'
     consolesluiten = 'Ja'
     controlevoorklaarzetten = 'Ja'
 }
@@ -3480,7 +3512,7 @@ $Description2                     = New-Object system.Windows.Forms.Label
 $Description2.text                = "Homemap kandidaten wissen na uitvoeren van een back-up"
 $Description2.AutoSize            = $false
 $Description2.width               = 400
-$Description2.height              = 30
+$Description2.height              = 40
 $Description2.location            = New-Object System.Drawing.Point(40,100)
 $Description2.Font                = 'Microsoft Sans Serif,11'
 $Description2.ForeColor = [System.Drawing.Color]::Blue
@@ -3727,9 +3759,9 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
     # Console open houden of sluiten
     if (($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'prerelease')) {
         if ($keuzeoptie9.Selectedindex -eq 0) {
-        Hide-ConsoleWindow;
+        ShowHide-ConsoleWindow 0;
         } else {
-        ShowConsole;
+        ShowHide-ConsoleWindow 5;
         }
     }
 
@@ -4286,7 +4318,7 @@ $Form2.Controls.Add($schuinemoppen);
 #>
 
 # venster met uitleg over deze taak wordt gedeclareerd.
-declareren_uitlegvenster "Uitleg over het venster Moppen." 700 200 500 210 "Hier wordt een mop genereerd en weergegeven.
+declareren_uitlegvenster "Uitleg over het venster Moppen." 700 200 500 210 "Hier wordt een mop gegenereerd en weergegeven.
 De mop wordt opgehaald van de API van apekool.nl.
 Met de knop Nog een grap kan je een nieuwe mop genereren.
 De knop Terug brengt je terug naar het hoofdvenster." 
@@ -4758,7 +4790,7 @@ write-host "Opstarten hoofdvenster."
 # Hide Console. Alleen bij mode = release of prerelease
 if (( ($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'prerelease')) -and ($global:init.algemeen.consolesluiten -eq 'Ja')) { 
     write-host "De console wordt afgesloten..."
-    Hide-ConsoleWindow 
+    ShowHide-ConsoleWindow 0;
     }
 
 # Hoofdvenster declareren --------------------------------------------------------------------
