@@ -27,7 +27,7 @@ DATE wordt gegeven als JJMMDD (jaar, maand en dag)
 
 Modes:
     alpha      : Logbestanden verwijderen is uit, Automatisch updates is uit, Lokale mappen worden gebruikt en Console blijft open
-    beta       : Logbestanden verwijderen is uit, Automatisch updates is uit en Console blijft open
+    beta       : Automatisch updates is uit en Console blijft open
     update     : Een update wordt getest en de map "test" op website wordt gebruikt hiervoor. Console blijft open
     prerelease : Wordt gebruikt om alles te testen, dus ook updates en verwijderen logbestanden
     release    : Normale gebruik
@@ -49,8 +49,8 @@ $scriptnaam = $scriptnaam.Replace(".ps1","")
 # de naam van het programma wordt ook gebruikt in de titelbalk van het hoofdvenster.
 $global:programma = @{
     versie = '4.7.1'
-    extralabel = 'alpha.1.250921'
-    mode = 'prerelease' # alpha, beta, update, prerelease of release
+    extralabel = 'alpha.1.250922'
+    mode = 'alpha' # alpha, beta, update, prerelease of release
     naam = $scriptnaam
 }
 
@@ -4124,8 +4124,8 @@ $form.show()
 function opschonenlogsbijstart {
 
 
-# alleen starten als dit is ingesteld in opschonenlogs en programma.mode niet de status alpha of beta heeft.
-if (($global:init.opschonen.opschonenlogs -eq "Nee") -or ("alpha","beta" -contains($global:programma.mode)) ) {
+# alleen starten als dit is ingesteld in opschonenlogs en programma.mode niet de status alpha heeft.
+if (($global:init.opschonen.opschonenlogs -eq "Nee") -or ("alpha" -contains($global:programma.mode)) ) {
     return;
 }
 

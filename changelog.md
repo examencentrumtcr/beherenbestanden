@@ -4,6 +4,16 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
+## [4.7.1]
+### Bugfixes
+- Tekstuele fouten bij functies **Moppenbot** en **Instellingen** opgelost.
+- Een niet gebrukte waarde van de gebruikersinstellingen verwijderd.
+
+### Overige wijzigingen
+- Bij programma mode beta worden oude logbestanden verwijderd.
+- Programma mode 'online' veranderd naar 'release'.
+- Programma code verbeterd door van 2 functies 1 te maken.
+
 ## [4.7.0]
 ### Nieuwe functies
 - Console kan opengehouden worden bij het starten van het hoofdvenster.  
@@ -35,7 +45,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 - Infovenster past nu bij lange installatienamen.  
 
 ### Overige wijzigingen
-- Console kan opengehouden worden via variabele in init-bestand.  
+- Console kan opengehouden worden via variabele in gebruikersbestand.  
 - Afbeeldingen in instellingen tonen nu extra tekst.  
 - Navigatie verbeterd (Esc sluit vensters).  
 - Ongebruikte bestanden en mappen worden bij start verwijderd.  
