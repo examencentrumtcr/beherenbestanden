@@ -7,12 +7,14 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 ## [4.7.1]
 ### Bugfixes
 - Tekstuele fouten bij functies **Moppenbot** en **Instellingen** opgelost.
-- Een niet gebrukte waarde van de gebruikersinstellingen verwijderd.
+- Een niet gebruikte waarde van de gebruikersinstellingen verwijderd.
 
 ### Overige wijzigingen
 - Bij programma mode beta worden oude logbestanden verwijderd.
 - Programma mode 'online' veranderd naar 'release'.
 - Programma code verbeterd door van 2 functies 1 te maken.
+- Bij de moppenbot heb je de keuze uit moppen van 3 websites.
+- Het is mogelijk om logbestanden helemaal niet meer te bewaren.
 
 ## [4.7.0]
 ### Nieuwe functies

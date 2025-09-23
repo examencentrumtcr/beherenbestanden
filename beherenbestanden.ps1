@@ -49,8 +49,8 @@ $scriptnaam = $scriptnaam.Replace(".ps1","")
 # de naam van het programma wordt ook gebruikt in de titelbalk van het hoofdvenster.
 $global:programma = @{
     versie = '4.7.1'
-    extralabel = 'alpha.1.250922'
-    mode = 'alpha' # alpha, beta, update, prerelease of release
+    extralabel = 'alpha.1.250923'
+    mode = 'beta' # alpha, beta, update, prerelease of release
     naam = $scriptnaam
 }
 
@@ -136,6 +136,25 @@ $global:afbeeldingen = @(
     [PSCustomObject]@{
         naam = 'Thuiswerken'
         bestand = 'thuiswerken.gif'
+    }
+)
+
+# Websites met moppen
+$Global:Moppen = @(
+    [PSCustomObject]@{
+        naam = 'Appspot.com'
+        url = 'https://official-joke-api.appspot.com/jokes/random'
+        taal = 'Engels'
+    },
+    [PSCustomObject]@{
+        naam = 'Apekool.nl'
+        url = 'http://api.apekool.nl/services/jokes/getjoke.php' 
+        taal = 'Nederlands'
+    },
+    [PSCustomObject]@{
+        naam = 'Icanhazdadjoke.com'
+        url = 'http://icanhazdadjoke.com/' 
+        taal = 'Engels'
     }
 )
 
@@ -621,6 +640,7 @@ $algemeen=@{
     afbeelding = 'Samenwerken'
     consolesluiten = 'Ja'
     controlevoorklaarzetten = 'Ja'
+    websitemoppen = 'Apekool.nl'
 }
 $opschonen=@{
     dagenbewarenlogs = 365
@@ -3445,21 +3465,19 @@ $global:afbeeldingen.ForEach( {
 
 })
 
-<# Tijdelijk uitgeschakeld omdat moppenbot.nl een error geeft!
 $keuzeoptie7                     = New-Object system.Windows.Forms.ComboBox
-$keuzeoptie7.width               = 80
+$keuzeoptie7.width               = 230
 $keuzeoptie7.autosize            = $true
 $keuzeoptie7.DropDownStyle       = "DropDownList"
 $keuzeoptie7.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie7.location = "450,345" 
-[void] $keuzeoptie7.Items.Add("Ja")
-[void] $keuzeoptie7.Items.Add("Nee")
-if ($global:init["algemeen"]["schuinemoppen"] -eq "Ja") {
-    $keuzeoptie7.Selectedindex = 0
-    } else {
-    $keuzeoptie7.Selectedindex = 1
-    }
-#>
+$keuzeoptie7.location = "300,335" 
+
+[int]$teller = 0
+$global:moppen.ForEach( {
+    [void] $keuzeoptie7.Items.Add($_.naam)
+    if ($_.naam -eq $global:init["algemeen"]["websitemoppen"]) {$keuzeoptie7.Selectedindex = $teller}
+    $teller+=1
+})
 
 $keuzeoptie8 = New-Object System.Windows.Forms.TextBox 
 $keuzeoptie8.Location = New-Object System.Drawing.Size(300,15) 
@@ -3545,7 +3563,7 @@ $Description4.add_MouseHover({
 })
 
 $Description5                     = New-Object system.Windows.Forms.Label
-$Description5.text                = "Standaard dagen voor het verwijderen van logbestanden van het programma"
+$Description5.text                = "Aantal dagen dat de logbestanden van het programma bewaard blijven"
 $Description5.AutoSize            = $false
 $Description5.width               = 400
 $Description5.height              = 40
@@ -3568,9 +3586,9 @@ $Description6.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Wijzigen van albeelding in hoofdmenu" )
 })
 
-<# Tijdelijk uitgeschakeld omdat moppenbot.nl een error geeft!
+
 $Description7                     = New-Object system.Windows.Forms.Label
-$Description7.text                = "De moppenbot toont ook schuine moppen"
+$Description7.text                = "Keuze voor website met moppen"
 $Description7.AutoSize            = $false
 $Description7.width               = 400
 $Description7.height              = 40
@@ -3578,9 +3596,9 @@ $Description7.location            = New-Object System.Drawing.Point(40,340)
 $Description7.Font                = 'Microsoft Sans Serif,11'
 $Description7.ForeColor = [System.Drawing.Color]::Blue
 $Description7.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bepaal of je ook schuine moppen wil tonen met de moppenbot." )
+    $global:tooltip1.SetToolTip($this, "Bepaal welke website standaard de moppen genereerd." )
 })
-#>
+
 
 $Description8                     = New-Object system.Windows.Forms.Label
 $Description8.text                = "Jouw naam"
@@ -3635,7 +3653,7 @@ $Btnstandaard.add_click({
     $keuzeoptie4.SelectedItem=$temp_init["opschonen"]["opschonenlogs"]
     $keuzeoptie5.Text=$temp_init["opschonen"]["dagenbewarenlogs"]
     $keuzeoptie6.SelectedItem=$temp_init["algemeen"]["afbeelding"]
-    # $keuzeoptie7.SelectedItem=$temp_init["algemeen"]["schuinemoppen"]
+    $keuzeoptie7.SelectedItem=$temp_init["algemeen"]["websitemoppen"]
     $keuzeoptie9.SelectedItem=$temp_init["algemeen"]["consolesluiten"]
     $keuzeoptie10.SelectedItem=$temp_init["algemeen"]["controlevoorklaarzetten"]
 }) # einde Btnstandaard.add_click
@@ -3708,8 +3726,8 @@ Als u de instellingen wilt bewaren klikt u op Bewaren.
 Als u terug wilt zonder de instellingen te bewaren klikt u op Terug.
 " 
 
-$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie6, $keuzeoptie1, $keuzeoptie2, $keuzeoptie3, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie10,
-$description1, $description2, $description3, $description4, $description5, $description6, $description8, $description9, $description10,
+$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie6, $keuzeoptie1, $keuzeoptie2, $keuzeoptie3, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie10, $keuzeoptie7,
+$description1, $description2, $description3, $description4, $description5, $description6, $description8, $description9, $description10, $description7,
 $Btnaccept, $Btnescape, $Btnstandaard, $Global:vraagtekenicoon, $gifbox2 ))
 
 Form2afsluitenbijescape;
@@ -3725,7 +3743,7 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
     $global:init["algemeen"]["wissennabackup"]=$keuzeoptie2.Selecteditem
     $global:init["algemeen"]["maplegenvoorverplaatsen"]=$keuzeoptie3.Selecteditem
     $global:init["opschonen"]["opschonenlogs"]=$keuzeoptie4.Selecteditem
-    # $global:init["algemeen"]["schuinemoppen"]=$keuzeoptie7.Selecteditem
+    $global:init["algemeen"]["websitemoppen"]=$keuzeoptie7.Selecteditem
     $global:init["algemeen"]["consolesluiten"]=$keuzeoptie9.Selecteditem
     $global:init["algemeen"]["controlevoorklaarzetten"]=$keuzeoptie10.Selecteditem
     # alle spaties aan begin en eind weghalen
@@ -3738,8 +3756,8 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
     if (!($keuzeoptie5.Text -eq "" )) {
         # eventueel de nullen ervoor weghalen
         [int32]$getal1=$keuzeoptie5.Text
-        # alleen als getal1 groter dan 0 is wordt de wijging doorgevoerd
-        if ($getal1 -gt 0) { $global:init["opschonen"]["dagenbewarenlogs"]=$getal1 }
+        # alleen als getal1 groter of gelijk is aan 0 is wordt de wijging doorgevoerd
+        if ($getal1 -ge 0) { $global:init["opschonen"]["dagenbewarenlogs"]=$getal1 }
     }
     $global:init["algemeen"]["afbeelding"]=$keuzeoptie6.Selecteditem
     # afbeelding in hoofdmenu wordt aangepast
@@ -4186,7 +4204,7 @@ if ( $tellerlogs -eq 0) {
 
 # start proces verwijderen
 
-Write-Host "Opschonen van oude logbestanden."
+Write-Host "Opschonen van $tellerlogs logbestanden."
 
 # in logbestand schrijven
 $melding_opschonen_begint | out-file $logbestand -Append
@@ -4218,7 +4236,8 @@ catch {
 
 # in logbestand eindtijd schrijven
 # eerst eindtijd naar variabele
-# alleen uitvoeren als aantal dagen verwijderen logs > 0. Zo wordt alles verwijderd als je dit als 0 instelt. Nu blijft de laatste log met het opschonen bestaan.
+# alleen uitvoeren als aantal dagen verwijderen logs > 0. Zo wordt alles verwijderd als je dit als 0 instelt. 
+# Nu blijft de laatste log met het opschonen bestaan.
 if ( $getal2 -gt 0) {
     $logtijd = bepaaltijd
 
@@ -4230,7 +4249,10 @@ if ( $getal2 -gt 0) {
     # tijdelijke log toevoegen aan eigen logbestand als deze al bestaat, anders bestand hernoemen.
     Logbestandtoevoegen $logbestand
 
-} # einde if 
+} else {
+    # tijdelijke logbestand verwijderen
+    Remove-Item -Path $logbestand -Force
+}
 
 } # einde opschonenlogsbijstart
 
@@ -4239,12 +4261,33 @@ function Venstermetgrap {
 
 function laadgrap {
 # een random grap ophalen en in tekst-variabele plaatsen
+# eerst de reload knop zichtbaar. voor als het goed gaat.
+$reload.Enabled = $true
 try {
-    $quote = Invoke-RestMethod -Method Get -Uri 'http://api.apekool.nl/services/jokes/getjoke.php' -erroraction Stop
-    $tekst = $quote.joke
+    switch ($keuzewebsite.Selecteditem) {
+        'Apekool.nl' {
+        # toevoegen van -ContentType "application/json; charset=utf-8bom" heeft geen zin.
+        $quote = Invoke-RestMethod -Method Get -Uri 'http://api.apekool.nl/services/jokes/getjoke.php' -erroraction Stop
+        $tekst = $quote.joke 
+          }
+        'Appspot.com' {
+        $quote = Invoke-RestMethod -Method Get -Uri 'https://official-joke-api.appspot.com/jokes/random' -erroraction Stop
+        $tekst = $quote.setup + "`r`n" + $quote.punchline
+          }
+        'Icanhazdadjoke.com' {
+        $Header = @{'Accept' = 'application/json' }
+        $quote = (Invoke-RestMethod -Method Get -Uri 'https://icanhazdadjoke.com/' -Headers $Header -UseBasicParsing).joke
+        $tekst = $quote
+          }
+        Default { 
+            $tekst = 'Kies een website met moppen bij de keuzelijst hieronder.'
+            $reload.Enabled = $false 
+        }
+    }
+    
 }
 catch {
-$tekst = "Het is niet gelukt een mop te krijgen van de API van apekool.nl." + "`r`n" + "De website geeft de volgende melding: " + "`r`n" + $_.exception.message
+$tekst = "Het is niet gelukt een mop te krijgen van de API van " + $keuzewebsite.selecteditem + "`r`n" + "De website geeft de volgende melding: " + "`r`n" + $_.exception.message
 Foutenloggen $tekst
 $reload.Enabled = $false  
 }
@@ -4297,29 +4340,36 @@ $objtekst1.Text = laadgrap
 
 $Form2.Controls.Add($reload);
 
-<# Schuine moppen is alleen van toepassing bij moppenbot.nl maar deze website geeft een error.
+$keuzewebsite                     = New-Object system.Windows.Forms.ComboBox
+$keuzewebsite.width               = 360
+$keuzewebsite.autosize            = $true
+$keuzewebsite.DropDownStyle       = "DropDownList"
+$keuzewebsite.Font                = 'Microsoft Sans Serif,12'
+$keuzewebsite.location = "500,210" 
 
-$schuinemoppen = New-Object System.Windows.Forms.Checkbox 
-$schuinemoppen.Location = New-Object System.Drawing.Point(450,212)
-$schuinemoppen.Size = New-Object System.Drawing.Size(300,30)
-$schuinemoppen.Text = "Schuine moppen ook weergeven"
-$schuinemoppen.Font = 'Microsoft Sans Serif,11'
-$schuinemoppen.ForeColor = [System.Drawing.Color]::green
-$schuinemoppen.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Geef aan of je ook schuine moppen wil laten zien." )
+[int]$teller = 0
+$global:moppen.ForEach( {
+    [void] $keuzewebsite.Items.Add($_.naam)
+    # adhv ingestelde keuze bij instellingen bepaal je de geselecteerde item
+    if ($_.naam -eq $global:init["algemeen"]["websitemoppen"]) {$keuzewebsite.Selectedindex = $teller}
+    $teller+=1
+
 })
 
-if (($global:init["algemeen"]["schuinemoppen"]) -eq "Ja") {
-    $schuinemoppen.checked = $true
-    } else {
-    $schuinemoppen.checked = $false
-    }
-$Form2.Controls.Add($schuinemoppen);
-#>
+$keuzewebsite.add_SelectedIndexChanged({
+    $objtekst1.Text = laadgrap
+})
+
+# $reload en $keuzewebsite moeten eerst gedefinieerd moeten worden.
+# dit is nodig zodat als er geen mop geladen kan worden, de knop reload uitgeschakeld is.
+$objtekst1.Text = laadgrap
+
+$Form2.Controls.Add($keuzewebsite);
 
 # venster met uitleg over deze taak wordt gedeclareerd.
-declareren_uitlegvenster "Uitleg over het venster Moppen." 700 200 500 210 "Hier wordt een mop gegenereerd en weergegeven.
-De mop wordt opgehaald van de API van apekool.nl.
+declareren_uitlegvenster "Uitleg over het venster Moppen." 700 200 450 210 "Hier wordt een mop gegenereerd en weergegeven.
+Rechtsonder staat de website waaruit de mop is gehaald.
+Klik hierop om een andere website te kiezen.
 Met de knop Nog een grap kan je een nieuwe mop genereren.
 De knop Terug brengt je terug naar het hoofdvenster." 
 
