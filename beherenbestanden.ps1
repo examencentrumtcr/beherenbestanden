@@ -28,8 +28,7 @@ DATE wordt gegeven als JJMMDD (jaar, maand en dag)
 Modes:
     alpha      : Logbestanden verwijderen is uit, Automatisch updates is uit, Lokale mappen worden gebruikt en Console blijft open
     beta       : Automatisch updates is uit en Console blijft open
-    update     : Een update wordt getest en de map "test" op website wordt gebruikt hiervoor. Console blijft open
-    prerelease : Wordt gebruikt om alles te testen, dus ook updates en verwijderen logbestanden
+    prerelease : Updates worden gedownload vanuit de prerelease pagina van Github. Alle functionalliteiten kunnen getest worden.
     release    : Normale gebruik
 
     De modus hoeven niet persé allemaal doorlopen te worden!
@@ -49,9 +48,10 @@ $scriptnaam = $scriptnaam.Replace(".ps1","")
 # de naam van het programma wordt ook gebruikt in de titelbalk van het hoofdvenster.
 $global:programma = @{
     versie = '4.7.1'
-    extralabel = 'alpha.1.250923'
-    mode = 'beta' # alpha, beta, update, prerelease of release
+    extralabel = 'alpha.1.251003' # alpha, beta, update, prerelease of release
+    mode = 'alpha' # alpha, beta, prerelease of release
     naam = $scriptnaam
+    github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
 }
 
 write-host ""
@@ -244,91 +244,6 @@ function ShowHide-ConsoleWindow($mode) {
   }
 } # einde ShowHide-ConsoleWindow
 
-function ShowConsole {
-
-    # ShowConsole() is een functie die de console window weer zichtbaar maakt.
-    # Dit is nodig als je de console window hebt verborgen met HideConsole().
-    # Dit werkt niet in Windows 11 sinds de laatste update. dd 25-06-2025
-    # Daarom  wordt er niets uitgevoerd en volgt hieronder de return
-
-    return;
-    
-    if ($hwnd -ne [System.IntPtr]::Zero) {
-        # When you got HWND of the console window:
-        # (It would appear that Windows Console Host is the default terminal application)
-        $null = $ShowWindowAsync::ShowWindowAsync($hwnd, 2)
-    } else {
-        # When you failed to get HWND of the console window:
-        # (It would appear that Windows Terminal is the default terminal application)
-    
-        # Mark the current console window with a unique string.
-        $UniqueWindowTitle = New-Guid
-        $Host.UI.RawUI.WindowTitle = $UniqueWindowTitle
-        $StringBuilder = New-Object System.Text.StringBuilder 1024
-    
-        # Search the process that has the window title generated above.
-        $TerminalProcess = (Get-Process | Where-Object { $_.MainWindowTitle -eq $UniqueWindowTitle })
-        # Get the window handle of the terminal process.
-        $hwnd = $TerminalProcess.MainWindowHandle
-        if ($hwnd -ne [System.IntPtr]::Zero) {
-        # When you got HWND of the terminal process:
-        $null = $ShowWindowAsync::ShowWindowAsync($hwnd, 2)
-        
-        } else {
-        Write-Host "Niet gelukt om de console window te tonen." -ForegroundColor Red
-        }
-    }
-
-    <#
-        Hide            = 0,
-        Normal          = 1,
-        ShowMinimized   = 2,
-        Maximize        = 3,
-        ShowNoActivate  = 4,
-        Show            = 5,
-        Minimize        = 6,
-        ShowMinNoActive = 7,
-        ShowNA          = 8,
-        Restore         = 9,
-        Showdefault     = 10,
-        Forceminimize   = 11
-    #>
-
-}
-
-function Hide-ConsoleWindow() {
-  
-  if ($hwnd -ne [System.IntPtr]::Zero) {
-    # When you got HWND of the console window:
-    # (It would appear that Windows Console Host is the default terminal application)
-    $null = $ShowWindowAsync::ShowWindowAsync($hwnd, 0)
-  } else {
-    # When you failed to get HWND of the console window:
-    # (It would appear that Windows Terminal is the default terminal application)
-
-    # Mark the current console window with a unique string.
-    $UniqueWindowTitle = New-Guid
-    $Host.UI.RawUI.WindowTitle = $UniqueWindowTitle
-    $StringBuilder = New-Object System.Text.StringBuilder 1024
-
-    # Search the process that has the window title generated above.
-    $TerminalProcess = (Get-Process | Where-Object { $_.MainWindowTitle -eq $UniqueWindowTitle })
-    # Get the window handle of the terminal process.
-    # Note that GetConsoleWindow() in Win32 API returns the HWND of
-    # powershell.exe itself rather than the terminal process.
-    # When you call ShowWindowAsync(HWND, 0) with the HWND from GetConsoleWindow(),
-    # the Windows Terminal window will be just minimized rather than hidden.
-    $hwnd = $TerminalProcess.MainWindowHandle
-    if ($hwnd -ne [System.IntPtr]::Zero) {
-      # afsluiten terminal. Met $null zie je ook geen resultaat op he scherm. dus het woord "true" verschijnt niet.  
-      $null = $ShowWindowAsync::ShowWindowAsync($hwnd, 0) 
-      
-    } else {
-      Write-Host "Niet gelukt om de console window te verbergen." -ForegroundColor Red
-    }
-  }
-}
-
 Function declareren_standaardvenster ($titel, $pos_x, $pos_y)
 {
 $StandaardForm                            = New-Object system.Windows.Forms.Form
@@ -389,8 +304,11 @@ Rename-Item -Path $logbestand -NewName $logvanvandaag
 
 }
 
-function Foutenloggen ($invoer) {
-
+function Foutenloggen {
+param (
+    [Parameter(Mandatory = $true)] [string]$meldtekst,
+    [string]$type = "MELDING!"
+)
 # map aanmaken voor logbestanden als deze niet bestaat
 if (!(Test-Path "$logmap")) { New-Item -Path "$logmap" -ItemType Directory | Out-Null  } 
 
@@ -398,9 +316,9 @@ if (!(Test-Path "$logmap")) { New-Item -Path "$logmap" -ItemType Directory | Out
 $logtijd = get-date -Format "HH:mm:ss"
 
 # loggen. $foutmeldingsbestand is in het begin gedefinieerd.
-"MELDING! " | out-file $foutmeldingsbestand -Append
+"$type" | out-file $foutmeldingsbestand -Append
 "Tijd : $logtijd " | out-file $foutmeldingsbestand -Append
-"$invoer" | out-file $foutmeldingsbestand -Append
+"$meldtekst" | out-file $foutmeldingsbestand -Append
 
 "-------------------------------------------------------------------------
 " | out-file $foutmeldingsbestand -Append
@@ -2423,19 +2341,6 @@ $Form2.controls.AddRange(@($listBox, $lijstlocaties, $lijstcrebonrs, $lijstkernt
 $listview1, $listView2, $Btnstart, $Btnescape, $Controlemappen, $Description2,
 $Description3, $Description4, $Description5, $Description8, $Global:vraagtekenicoon ))
 
-# $form2.Topmost = $true
-# $form2.Topmost = $false
-
-<#
-# Bij Escape-toets het venster sluiten.
-$form2.Add_KeyDown({
-    param($sender, $e)
-    if ($e.KeyCode -eq [System.Windows.Forms.Keys]::Escape) { $form2.Close() }
-})
-
-$form2.KeyPreview = $true
-#>
-
 Form2afsluitenbijescape;
 
 # venster tonen
@@ -3150,7 +3055,49 @@ $form.show()
 
 
 function updateuitvoeren {
-# de taak updaten begint hier
+
+    Function vergelijk_versies ($huidigeversie, $updateversie) {
+    # Haal eventuele +rc.x of -rc.x suffixen eruit en bewaar ze
+    $huidigeMain = $huidigeversie -replace '\.rc\.\d+$', ''
+    $updateMain = $updateversie -replace '\.rc\.\d+$', ''
+
+    # Haal rc-nummer indien aanwezig
+    $huidigeRc = $null
+    if ($huidigeversie -match '\.rc\.(\d+)$') { $huidigeRc = [int]$Matches[1] }
+    $updateRc = $null
+    if ($updateversie -match '\.rc\.(\d+)$') { $updateRc = [int]$Matches[1] }
+
+    # Split de hoofdversies in onderdelen
+    $huidigeDeel = $huidigeMain -split '\.'
+    $updateDeel = $updateMain -split '\.'
+
+    for ($i = 0; $i -lt [Math]::Max($huidigeDeel.Length, $updateDeel.Length); $i++) {
+        $huidigeNummer = if ($i -lt $huidigeDeel.Length) { [int]$huidigeDeel[$i] } else { 0 }
+        $updateNummer = if ($i -lt $updateDeel.Length) { [int]$updateDeel[$i] } else { 0 }
+
+        if ($huidigeNummer -lt $updateNummer) {
+            return -1  # Huidige versie is lager
+        } elseif ($huidigeNummer -gt $updateNummer) {
+            return 1   # Huidige versie is hoger
+        }
+    }
+
+    # Vergelijk RC's indien hoofdversies gelijk zijn
+    if ($null -ne $huidigeRc -and $null -ne $updateRc) {
+        if ($huidigeRc -lt $updateRc) { return -1 }
+        elseif ($huidigeRc -gt $updateRc) { return 1 }
+        else { return 0 }
+    } elseif ($null -ne $huidigeRc -and $null -eq $updateRc) {
+        # Release Candidate is altijd lager dan een definitieve release
+        return -1
+    } elseif ($null -eq $huidigeRc -and $null -ne $updateRc) {
+        return 1
+    }
+
+    return 0  # Versies zijn gelijk
+} # einde vergelijk_versies
+
+# de function updateuitvoeren begint hier ****************************************
 
 # alleen starten als programma.mode niet de status alpha of beta heeft.
 if ("alpha","beta" -contains($global:programma.mode)) {
@@ -3163,6 +3110,21 @@ $programmanaam = $global:programma.naam
 # Eerste regel van elke foutmelding
 $foutmeldingbegin = "Uitvoeren van een update :
 "
+# huidige versie van het programma
+$huidigeversie = $global:programma.versie
+
+# Standaard waarde. Als er geen update is gevonden, dan blijft deze waarde 0.0.0. 
+# Let op, dit betekent dat er een probleem is met de update.
+$updateto = "0.0.0" 
+
+# zip-bestand met update op lokale pc
+$zip_download = -join ("$startmap","\","updatebestand.zip")
+
+if (Test-Path -path $zip_download -pathtype leaf) {
+        write-host "Er is net een update uitgevoerd. Het gedownloade bestand wordt verwijderd."
+        Remove-Item $zip_download -Recurse -Force
+        return
+    }
 
 # controleren of het script al is opgestart. Als dit zo is kan het mis gaan bij het updaten.
 try {
@@ -3180,11 +3142,10 @@ catch {
  if ($gevonden) { 
      # er moet altijd een proces gevonden worden omdat dit script in ieder geval draait. Probleem is er als er meerdere processen draaien.
     if ($gevonden.processid.count -gt 1) { 
-        $melding = -join ($foutmeldingbegin, "Het updateproces wordt niet uitgevoerd omdat een andere proces van het script al is opgestart." ) 
+        $melding = -join ($foutmeldingbegin, "Het updateproces wordt niet uitgevoerd omdat een andere proces van het script al is opgestart." )
         Write-Host $melding -ForegroundColor Yellow
         # Melding ook loggen
-        Foutenloggen $melding
-
+        Foutenloggen -meldtekst $melding -type "OPGELET:"
         Start-Sleep -Seconds 3
         return
     } 
@@ -3193,124 +3154,118 @@ catch {
 # Info geven
 write-host "Controleren op een update."
 
-# Als programma.mode = "update" dan wordt de map Test op de website gebruikt om de update uit te voeren.
-if ($global:programma.mode -eq "update") {
-        $updatewebsite =  -join ($updatewebsite,'/test')
+# dit is de url van de github repository. Hier wordt bepaald of de release of prerelease wordt gedownload.
+$url = $global:programma.github 
+if ($global:programma.mode -eq "release") {
+        $url = -join ($url,"release")
+        } else {
+        $url = -join ($url,"prerelease")
         }
 
-<# $huidigeversie wordt alleen in deze functie gebruikt en is er om te verduidelijken dat dit de huidge versie is en
-   om niet overal "global:" voor te zetten. $versie is namelijk een global variabele.
-#>
-$huidigeversie = $global:programma.versie
-
-# website met laatste update van programma
-$latestupdate = "$updatewebsite/updates/latest"
-
-# Op de website de map met de laatste versie lezen
-$error.clear()
+# inhoud van de map in github ophalen
 try {
-    $content = Invoke-WebRequest $latestupdate -UseBasicParsing -ErrorAction Stop
-    }
+        $response = Invoke-RestMethod -Uri $url -Headers @{ "User-Agent" = "PowerShell" }
+    } 
 catch {
-      $melding = -join ($foutmeldingbegin, "Het is niet gelukt om verbinding te maken met de website!
-Neem contact op met de sitebeheerder van de website $updatewebsite"  ) 
-      # melding loggen
-      Foutenloggen $melding
-      write-host $melding -f Red
-      Start-Sleep -Seconds 8
-      return
-      } 
-
-# updateto een waarde geven voor het geval het fout gaat.
-$updateto = "leeg"
-
-# links zoeken op de website in de map met de laatste versie
-$filename = $content.Links.HREF| select -skip 1 | %{$_.Split("-")} 
-
-# alle gevonden bestanden doorlopen en de laatste versie in de variabele $updateto zetten
-$filename.ForEach( {
-
-    # de programmanaam moet in bestandsnaam aanwezig zijn.
-    if ($_ -like "*$programmanaam*") { 
-    
-    # alleen de naam vh bestand, dus zonder bovenliggende mappen.
-    $bestnaam=Split-Path -leaf $_
-
-    # Versie begint na de _ en is 5 tekens lang
-    $uitvoer = $bestnaam.split('_')[1]
-    $updateto = $uitvoer.substring(0,5)
-
+        $melding = -join ($foutmeldingbegin, "Het is niet gelukt om verbinding te maken met de website!
+Neem contact op met de eigenaar van $url"  ) 
+        # melding loggen
+        Foutenloggen $melding
+        write-host $melding -f Red
+        Start-Sleep -Seconds 8
+        return
     }
-} 
-) # einde $filename.foreach
+       
+# Loop door de items in de response en controleer of er een nieuw update is
+foreach ($item in $response) {
+        # alleen bestanden controleren
+        if ($item.type -eq "file") {
+            # bestnaam is de naam van het te controleren bestand
+            $bestnaam = $($item.name) 
 
-# Aangeven of het programma up to date is ....................
+            # controleer of het bestand de juiste format heeft.
+            if ($bestnaam -match "$programmanaam") {
+                # conroleer of het bestand de juiste versieformat heeft.
+                if (( $bestnaam -match "_\d+\.\d+\.\d+\.zip$") -or ( $bestnaam -match "_\d+\.\d+\.\d+\.rc\.\d+\.zip$") ){
 
-if ($updateto -eq "leeg") {
-    $melding = -join ($foutmeldingbegin, "Het is niet gelukt om de laatste versie te vinden op de website!
-Neem contact op met de sitebeheerder van de website $updatewebsite" )
-    Foutenloggen $melding
-    write-host $melding -f Red
-    Start-Sleep -s 8
-    return
+                    # bepaal laatste versie van het script
+                    # versiemetzip is de versie met .zip in de naam.
+                    $versiemetzip = $bestnaam.split('_')[1]
+                    # de positie van de laatste punt in de versie bepalen
+                    $positiepunt = $versiemetzip.LastIndexOf(".")
+                    # updateto is alleen de versie zonder .zip. Dit is de versie die we willen vergelijken met de huidige versie.
+                    $updateto = $versiemetzip.Substring(0, $positiepunt) 
+                    # tedownloadebestand is de naam van het bestand dat gedownload moet worden
+                    $tedownloadenbestand = $item.download_url
 
-    } elseif ($huidigeversie -ge $updateto) {
-    write-host "Het programma heeft de laatste update."
-    return
+                    break # we zoeken maar 1 bestand, dus na de eerste gevonden versie stoppen met zoeken
+                } # einde controle bestnaam met versieformat
+            } # einde controle bestnaam met programmanaam                     
+        } # einde if item.type = file
+    } # einde foreach loop
 
-} 
+# Als er geen update is gevonden, melding geven en loggen
+if ($updateto -eq "0.0.0") {
+        Write-Host "" -f Red
+        $melding = -join ($foutmeldingbegin, "Er is geen update gevonden in de GitHub repository: $url
+Neem contact op met de eigenaar van $url"  ) 
+        # melding loggen
+        Foutenloggen $melding
+        write-host $melding -f Red
+        Start-Sleep -Seconds 8
+    } 
+
+# vergelijken van de huidige versie met de update versie
+$resultaat = vergelijk_versies $huidigeversie $updateto
+if ($resultaat -eq 0) {
+        # Huidige versie is gelijk aan de update versie
+        write-host "Huidige versie is gelijk aan de update versie."
+        return
+    } elseif ($resultaat -gt 0) {
+        # Huidige versie is hoger dan de update versie
+        write-host "Huidige versie is hoger dan de update versie." 
+        return
+     }
+
 
 # Hier aangekomen dan is er een update beschikbaar.
+write-host "Programma wordt geupdatet naar versie $updateto "
 
-write-host "Programma wordt geupdatet naar versie $updateto " -f Green
+# downloaden zip_download van Github en foutmeldingen opvangen
+$error.clear()
+try {
+    Invoke-WebRequest -Uri $tedownloadenbestand -OutFile $zip_download -ErrorAction Stop
+    }
+
+catch {
+    # foutmelding weergeven, loggen en stoppen
+    $melding = -join ($foutmeldingbegin, "Het updaten is niet gelukt omdat het updatebestand niet is gevonden op de website. 
+Neem contact op met de eigenaar van $url" )
+    Foutenloggen $melding
+    write-host $melding -f Red
+    Start-Sleep -Seconds 8
+    return
+    }
 
 # backup maken van hele map voor het geval het mis gaat bij het uitpakken
 # eerst de backupbestand een naam geven
 $backupzip = "$startmap\backup.zip"
 # als deze al bestaat, verwijderen...
-if (test-path -path "$backupzip") { Remove-Item "$backupzip" }
+if (test-path -path "$backupzip" -PathType Leaf) { Remove-Item "$backupzip" }
 # Dan backup maken....
 try {
+    Write-Host "Er wordt een veiligheidsbackup gemaakt."
     Compress-Archive -Path "$startmap\*" -DestinationPath $backupzip -ErrorAction Stop
 }
 catch {
     # foutmelding weergeven en stoppen
-
     $melding = -join ($foutmeldingbegin, "Het updaten is niet gelukt omdat er geen veiligheidsback-up gemaakt kon worden. 
-Neem contact op met de sitebeheerder van de website $updatewebsite")
+Neem contact op met de eigenaar van $url")
     Foutenloggen $melding
     write-host $melding -f Red
     Start-Sleep -Seconds 8
     return
     }
-
-# variabelen die nodig zijn voor het downloaden. 
-# bestand met update die gedownload wordt
-$scriptnaam = $global:programma.naam
-
-$zip_download = -join ($scriptnaam,"_",$updateto,".zip")
-# pad naar bestand met update op de website, samenvoegen met update die gedownload wordt
-$downloadbestand = -join ("$latestupdate","/","$zip_download")
-# pad naar bestand met update op lokale pc
-$zip_download = -join ("$startmap","\","$zip_download")
-
-# downloaden zip_download van website en foutmeldingen opvangen
-$error.clear()
-try {
-    Invoke-WebRequest "$downloadbestand" -outfile "$zip_download" -ErrorAction Stop
-    }
-
-catch {
-    # foutmelding weergeven, loggen en stoppen
-
-    $melding = -join ($foutmeldingbegin, "Het updaten is niet gelukt omdat het updatebestand niet is gevonden op de website. 
-Neem contact op met de sitebeheerder van de website $updatewebsite" )
-    Foutenloggen $melding
-    write-host $melding -f Red
-    Start-Sleep -Seconds 8
-    return
-    }
-
 
 # uitpakken en installeren van programma
 $error.clear()
@@ -3321,7 +3276,7 @@ catch {
     # foutmelding weergeven en stoppen
     
     $melding = -join ($foutmeldingbegin, "Het updaten is niet gelukt omdat er iets fout ging bij het uitpakken van de nieuwe bestanden. 
-Neem contact op met de sitebeheerder van de website $updatewebsite" )
+Neem contact op met de eigenaar van $url" )
     Foutenloggen $melding
     write-host $melding -f Red
     Start-Sleep -Seconds 8
@@ -3336,22 +3291,24 @@ Neem contact op met de sitebeheerder van de website $updatewebsite" )
     return
     }
 
-# zipbestand en backup na het uitpakken verwijderen
-Remove-Item "$zip_download"
+# de backup na het uitpakken verwijderen. de zipbestand niet omdat bij het starten dan gezien kan worden dat al een update is uitgevoerd.
+# Remove-Item "$zip_download"
 if (test-path -path "$backupzip") { Remove-Item "$backupzip" }
 
-Write-Host -b White -f Red "Het programma heeft een update uitgevoerd en heeft nu de versie $updateto.
+Write-Host -f Yellow "Het programma heeft een update uitgevoerd en heeft nu de versie $updateto.
 Het programma wordt opnieuw opgestart  ..."
+
+Foutenloggen -meldtekst "Het programma heeft een update uitgevoerd en heeft nu de versie $updateto." -type "INFO"
 
 Start-Sleep -Seconds 5
 
 # opnieuw opstarten script met een andere procesnummer, zie de regel met start-proces hieronder, wordt niet meer gebruikt sinds 4.5.3.
 # Dit was nodig toen Sharepoint werd gebruikt. Nu wordt weer de oude methode gebruikt.
-$scriptnaam = $global:programma.naam
-# start-process PowerShell.exe -argumentlist '-file',".\$scriptnaam.ps1"
-powershell -file "$PSScriptRoot\$scriptnaam.ps1"
+# Nu toch weer met start-proces omdat je dan een nieuw proces krijgt en de oude kan worden afgesloten.
+start-process PowerShell.exe -argumentlist '-file',".\$programmanaam.ps1"
+# powershell -file "$PSScriptRoot\$scriptnaam.ps1"
 
-# beëindigen van programma als updaten is uitgevoerd. Anders kan je na een update niet afsluiten.
+# beëindigen van huidige proces. Script gaat verder in het nieuwe proces dat met start-process is gestart.
 exit;
 
 

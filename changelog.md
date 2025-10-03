@@ -10,9 +10,8 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 - Een niet gebruikte waarde van de gebruikersinstellingen verwijderd.
 
 ### Overige wijzigingen
-- Bij programma mode beta worden oude logbestanden verwijderd.
-- Programma mode 'online' veranderd naar 'release'.
-- Programma code verbeterd door van 2 functies 1 te maken.
+- In de programma code wijzigingen aangebracht in hoe met bepaalde fases wordt omgegaan.
+- Van 2 functies 1 gemaakt om de programma code te verbeteren.
 - Bij de moppenbot heb je de keuze uit moppen van 3 websites.
 - Het is mogelijk om logbestanden helemaal niet meer te bewaren.
 
