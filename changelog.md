@@ -4,7 +4,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.7.1]
+## [4.7.1] [Unreleased]
 ### Bugfixes
 - Tekstuele fouten bij functies **Moppenbot** en **Instellingen** opgelost.
 - Een niet gebruikte waarde van de gebruikersinstellingen verwijderd.
@@ -14,8 +14,14 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 - Van 2 functies 1 gemaakt om de programma code te verbeteren.
 - Bij de moppenbot heb je de keuze uit moppen van 3 websites.
 - Het is mogelijk om logbestanden helemaal niet meer te bewaren.
+- Het script wordt nu geüpdatet vanuit een repository in Github.
+- Een aantal verbeteringen aan het updateproces toegepast; 
+  Na een update start de script in een andere sessie en controleert niet opnieuw.
+  Updateproces kan nu omgaan met getallen > 9 in de versienummer.
+  Het updateproces wordt nu ook gelogd.
+- De manier waarop meldingen worden gelogd aangepast. Nu 3 typen meldingen.
 
-## [4.7.0]
+## [4.7.0] 2025-06-17
 ### Nieuwe functies
 - Console kan opengehouden worden bij het starten van het hoofdvenster.  
   Handig voor foutopsporing en testen. Optie beschikbaar in **Instellingen**.  
@@ -38,7 +44,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.6.2]
+## [4.6.2] 2025-02-18
 ### Bugfixes
 - Netwerkmappen werden niet automatisch hersteld.  
 - Updateproces crashte bij meerdere openstaande processen → nu back-up en herstel ingebouwd.  
@@ -54,7 +60,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.6.1]
+## [4.6.1] 2025-01-21
 ### Bugfixes
 - Tabvolgorde van icoontjes hersteld.  
 - Console-venster error opgelost door overbodige code te verwijderen.  
@@ -69,7 +75,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.6.0]
+## [4.6.0] 2024-11-06
 ### Nieuwe functies
 - Functie **Verkenner** toegevoegd om studentmappen te bekijken.  
 - Afbeelding in hoofdscherm kan gewijzigd worden (8 keuzes).  
@@ -86,7 +92,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.5.3]
+## [4.5.3] 2024-09-21
 ### Bugfixes
 - Logbestanden niet zichtbaar door naamgevingsfout → opgelost.  
 
@@ -101,7 +107,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.5.2]
+## [4.5.2] 2024-09-11
 ### Bugfixes
 - MFA-inloggen uitgeschakeld → code in commentaar.  
 
@@ -114,7 +120,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.5.1]
+## [4.5.1] 2024-05-23
 ### Bugfixes
 - Console sluit nu correct.  
 
@@ -129,7 +135,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.5.0]
+## [4.5.0] 2023-12-12
 ### Nieuwe functies
 - Inloggen verplicht via Microsoft MFA.  
 - Persoonlijke instellingen en logbestanden per gebruiker.  
@@ -152,7 +158,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.4.1]
+## [4.4.1] 2023-09-22
 ### Bugfixes
 - Opschonen langzamer → opgelost met runspaces.  
 
@@ -165,7 +171,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.4.0]
+## [4.4.0] 2023-06-01
 ### Nieuwe functies
 - **Bestanden overzetten**: mappenstructuur doorbladeren met navigatie-iconen.  
 - Klikken op afbeelding toont mop/weetje.  
@@ -181,13 +187,13 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.3.2]
+## [4.3.2] 2023-02-10
 ### Overige wijzigingen
 - Back-up mapnaam bevat nu datum en tijd (HH-MM-SS).  
 
 ---
 
-## [4.3.1]
+## [4.3.1] 2023-01-10
 ### Bugfixes
 - Lange bestandsnamen geen probleem meer.  
 
@@ -196,7 +202,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.3.0]
+## [4.3.0] 2022-11-04
 ### Nieuwe functies
 - Uitleg toegevoegd via vraagtekens en tooltips.  
 - Instelbare bewaartermijn log- en back-upbestanden.  
@@ -212,7 +218,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.2.2]
+## [4.2.2] 2022-00-29
 ### Bugfixes
 - Scriptproblemen opgelost met runspaces.  
 - Betere methode om variabelen te beheren via `initialisatie.ini`.  
@@ -223,7 +229,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.2.1]
+## [4.2.1] 2022-08-25
 ### Overige wijzigingen
 - Init-bestand hernoemd naar `gebruiker.ini`.  
 - Infovenster aangepast.  
@@ -231,7 +237,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.2.0]
+## [4.2.0] 2022-08-15
 ### Nieuwe functies
 - Infovenster met Readme en Changelog.  
 - Opschoonfunctie voor back-ups en logs.  
@@ -250,7 +256,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.1.0]
+## [4.1.0] 2022-07-04
 ### Nieuwe functies
 - Controle op inhoud doelmappen bij kopiëren, back-up en verplaatsen.  
 - Optie om doelmap te legen bij verplaatsen.  
@@ -260,7 +266,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.0.0]
+## [4.0.0] 2022-06-23
 ### Eerste officiële versie
 - Herschreven in PowerShell (niet updatebaar vanaf 3.7.18).  
 - **Hoofdtaken**: bestanden klaarzetten, back-up, wissen, verplaatsen/kopiëren.  

@@ -47,9 +47,9 @@ $scriptnaam = Split-Path -leaf $scriptnaam
 $scriptnaam = $scriptnaam.Replace(".ps1","")
 # de naam van het programma wordt ook gebruikt in de titelbalk van het hoofdvenster.
 $global:programma = @{
-    versie = '4.7.1'
-    extralabel = 'alpha.1.251003' # alpha, beta, update, prerelease of release
-    mode = 'alpha' # alpha, beta, prerelease of release
+    versie = '4.7.1.rc.1'
+    extralabel = 'prerelease.1.251004' # alpha, beta, prerelease of release + volgnummer + datum
+    mode = 'prerelease' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = $scriptnaam
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
 }
@@ -306,8 +306,8 @@ Rename-Item -Path $logbestand -NewName $logvanvandaag
 
 function Foutenloggen {
 param (
-    [Parameter(Mandatory = $true)] [string]$meldtekst,
-    [string]$type = "MELDING!"
+    [Parameter(Mandatory = $true)] [string]$meldtekst, # de melding die gelogd moet worden
+    [string]$type = "FOUT:" # type melding. Standaard is dit "FOUT!" maar je kan ook "INFO:" of "OPGELET:" meegeven.
 )
 # map aanmaken voor logbestanden als deze niet bestaat
 if (!(Test-Path "$logmap")) { New-Item -Path "$logmap" -ItemType Directory | Out-Null  } 
@@ -1151,10 +1151,10 @@ if (($uitvoeren.taak -eq "kopiëren") -and ($uitvoeren.controlemappen)) {
         # Controleren of de mappen leeg zijn. Foutmeldingen worden gelogd maar niet getoond!
         try {
             If ((Get-ChildItem -Path $doelmap -Force -ErrorAction Stop | Measure-Object).Count -gt 0) {
-            # rpc-nr toevoegen aan overzicht van mappen die niet leeg zijn
-            $nietlegemappen = -join ($nietlegemappen, $rpcitem, ' - ')
-            $teller++
-        } 
+                # rpc-nr toevoegen aan overzicht van mappen die niet leeg zijn
+                $nietlegemappen = -join ($nietlegemappen, $rpcitem, ' - ')
+                $teller++
+            } 
         }
         catch {
             $melding = -join ("Extra controle voor het uitvoeren van de taak Bestanden Klaarzetten : ", "`n", $_.exception.message )
@@ -1664,7 +1664,7 @@ function inlezengekozenmap ($invoer) {
   catch {
   $ingelezen = ""
   # melding loggen en weergeven
-  $melding = -join ("Venster Bestanden Klaarzetten is geopend : ", "`n", $_.exception.message )
+  $melding = -join ("Venster bestanden klaarzetten is geopend : ", "`n", $_.exception.message )
   Foutenloggen $melding
   }
   return $ingelezen
@@ -3302,10 +3302,9 @@ Foutenloggen -meldtekst "Het programma heeft een update uitgevoerd en heeft nu d
 
 Start-Sleep -Seconds 5
 
-# opnieuw opstarten script met een andere procesnummer, zie de regel met start-proces hieronder, wordt niet meer gebruikt sinds 4.5.3.
-# Dit was nodig toen Sharepoint werd gebruikt. Nu wordt weer de oude methode gebruikt.
-# Nu toch weer met start-proces omdat je dan een nieuw proces krijgt en de oude kan worden afgesloten.
+# opnieuw opstarten script met een andere procesnummer (sessie). De de oude kan worden afgesloten.
 start-process PowerShell.exe -argumentlist '-file',".\$programmanaam.ps1"
+# dit was de oude manier van starten:
 # powershell -file "$PSScriptRoot\$scriptnaam.ps1"
 
 # beëindigen van huidige proces. Script gaat verder in het nieuwe proces dat met start-process is gestart.
@@ -4218,35 +4217,37 @@ function Venstermetgrap {
 
 function laadgrap {
 # een random grap ophalen en in tekst-variabele plaatsen
-# eerst de reload knop zichtbaar. voor als het goed gaat.
-$reload.Enabled = $true
+
 try {
     switch ($keuzewebsite.Selecteditem) {
         'Apekool.nl' {
         # toevoegen van -ContentType "application/json; charset=utf-8bom" heeft geen zin.
         $quote = Invoke-RestMethod -Method Get -Uri 'http://api.apekool.nl/services/jokes/getjoke.php' -erroraction Stop
         $tekst = $quote.joke 
+        $reload.Enabled = $true
           }
         'Appspot.com' {
         $quote = Invoke-RestMethod -Method Get -Uri 'https://official-joke-api.appspot.com/jokes/random' -erroraction Stop
         $tekst = $quote.setup + "`r`n" + $quote.punchline
+        $reload.Enabled = $true
           }
         'Icanhazdadjoke.com' {
         $Header = @{'Accept' = 'application/json' }
         $quote = (Invoke-RestMethod -Method Get -Uri 'https://icanhazdadjoke.com/' -Headers $Header -UseBasicParsing).joke
         $tekst = $quote
+        $reload.Enabled = $true
           }
         Default { 
-            $tekst = 'Kies een website met moppen bij de keuzelijst hieronder.'
-            $reload.Enabled = $false 
+        $tekst = 'Kies een website met moppen bij de keuzelijst hieronder.'
+        $reload.Enabled = $false 
         }
     }
     
 }
 catch {
-$tekst = "Het is niet gelukt een mop te krijgen van de API van " + $keuzewebsite.selecteditem + "`r`n" + "De website geeft de volgende melding: " + "`r`n" + $_.exception.message
-Foutenloggen $tekst
-$reload.Enabled = $false  
+    $tekst = "Het is niet gelukt een mop te krijgen van de API van " + $keuzewebsite.selecteditem + "`r`n" + "De website geeft de volgende melding: " + "`r`n" + $_.exception.message
+    Foutenloggen -meldtekst $tekst -type "OPGELET:"
+    $reload.Enabled = $false  
 }
 
 return $tekst
@@ -4381,38 +4382,36 @@ $geselecteerdebronmap.Add($mijndocumentenmap)
 }
 
 Function geselecteerdemap_vullen ($selectie) {
+# vullen van de rechter venster met de inhoud van de geselecteerde map of submap
+    try { 
+        $inhoud = Get-ChildItem -Path "$selectie" -ErrorAction Stop | Sort-object 
 
-
-  try { 
-  # weergeven inhoud in rechter venster (inhoud geselecteerde map). En fouten opvangen.
-  $inhoud = Get-ChildItem -Path "$selectie" -ErrorAction Stop | Sort-object 
-
-  # dan netjes in rijen plaatsen.
-  foreach ($item in $inhoud) {
+        # dan netjes in rijen plaatsen.
+        foreach ($item in $inhoud) {
         toevoegen_lijst1 $selectie $item.Name $item.LastWriteTime $item.Length
         $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $Item.Name)
-       }
-  }
-  catch {
-  # melding loggen en weergeven
-  $melding = -join ("Venster Verkenner is geopend : ", "`n", $_.exception.message )
-  Foutenloggen $melding
-  }
+            }
+        }
+    catch {
+        # melding loggen en weergeven
+        $melding = -join ("Venster Verkenner is geopend : ", "`n", $_.exception.message )
+        Foutenloggen $melding
+        }
 
-  # aanpassen venster aan inhoud
-  $listView1.AutoResizeColumns(1) 
+    # aanpassen venster aan inhoud
+    $listView1.AutoResizeColumns(1) 
 
-  # Weergeven submappen van homemap kandidaat in bovenste venster (submappenvenster)
-  if ( $listBox.selecteditems.count -eq 1) {
+    # Weergeven submappen van homemap kandidaat in bovenste venster (submappenvenster)
+    if ( $listBox.selecteditems.count -eq 1) {
         $objtekst2.Text = $listBox.SelectedItem
-     } else {
+    } else {
         $objtekst2.Text = ''
-     }
+    }
 
-  foreach ($item in $geselecteerdebronmap) {
+    foreach ($item in $geselecteerdebronmap) {
           $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $Item)
-  }
-} # einde geselecteerdemap_vullen
+        }
+    } # einde geselecteerdemap_vullen
 
 
 # ----------- Start function VensterVerkenner -------------------------------
