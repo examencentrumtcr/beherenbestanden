@@ -1,39 +1,11 @@
 ﻿<# 
 Beherenbestanden.ps1
-
 Programma om bestanden op pc's in een netwerk te beheren, dus bestanden klaarzetten, back-uppen, verplaatsen of wissen
-
 Zie voor versienummer hier onder de comments.
-
 Versienummer wordt volgens Semantic Versioning uitgevoerd (zie https://semver.org/lang/nl/)
-
 Dit programma is beschermt met auteursplicht door middel van de GNU GPL (https://www.gnu.org/licenses)
-
-Lees ook de readme.txt op https://beherenbestanden.neveshuis.nl/readme.txt
-
-
-Programma versie wordt aangegeven in de vorm : Versie.Extralabel.DATE
-
-Versie = versie van dit programma en wordt aangegeven in de vorm major.minor.patch
-         In de titelbalk staat de versienummer
-
-Extra label =  Een extra label wordt weergegeven bij info over dit programma
-   Een extra label kan een pre-release of een build zijn
-   Een pre-release wordt aangegeven met alpha, beta of pre-release
-   De build geeft aan hoe vaak het programma is uitgebracht en is een oplopende getal
-   Een build wordt alleen meegegeven als een versie naar release gaat
-
-DATE wordt gegeven als JJMMDD (jaar, maand en dag)
-
-Modes:
-    alpha      : Logbestanden verwijderen is uit, Automatisch updates is uit, Lokale mappen worden gebruikt en Console blijft open
-    beta       : Automatisch updates is uit en Console blijft open
-    prerelease : Updates worden gedownload vanuit de prerelease pagina van Github. Alle functionalliteiten kunnen getest worden.
-    release    : Normale gebruik
-
-    De modus hoeven niet persé allemaal doorlopen te worden!
-    Bij het opstarten krijg je een melding als je in een testfase zit (modes alpha, beta of prelease)
-
+Lees ook de README.md en LICENSE op https://github.com/examencentrumtcr/beherenbestanden 
+Auteur: Benvindo Neves
 #>
 
 # Hier worden de programma variabelen gedeclareerd.
@@ -41,14 +13,33 @@ Modes:
 <# bepalen naam van deze script. variabele scriptnaam wordt alleen hier gebruikt (en lokaal bij bepaalde functies, nl updaten en informatie over programma)
    alleen de naam vh bestand, dus zonder bovenliggende mappen
    extensie .ps1 wordt verwijderd 
-#>
+   de naam van het programma wordt ook gebruikt in de titelbalk van het hoofdvenster.
+   #>
+
 $scriptnaam = $MyInvocation.InvocationName
 $scriptnaam = Split-Path -leaf $scriptnaam
 $scriptnaam = $scriptnaam.Replace(".ps1","")
-# de naam van het programma wordt ook gebruikt in de titelbalk van het hoofdvenster.
+
+<# object met alle variabelen die het programma beschrijven. 
+   versie wordt aangepast als er een nieuwe versie is.
+   extralabel wordt aangepast als het programma naar een andere fase gaat of als er een nieuwe versie is.
+   mode wordt aangepast afhankelijk van wat je wil testen of als er een nieuwe versie is.
+   naam is de naam van het script. Deze wordt gebruikt in de titelbalk van het hoofdvenster.
+   github is de locatie waar de updates vandaan gehaald worden. Dit is altijd hetzelfde.
+
+   Mode kan de volgende waarden hebben:
+    alpha      : Logbestanden verwijderen is uit, Automatisch updates is uit, Lokale mappen worden gebruikt en Console blijft open
+    beta       : Automatisch updates is uit en Console blijft open
+    prerelease : Updates worden gedownload vanuit de prerelease pagina van Github. Alle functionalliteiten kunnen getest worden.
+    release    : Normale gebruik
+
+    De modus hoeven niet persé allemaal doorlopen te worden!
+    Bij het opstarten krijg je een melding als je in de fase alpha, beta of prelease zit.
+
+#>
 $global:programma = @{
     versie = '4.7.1.rc.1'
-    extralabel = 'prerelease.1.251004' # alpha, beta, prerelease of release + volgnummer + datum
+    extralabel = 'prerelease.1.251007' # alpha, beta, prerelease of buildnummer (+ eventueel volgnummer) + datum
     mode = 'prerelease' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = $scriptnaam
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
@@ -74,9 +65,6 @@ Add-Type -AssemblyName System.Windows.Forms
 
 # VisualStyles aan zetten ------------------------------------------------------------------
 [System.Windows.Forms.Application]::EnableVisualStyles()
-
-# website met updates van programma
-$updatewebsite = "https://beherenbestanden.neveshuis.nl"
 
 # startmap van het programma bepalen
 $startmap=Split-Path -Parent $PSCommandPath
@@ -304,10 +292,10 @@ Rename-Item -Path $logbestand -NewName $logvanvandaag
 
 }
 
-function Foutenloggen {
+function Meldingnaarlogbestand {
 param (
     [Parameter(Mandatory = $true)] [string]$meldtekst, # de melding die gelogd moet worden
-    [string]$type = "FOUT:" # type melding. Standaard is dit "FOUT!" maar je kan ook "INFO:" of "OPGELET:" meegeven.
+    [string]$type = "FOUTMELDING" # type melding. Standaard is dit "FOUTMELDING" maar je kan ook "INFORMATIE" of "MEDEDELING" meegeven.
 )
 # map aanmaken voor logbestanden als deze niet bestaat
 if (!(Test-Path "$logmap")) { New-Item -Path "$logmap" -ItemType Directory | Out-Null  } 
@@ -1088,7 +1076,7 @@ $foutmeldingbegin = "Uitvoeren van een taak : "
 
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { 
     $tempmap = $global:beheer.examenmappen.homemapstudenten
-    Foutenloggen "$foutmeldingbegin
+    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
 De volgende Netwerkmap is niet gevonden
 $tempmap
     "
@@ -1098,7 +1086,7 @@ $tempmap
 if ($uitvoeren.taak -eq "kopiëren") {
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.digitalebestanden $true )) { 
     $tempmap = $global:beheer.examenmappen.digitalebestanden
-    Foutenloggen "$foutmeldingbegin
+    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
 De volgende Netwerkmap is niet gevonden
 $tempmap
     "
@@ -1109,7 +1097,7 @@ $tempmap
 if ($uitvoeren.taak -eq "backup") {
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.backupmap $true )) { 
     $tempmap = $global:beheer.examenmappen.backupmap
-    Foutenloggen "$foutmeldingbegin
+    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
 De volgende Netwerkmap is niet gevonden
 $tempmap
     "
@@ -1158,7 +1146,7 @@ if (($uitvoeren.taak -eq "kopiëren") -and ($uitvoeren.controlemappen)) {
         }
         catch {
             $melding = -join ("Extra controle voor het uitvoeren van de taak Bestanden Klaarzetten : ", "`n", $_.exception.message )
-            Foutenloggen $melding
+            Meldingnaarlogbestand -meldtekst $melding
         }
         
     } # einde foreach $rpcitem ...
@@ -1665,7 +1653,7 @@ function inlezengekozenmap ($invoer) {
   $ingelezen = ""
   # melding loggen en weergeven
   $melding = -join ("Venster bestanden klaarzetten is geopend : ", "`n", $_.exception.message )
-  Foutenloggen $melding
+  Meldingnaarlogbestand -meldtekst $melding
   }
   return $ingelezen
 }
@@ -2838,7 +2826,7 @@ return $uitvoer
 }
 catch {
       $melding = -join ("Taak logbestanden bekijken is gestart : ", "`n", $_.exception.message )
-      Foutenloggen $melding
+      Meldingnaarlogbestand -meldtekst $melding
 }
 } # einde function Inlezenlogs
 
@@ -3133,7 +3121,7 @@ try {
 catch {
         # melding loggen
         $melding = -join ($foutmeldingbegin, $_.exception.message )
-        Foutenloggen $melding
+        Meldingnaarlogbestand -meldtekst $melding
         $melding2 = -join ($foutmeldingbegin, "Fout tijdens de controle of het script al is gestart. Zie logbestand voor details." )
         Write-Host $melding2 -ForegroundColor Yellow
         return
@@ -3142,10 +3130,10 @@ catch {
  if ($gevonden) { 
      # er moet altijd een proces gevonden worden omdat dit script in ieder geval draait. Probleem is er als er meerdere processen draaien.
     if ($gevonden.processid.count -gt 1) { 
-        $melding = -join ($foutmeldingbegin, "Het updateproces wordt niet uitgevoerd omdat een andere proces van het script al is opgestart." )
+        $melding = -join ($foutmeldingbegin, "Het updateproces is niet uitgevoerd omdat een andere proces van het script al is opgestart." )
         Write-Host $melding -ForegroundColor Yellow
         # Melding ook loggen
-        Foutenloggen -meldtekst $melding -type "OPGELET:"
+        Meldingnaarlogbestand -meldtekst $melding -type "MEDEDELING"
         Start-Sleep -Seconds 3
         return
     } 
@@ -3170,7 +3158,7 @@ catch {
         $melding = -join ($foutmeldingbegin, "Het is niet gelukt om verbinding te maken met de website!
 Neem contact op met de eigenaar van $url"  ) 
         # melding loggen
-        Foutenloggen $melding
+        Meldingnaarlogbestand -meldtekst $melding
         write-host $melding -f Red
         Start-Sleep -Seconds 8
         return
@@ -3210,9 +3198,10 @@ if ($updateto -eq "0.0.0") {
         $melding = -join ($foutmeldingbegin, "Er is geen update gevonden in de GitHub repository: $url
 Neem contact op met de eigenaar van $url"  ) 
         # melding loggen
-        Foutenloggen $melding
+        Meldingnaarlogbestand -meldtekst $melding
         write-host $melding -f Red
         Start-Sleep -Seconds 8
+        return
     } 
 
 # vergelijken van de huidige versie met de update versie
@@ -3229,7 +3218,7 @@ if ($resultaat -eq 0) {
 
 
 # Hier aangekomen dan is er een update beschikbaar.
-write-host "Programma wordt geupdatet naar versie $updateto "
+write-host "`nProgramma wordt geupdatet naar versie $updateto " -f Green
 
 # downloaden zip_download van Github en foutmeldingen opvangen
 $error.clear()
@@ -3241,7 +3230,7 @@ catch {
     # foutmelding weergeven, loggen en stoppen
     $melding = -join ($foutmeldingbegin, "Het updaten is niet gelukt omdat het updatebestand niet is gevonden op de website. 
 Neem contact op met de eigenaar van $url" )
-    Foutenloggen $melding
+    Meldingnaarlogbestand -meldtekst $melding
     write-host $melding -f Red
     Start-Sleep -Seconds 8
     return
@@ -3261,7 +3250,7 @@ catch {
     # foutmelding weergeven en stoppen
     $melding = -join ($foutmeldingbegin, "Het updaten is niet gelukt omdat er geen veiligheidsback-up gemaakt kon worden. 
 Neem contact op met de eigenaar van $url")
-    Foutenloggen $melding
+    Meldingnaarlogbestand -meldtekst $melding
     write-host $melding -f Red
     Start-Sleep -Seconds 8
     return
@@ -3277,7 +3266,7 @@ catch {
     
     $melding = -join ($foutmeldingbegin, "Het updaten is niet gelukt omdat er iets fout ging bij het uitpakken van de nieuwe bestanden. 
 Neem contact op met de eigenaar van $url" )
-    Foutenloggen $melding
+    Meldingnaarlogbestand -meldtekst $melding
     write-host $melding -f Red
     Start-Sleep -Seconds 8
     
@@ -3298,7 +3287,7 @@ if (test-path -path "$backupzip") { Remove-Item "$backupzip" }
 Write-Host -f Yellow "Het programma heeft een update uitgevoerd en heeft nu de versie $updateto.
 Het programma wordt opnieuw opgestart  ..."
 
-Foutenloggen -meldtekst "Het programma heeft een update uitgevoerd en heeft nu de versie $updateto." -type "INFO"
+Meldingnaarlogbestand -meldtekst "Het programma heeft een update uitgevoerd en heeft nu de versie $updateto." -type "INFORMATIE"
 
 Start-Sleep -Seconds 5
 
@@ -3781,7 +3770,7 @@ try {
 }
 catch {
         $melding = -join ("Taak verwijderen van backups van de homemappen is gestart : ", "`n", $_.exception.message )
-        Foutenloggen $melding
+        Meldingnaarlogbestand -meldtekst $melding
        }
 # Knop Bevestigen laten zien als er mappen zijn om te verwijderen
 if ($tellerbackups -eq 0 ) { $Btnaccept.Enabled=$false }
@@ -4148,7 +4137,7 @@ try {
 catch {
         # melding loggen en weergeven
         $melding = -join ($melding_opschonen_begint, "`n", $_.exception.message )
-        Foutenloggen $melding
+        Meldingnaarlogbestand -meldtekst $melding
         Write-Host $melding -ForegroundColor Red
         return;
 }
@@ -4246,7 +4235,7 @@ try {
 }
 catch {
     $tekst = "Het is niet gelukt een mop te krijgen van de API van " + $keuzewebsite.selecteditem + "`r`n" + "De website geeft de volgende melding: " + "`r`n" + $_.exception.message
-    Foutenloggen -meldtekst $tekst -type "OPGELET:"
+    Meldingnaarlogbestand -meldtekst $tekst
     $reload.Enabled = $false  
 }
 
@@ -4395,7 +4384,7 @@ Function geselecteerdemap_vullen ($selectie) {
     catch {
         # melding loggen en weergeven
         $melding = -join ("Venster Verkenner is geopend : ", "`n", $_.exception.message )
-        Foutenloggen $melding
+        Meldingnaarlogbestand -meldtekst $melding
         }
 
     # aanpassen venster aan inhoud
@@ -4728,6 +4717,9 @@ if (test-path -path "$startmap\netwerkschijvencontroleren.exe") { Remove-Item "$
 if (test-path -path "$startmap\png\controleren-2.gif") { Remove-Item "$startmap\png\controleren-2.gif" }  
 if (test-path -path "$startmap\png\nieuwe map") { Remove-Item "$startmap\png\nieuwe map" -Force -Recurse }
 if (test-path -path "$startmap\snelkoppeling_maken.exe") { Remove-Item "$startmap\snelkoppeling_maken.exe" }   
+# verwijderen readme.txt en changelog.txt vanaf versie 4.7.1
+if (test-path -path "$startmap\readme.txt") { Remove-Item "$startmap\readme.txt" }  
+if (test-path -path "$startmap\changelog.txt") { Remove-Item "$startmap\changelog.txt" }  
 
 # Dit staat hier voor versies lager dan 4.5.0 om de logbestanden te hernoemen. Kan op een gegeven moment verwijderd worden.
 if (test-path -path "$logmap") {
@@ -4760,7 +4752,7 @@ $netwerkmapfout = $false
 
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.digitalebestanden $false )) { 
     $tempmap = $global:beheer.examenmappen.digitalebestanden
-    Foutenloggen "$foutmeldingbegin
+    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
 De volgende Netwerkmap is niet gevonden
 $tempmap
     "
@@ -4768,7 +4760,7 @@ $tempmap
 } 
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $false )) { 
     $tempmap = $global:beheer.examenmappen.homemapstudenten
-    Foutenloggen "$foutmeldingbegin
+    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
 De volgende Netwerkmap is niet gevonden
 $tempmap
     "
@@ -4776,7 +4768,7 @@ $tempmap
     } 
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.backupmap $false )) { 
     $tempmap = $global:beheer.examenmappen.backupmap
-    Foutenloggen "$foutmeldingbegin
+    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
 De volgende Netwerkmap is niet gevonden
 $tempmap
     "
