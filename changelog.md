@@ -4,7 +4,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.7.1] - [Unreleased]
+## [4.7.1] - 2025-10-08
 ### Bugfixes
 - Tekstuele fouten bij functies **Moppenbot** en **Instellingen** opgelost.
 - Een niet gebruikte waarde van de gebruikersinstellingen verwijderd.

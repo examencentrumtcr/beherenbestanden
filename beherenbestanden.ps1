@@ -38,9 +38,9 @@ $scriptnaam = $scriptnaam.Replace(".ps1","")
 
 #>
 $global:programma = @{
-    versie = '4.7.1.rc.1'
-    extralabel = 'prerelease.1.251007' # alpha, beta, prerelease of buildnummer (+ eventueel volgnummer) + datum
-    mode = 'prerelease' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    versie = '4.7.1'
+    extralabel = '179.251008' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
+    mode = 'release' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = $scriptnaam
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
 }
