@@ -1,40 +1,11 @@
 ﻿<# 
 Beherenbestanden.ps1
-
 Programma om bestanden op pc's in een netwerk te beheren, dus bestanden klaarzetten, back-uppen, verplaatsen of wissen
-
 Zie voor versienummer hier onder de comments.
-
-Versienummer wordt volgens Semantic Versioning uitgevoerd (zie https://Semver.org)
-
+Versienummer wordt volgens Semantic Versioning uitgevoerd (zie https://semver.org/lang/nl/)
 Dit programma is beschermt met auteursplicht door middel van de GNU GPL (https://www.gnu.org/licenses)
-
-Lees ook de readme.txt op https://beherenbestanden.neveshuis.nl/readme.txt
-
-
-Programma versie wordt aangegeven in de vorm : Versie.Extralabel.DATE
-
-Versie = versie van dit programma en wordt aangegeven in de vorm major.minor.patch
-         In de titelbalk staat de versienummer
-
-Extra label =  Een extra label wordt weergegeven bij info over dit programma
-   Een extra label kan een pre-release of een build zijn
-   Een pre-release wordt aangegeven met alpha, beta of pre-release
-   De build geeft aan hoe vaak het programma is uitgebracht en is een oplopende getal
-   Een build wordt alleen meegegeven als een versie naar release gaat
-
-DATE wordt gegeven als JJMMDD (jaar, maand en dag)
-
-Modes:
-    alpha      : Logbestanden verwijderen is uit, Automatisch updates is uit, Lokale mappen worden gebruikt en Console blijft open
-    beta       : Logbestanden verwijderen is uit, Automatisch updates is uit en Console blijft open
-    update     : Een update wordt getest en de map "test" op website wordt gebruikt hiervoor. Console blijft open
-    prerelease : Wordt gebruikt om alles te testen, dus ook updates en verwijderen logbestanden
-    release    : Normale gebruik
-
-    De modus hoeven niet persé allemaal doorlopen te worden!
-    Bij het opstarten krijg je een melding als je in een testfase zit (modes alpha, beta of prelease)
-
+Lees ook de README.md en LICENSE op https://github.com/examencentrumtcr/beherenbestanden 
+Auteur: Benvindo Neves
 #>
 
 # Hier worden de programma variabelen gedeclareerd.
@@ -42,16 +13,36 @@ Modes:
 <# bepalen naam van deze script. variabele scriptnaam wordt alleen hier gebruikt (en lokaal bij bepaalde functies, nl updaten en informatie over programma)
    alleen de naam vh bestand, dus zonder bovenliggende mappen
    extensie .ps1 wordt verwijderd 
-#>
+   de naam van het programma wordt ook gebruikt in de titelbalk van het hoofdvenster.
+   #>
+
 $scriptnaam = $MyInvocation.InvocationName
 $scriptnaam = Split-Path -leaf $scriptnaam
 $scriptnaam = $scriptnaam.Replace(".ps1","")
-# de naam van het programma wordt ook gebruikt in de titelbalk van het hoofdvenster.
+
+<# object met alle variabelen die het programma beschrijven. 
+   versie wordt aangepast als er een nieuwe versie is.
+   extralabel wordt aangepast als het programma naar een andere fase gaat of als er een nieuwe versie is.
+   mode wordt aangepast afhankelijk van wat je wil testen of als er een nieuwe versie is.
+   naam is de naam van het script. Deze wordt gebruikt in de titelbalk van het hoofdvenster.
+   github is de locatie waar de updates vandaan gehaald worden. Dit is altijd hetzelfde.
+
+   Mode kan de volgende waarden hebben:
+    alpha      : Logbestanden verwijderen is uit, Automatisch updates is uit, Lokale mappen worden gebruikt en Console blijft open
+    beta       : Automatisch updates is uit en Console blijft open
+    prerelease : Updates worden gedownload vanuit de prerelease pagina van Github. Alle functionalliteiten kunnen getest worden.
+    release    : Normale gebruik
+
+    De modus hoeven niet persé allemaal doorlopen te worden!
+    Bij het opstarten krijg je een melding als je in de fase alpha, beta of prelease zit.
+
+#>
 $global:programma = @{
     versie = '4.7.1'
-    extralabel = 'alpha.1.250916'
-    mode = 'alpha' # alpha, beta, update, prerelease of release
+    extralabel = '179.251008' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
+    mode = 'release' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = $scriptnaam
+    github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
 }
 
 write-host ""
@@ -63,19 +54,6 @@ write-host "Initialiseren van het programma."
 <# Manier om console af te sluiten en weer te openen.
    Het sluiten wordt uitgevoerd voor het starten van de hoofdscherm.
 #>
-
-<# # Voor het sluiten van de console window wordt de volgende code gebruikt.
-Add-Type -Name Window -Namespace Console -MemberDefinition '
-[DllImport("Kernel32.dll")]
-public static extern IntPtr GetConsoleWindow();
-
-[DllImport("user32.dll")]
-public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);
-'
-#>
-
-# $ShowWindowAsyncCode = '[DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);'
-# $ShowWindowAsync = Add-Type -MemberDefinition $ShowWindowAsyncCode -name Win32ShowWindowAsync -namespace Win32Functions -PassThru
 $code = '[DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);'
 $ShowWindowAsync = Add-Type -MemberDefinition $code -Name myAPI -PassThru
 $hwnd = (Get-Process -PID $pid).MainWindowHandle
@@ -87,9 +65,6 @@ Add-Type -AssemblyName System.Windows.Forms
 
 # VisualStyles aan zetten ------------------------------------------------------------------
 [System.Windows.Forms.Application]::EnableVisualStyles()
-
-# website met updates van programma
-$updatewebsite = "https://beherenbestanden.neveshuis.nl"
 
 # startmap van het programma bepalen
 $startmap=Split-Path -Parent $PSCommandPath
@@ -111,8 +86,8 @@ $foutmeldingsbestand = -join ("$logmap","\","Foutmeldingen.txt")
 $Global:init=@{}
 
 # de 2 bestanden met info voor venster informatieprogramma
-$readmebestand="readme.txt"
-$changelogbestand="changelog.txt"
+$readmebestand="readme.md"
+$changelogbestand="changelog.md"
 
 # nodig voor werken met hashtabels. zie functies uitvoerentaken en overzichttaken
 $uitvoeren = [hashtable]::Synchronized(@{})
@@ -149,6 +124,25 @@ $global:afbeeldingen = @(
     [PSCustomObject]@{
         naam = 'Thuiswerken'
         bestand = 'thuiswerken.gif'
+    }
+)
+
+# Websites met moppen
+$Global:Moppen = @(
+    [PSCustomObject]@{
+        naam = 'Appspot.com'
+        url = 'https://official-joke-api.appspot.com/jokes/random'
+        taal = 'Engels'
+    },
+    [PSCustomObject]@{
+        naam = 'Apekool.nl'
+        url = 'http://api.apekool.nl/services/jokes/getjoke.php' 
+        taal = 'Nederlands'
+    },
+    [PSCustomObject]@{
+        naam = 'Icanhazdadjoke.com'
+        url = 'http://icanhazdadjoke.com/' 
+        taal = 'Engels'
     }
 )
 
@@ -205,64 +199,12 @@ if ($global:programma.mode -eq "alpha") {
 # functions ---------------------------------------------------------------------------------
 # hieronder de kleine functies die door andere functies gebruikt worden ---------------------
 
-function ShowConsole {
-
-    # ShowConsole() is een functie die de console window weer zichtbaar maakt.
-    # Dit is nodig als je de console window hebt verborgen met HideConsole().
-    # Dit werkt niet in Windows 11 sinds de laatste update. dd 25-06-2025
-    # Daarom  wordt er niets uitgevoerd en volgt hieronder de return
-
-    return;
-    
-    if ($hwnd -ne [System.IntPtr]::Zero) {
-        # When you got HWND of the console window:
-        # (It would appear that Windows Console Host is the default terminal application)
-        $null = $ShowWindowAsync::ShowWindowAsync($hwnd, 2)
-    } else {
-        # When you failed to get HWND of the console window:
-        # (It would appear that Windows Terminal is the default terminal application)
-    
-        # Mark the current console window with a unique string.
-        $UniqueWindowTitle = New-Guid
-        $Host.UI.RawUI.WindowTitle = $UniqueWindowTitle
-        $StringBuilder = New-Object System.Text.StringBuilder 1024
-    
-        # Search the process that has the window title generated above.
-        $TerminalProcess = (Get-Process | Where-Object { $_.MainWindowTitle -eq $UniqueWindowTitle })
-        # Get the window handle of the terminal process.
-        $hwnd = $TerminalProcess.MainWindowHandle
-        if ($hwnd -ne [System.IntPtr]::Zero) {
-        # When you got HWND of the terminal process:
-        $null = $ShowWindowAsync::ShowWindowAsync($hwnd, 2)
-        
-        } else {
-        Write-Host "Niet gelukt om de console window te tonen." -ForegroundColor Red
-        }
-    }
-
-    <#
-        Hide            = 0,
-        Normal          = 1,
-        ShowMinimized   = 2,
-        Maximize        = 3,
-        ShowNoActivate  = 4,
-        Show            = 5,
-        Minimize        = 6,
-        ShowMinNoActive = 7,
-        ShowNA          = 8,
-        Restore         = 9,
-        Showdefault     = 10,
-        Forceminimize   = 11
-    #>
-
-}
-
-function Hide-ConsoleWindow() {
+function ShowHide-ConsoleWindow($mode) {
   
   if ($hwnd -ne [System.IntPtr]::Zero) {
     # When you got HWND of the console window:
     # (It would appear that Windows Console Host is the default terminal application)
-    $null = $ShowWindowAsync::ShowWindowAsync($hwnd, 0)
+    $null = $ShowWindowAsync::ShowWindowAsync($hwnd, $mode)
   } else {
     # When you failed to get HWND of the console window:
     # (It would appear that Windows Terminal is the default terminal application)
@@ -270,7 +212,7 @@ function Hide-ConsoleWindow() {
     # Mark the current console window with a unique string.
     $UniqueWindowTitle = New-Guid
     $Host.UI.RawUI.WindowTitle = $UniqueWindowTitle
-    $StringBuilder = New-Object System.Text.StringBuilder 1024
+    # $StringBuilder = New-Object System.Text.StringBuilder 1024
 
     # Search the process that has the window title generated above.
     $TerminalProcess = (Get-Process | Where-Object { $_.MainWindowTitle -eq $UniqueWindowTitle })
@@ -282,13 +224,13 @@ function Hide-ConsoleWindow() {
     $hwnd = $TerminalProcess.MainWindowHandle
     if ($hwnd -ne [System.IntPtr]::Zero) {
       # afsluiten terminal. Met $null zie je ook geen resultaat op he scherm. dus het woord "true" verschijnt niet.  
-      $null = $ShowWindowAsync::ShowWindowAsync($hwnd, 0) 
+      $null = $ShowWindowAsync::ShowWindowAsync($hwnd, $mode) 
       
     } else {
-      Write-Host "Niet gelukt om de console window te verbergen." -ForegroundColor Red
+      Write-Host "Niet gelukt om de status van de console window te wijzigen naar waarde $mode." -ForegroundColor Red
     }
   }
-}
+} # einde ShowHide-ConsoleWindow
 
 Function declareren_standaardvenster ($titel, $pos_x, $pos_y)
 {
@@ -350,8 +292,11 @@ Rename-Item -Path $logbestand -NewName $logvanvandaag
 
 }
 
-function Foutenloggen ($invoer) {
-
+function Meldingnaarlogbestand {
+param (
+    [Parameter(Mandatory = $true)] [string]$meldtekst, # de melding die gelogd moet worden
+    [string]$type = "FOUTMELDING" # type melding. Standaard is dit "FOUTMELDING" maar je kan ook "INFORMATIE" of "MEDEDELING" meegeven.
+)
 # map aanmaken voor logbestanden als deze niet bestaat
 if (!(Test-Path "$logmap")) { New-Item -Path "$logmap" -ItemType Directory | Out-Null  } 
 
@@ -359,9 +304,9 @@ if (!(Test-Path "$logmap")) { New-Item -Path "$logmap" -ItemType Directory | Out
 $logtijd = get-date -Format "HH:mm:ss"
 
 # loggen. $foutmeldingsbestand is in het begin gedefinieerd.
-"MELDING! " | out-file $foutmeldingsbestand -Append
+"$type" | out-file $foutmeldingsbestand -Append
 "Tijd : $logtijd " | out-file $foutmeldingsbestand -Append
-"$invoer" | out-file $foutmeldingsbestand -Append
+"$meldtekst" | out-file $foutmeldingsbestand -Append
 
 "-------------------------------------------------------------------------
 " | out-file $foutmeldingsbestand -Append
@@ -599,9 +544,9 @@ $algemeen=@{
     maplegenvoorverplaatsen = 'Ja'
     gebruiker = ''
     afbeelding = 'Samenwerken'
-    schuinemoppen = 'Nee'
     consolesluiten = 'Ja'
     controlevoorklaarzetten = 'Ja'
+    websitemoppen = 'Apekool.nl'
 }
 $opschonen=@{
     dagenbewarenlogs = 365
@@ -1131,7 +1076,7 @@ $foutmeldingbegin = "Uitvoeren van een taak : "
 
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { 
     $tempmap = $global:beheer.examenmappen.homemapstudenten
-    Foutenloggen "$foutmeldingbegin
+    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
 De volgende Netwerkmap is niet gevonden
 $tempmap
     "
@@ -1141,7 +1086,7 @@ $tempmap
 if ($uitvoeren.taak -eq "kopiëren") {
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.digitalebestanden $true )) { 
     $tempmap = $global:beheer.examenmappen.digitalebestanden
-    Foutenloggen "$foutmeldingbegin
+    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
 De volgende Netwerkmap is niet gevonden
 $tempmap
     "
@@ -1152,7 +1097,7 @@ $tempmap
 if ($uitvoeren.taak -eq "backup") {
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.backupmap $true )) { 
     $tempmap = $global:beheer.examenmappen.backupmap
-    Foutenloggen "$foutmeldingbegin
+    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
 De volgende Netwerkmap is niet gevonden
 $tempmap
     "
@@ -1194,14 +1139,14 @@ if (($uitvoeren.taak -eq "kopiëren") -and ($uitvoeren.controlemappen)) {
         # Controleren of de mappen leeg zijn. Foutmeldingen worden gelogd maar niet getoond!
         try {
             If ((Get-ChildItem -Path $doelmap -Force -ErrorAction Stop | Measure-Object).Count -gt 0) {
-            # rpc-nr toevoegen aan overzicht van mappen die niet leeg zijn
-            $nietlegemappen = -join ($nietlegemappen, $rpcitem, ' - ')
-            $teller++
-        } 
+                # rpc-nr toevoegen aan overzicht van mappen die niet leeg zijn
+                $nietlegemappen = -join ($nietlegemappen, $rpcitem, ' - ')
+                $teller++
+            } 
         }
         catch {
             $melding = -join ("Extra controle voor het uitvoeren van de taak Bestanden Klaarzetten : ", "`n", $_.exception.message )
-            Foutenloggen $melding
+            Meldingnaarlogbestand -meldtekst $melding
         }
         
     } # einde foreach $rpcitem ...
@@ -1707,8 +1652,8 @@ function inlezengekozenmap ($invoer) {
   catch {
   $ingelezen = ""
   # melding loggen en weergeven
-  $melding = -join ("Venster Bestanden Klaarzetten is geopend : ", "`n", $_.exception.message )
-  Foutenloggen $melding
+  $melding = -join ("Venster bestanden klaarzetten is geopend : ", "`n", $_.exception.message )
+  Meldingnaarlogbestand -meldtekst $melding
   }
   return $ingelezen
 }
@@ -2384,19 +2329,6 @@ $Form2.controls.AddRange(@($listBox, $lijstlocaties, $lijstcrebonrs, $lijstkernt
 $listview1, $listView2, $Btnstart, $Btnescape, $Controlemappen, $Description2,
 $Description3, $Description4, $Description5, $Description8, $Global:vraagtekenicoon ))
 
-# $form2.Topmost = $true
-# $form2.Topmost = $false
-
-<#
-# Bij Escape-toets het venster sluiten.
-$form2.Add_KeyDown({
-    param($sender, $e)
-    if ($e.KeyCode -eq [System.Windows.Forms.Keys]::Escape) { $form2.Close() }
-})
-
-$form2.KeyPreview = $true
-#>
-
 Form2afsluitenbijescape;
 
 # venster tonen
@@ -2894,7 +2826,7 @@ return $uitvoer
 }
 catch {
       $melding = -join ("Taak logbestanden bekijken is gestart : ", "`n", $_.exception.message )
-      Foutenloggen $melding
+      Meldingnaarlogbestand -meldtekst $melding
 }
 } # einde function Inlezenlogs
 
@@ -3111,7 +3043,49 @@ $form.show()
 
 
 function updateuitvoeren {
-# de taak updaten begint hier
+
+    Function vergelijk_versies ($huidigeversie, $updateversie) {
+    # Haal eventuele +rc.x of -rc.x suffixen eruit en bewaar ze
+    $huidigeMain = $huidigeversie -replace '\.rc\.\d+$', ''
+    $updateMain = $updateversie -replace '\.rc\.\d+$', ''
+
+    # Haal rc-nummer indien aanwezig
+    $huidigeRc = $null
+    if ($huidigeversie -match '\.rc\.(\d+)$') { $huidigeRc = [int]$Matches[1] }
+    $updateRc = $null
+    if ($updateversie -match '\.rc\.(\d+)$') { $updateRc = [int]$Matches[1] }
+
+    # Split de hoofdversies in onderdelen
+    $huidigeDeel = $huidigeMain -split '\.'
+    $updateDeel = $updateMain -split '\.'
+
+    for ($i = 0; $i -lt [Math]::Max($huidigeDeel.Length, $updateDeel.Length); $i++) {
+        $huidigeNummer = if ($i -lt $huidigeDeel.Length) { [int]$huidigeDeel[$i] } else { 0 }
+        $updateNummer = if ($i -lt $updateDeel.Length) { [int]$updateDeel[$i] } else { 0 }
+
+        if ($huidigeNummer -lt $updateNummer) {
+            return -1  # Huidige versie is lager
+        } elseif ($huidigeNummer -gt $updateNummer) {
+            return 1   # Huidige versie is hoger
+        }
+    }
+
+    # Vergelijk RC's indien hoofdversies gelijk zijn
+    if ($null -ne $huidigeRc -and $null -ne $updateRc) {
+        if ($huidigeRc -lt $updateRc) { return -1 }
+        elseif ($huidigeRc -gt $updateRc) { return 1 }
+        else { return 0 }
+    } elseif ($null -ne $huidigeRc -and $null -eq $updateRc) {
+        # Release Candidate is altijd lager dan een definitieve release
+        return -1
+    } elseif ($null -eq $huidigeRc -and $null -ne $updateRc) {
+        return 1
+    }
+
+    return 0  # Versies zijn gelijk
+} # einde vergelijk_versies
+
+# de function updateuitvoeren begint hier ****************************************
 
 # alleen starten als programma.mode niet de status alpha of beta heeft.
 if ("alpha","beta" -contains($global:programma.mode)) {
@@ -3124,6 +3098,21 @@ $programmanaam = $global:programma.naam
 # Eerste regel van elke foutmelding
 $foutmeldingbegin = "Uitvoeren van een update :
 "
+# huidige versie van het programma
+$huidigeversie = $global:programma.versie
+
+# Standaard waarde. Als er geen update is gevonden, dan blijft deze waarde 0.0.0. 
+# Let op, dit betekent dat er een probleem is met de update.
+$updateto = "0.0.0" 
+
+# zip-bestand met update op lokale pc
+$zip_download = -join ("$startmap","\","updatebestand.zip")
+
+if (Test-Path -path $zip_download -pathtype leaf) {
+        write-host "Er is net een update uitgevoerd. Het gedownloade bestand wordt verwijderd."
+        Remove-Item $zip_download -Recurse -Force
+        return
+    }
 
 # controleren of het script al is opgestart. Als dit zo is kan het mis gaan bij het updaten.
 try {
@@ -3132,7 +3121,7 @@ try {
 catch {
         # melding loggen
         $melding = -join ($foutmeldingbegin, $_.exception.message )
-        Foutenloggen $melding
+        Meldingnaarlogbestand -meldtekst $melding
         $melding2 = -join ($foutmeldingbegin, "Fout tijdens de controle of het script al is gestart. Zie logbestand voor details." )
         Write-Host $melding2 -ForegroundColor Yellow
         return
@@ -3141,11 +3130,10 @@ catch {
  if ($gevonden) { 
      # er moet altijd een proces gevonden worden omdat dit script in ieder geval draait. Probleem is er als er meerdere processen draaien.
     if ($gevonden.processid.count -gt 1) { 
-        $melding = -join ($foutmeldingbegin, "Het updateproces wordt niet uitgevoerd omdat een andere proces van het script al is opgestart." ) 
+        $melding = -join ($foutmeldingbegin, "Het updateproces is niet uitgevoerd omdat een andere proces van het script al is opgestart." )
         Write-Host $melding -ForegroundColor Yellow
         # Melding ook loggen
-        Foutenloggen $melding
-
+        Meldingnaarlogbestand -meldtekst $melding -type "MEDEDELING"
         Start-Sleep -Seconds 3
         return
     } 
@@ -3154,124 +3142,119 @@ catch {
 # Info geven
 write-host "Controleren op een update."
 
-# Als programma.mode = "update" dan wordt de map Test op de website gebruikt om de update uit te voeren.
-if ($global:programma.mode -eq "update") {
-        $updatewebsite =  -join ($updatewebsite,'/test')
+# dit is de url van de github repository. Hier wordt bepaald of de release of prerelease wordt gedownload.
+$url = $global:programma.github 
+if ($global:programma.mode -eq "release") {
+        $url = -join ($url,"release")
+        } else {
+        $url = -join ($url,"prerelease")
         }
 
-<# $huidigeversie wordt alleen in deze functie gebruikt en is er om te verduidelijken dat dit de huidge versie is en
-   om niet overal "global:" voor te zetten. $versie is namelijk een global variabele.
-#>
-$huidigeversie = $global:programma.versie
-
-# website met laatste update van programma
-$latestupdate = "$updatewebsite/updates/latest"
-
-# Op de website de map met de laatste versie lezen
-$error.clear()
+# inhoud van de map in github ophalen
 try {
-    $content = Invoke-WebRequest $latestupdate -UseBasicParsing -ErrorAction Stop
-    }
+        $response = Invoke-RestMethod -Uri $url -Headers @{ "User-Agent" = "PowerShell" }
+    } 
 catch {
-      $melding = -join ($foutmeldingbegin, "Het is niet gelukt om verbinding te maken met de website!
-Neem contact op met de sitebeheerder van de website $updatewebsite"  ) 
-      # melding loggen
-      Foutenloggen $melding
-      write-host $melding -f Red
-      Start-Sleep -Seconds 8
-      return
-      } 
-
-# updateto een waarde geven voor het geval het fout gaat.
-$updateto = "leeg"
-
-# links zoeken op de website in de map met de laatste versie
-$filename = $content.Links.HREF| select -skip 1 | %{$_.Split("-")} 
-
-# alle gevonden bestanden doorlopen en de laatste versie in de variabele $updateto zetten
-$filename.ForEach( {
-
-    # de programmanaam moet in bestandsnaam aanwezig zijn.
-    if ($_ -like "*$programmanaam*") { 
-    
-    # alleen de naam vh bestand, dus zonder bovenliggende mappen.
-    $bestnaam=Split-Path -leaf $_
-
-    # Versie begint na de _ en is 5 tekens lang
-    $uitvoer = $bestnaam.split('_')[1]
-    $updateto = $uitvoer.substring(0,5)
-
+        $melding = -join ($foutmeldingbegin, "Het is niet gelukt om verbinding te maken met de website!
+Neem contact op met de eigenaar van $url"  ) 
+        # melding loggen
+        Meldingnaarlogbestand -meldtekst $melding
+        write-host $melding -f Red
+        Start-Sleep -Seconds 8
+        return
     }
-} 
-) # einde $filename.foreach
+       
+# Loop door de items in de response en controleer of er een nieuw update is
+foreach ($item in $response) {
+        # alleen bestanden controleren
+        if ($item.type -eq "file") {
+            # bestnaam is de naam van het te controleren bestand
+            $bestnaam = $($item.name) 
 
-# Aangeven of het programma up to date is ....................
+            # controleer of het bestand de juiste format heeft.
+            if ($bestnaam -match "$programmanaam") {
+                # conroleer of het bestand de juiste versieformat heeft.
+                if (( $bestnaam -match "_\d+\.\d+\.\d+\.zip$") -or ( $bestnaam -match "_\d+\.\d+\.\d+\.rc\.\d+\.zip$") ){
 
-if ($updateto -eq "leeg") {
-    $melding = -join ($foutmeldingbegin, "Het is niet gelukt om de laatste versie te vinden op de website!
-Neem contact op met de sitebeheerder van de website $updatewebsite" )
-    Foutenloggen $melding
-    write-host $melding -f Red
-    Start-Sleep -s 8
-    return
+                    # bepaal laatste versie van het script
+                    # versiemetzip is de versie met .zip in de naam.
+                    $versiemetzip = $bestnaam.split('_')[1]
+                    # de positie van de laatste punt in de versie bepalen
+                    $positiepunt = $versiemetzip.LastIndexOf(".")
+                    # updateto is alleen de versie zonder .zip. Dit is de versie die we willen vergelijken met de huidige versie.
+                    $updateto = $versiemetzip.Substring(0, $positiepunt) 
+                    # tedownloadebestand is de naam van het bestand dat gedownload moet worden
+                    $tedownloadenbestand = $item.download_url
 
-    } elseif ($huidigeversie -ge $updateto) {
-    write-host "Het programma heeft de laatste update."
-    return
+                    break # we zoeken maar 1 bestand, dus na de eerste gevonden versie stoppen met zoeken
+                } # einde controle bestnaam met versieformat
+            } # einde controle bestnaam met programmanaam                     
+        } # einde if item.type = file
+    } # einde foreach loop
 
-} 
+# Als er geen update is gevonden, melding geven en loggen
+if ($updateto -eq "0.0.0") {
+        Write-Host "" -f Red
+        $melding = -join ($foutmeldingbegin, "Er is geen update gevonden in de GitHub repository: $url
+Neem contact op met de eigenaar van $url"  ) 
+        # melding loggen
+        Meldingnaarlogbestand -meldtekst $melding
+        write-host $melding -f Red
+        Start-Sleep -Seconds 8
+        return
+    } 
+
+# vergelijken van de huidige versie met de update versie
+$resultaat = vergelijk_versies $huidigeversie $updateto
+if ($resultaat -eq 0) {
+        # Huidige versie is gelijk aan de update versie
+        write-host "Huidige versie is gelijk aan de update versie."
+        return
+    } elseif ($resultaat -gt 0) {
+        # Huidige versie is hoger dan de update versie
+        write-host "Huidige versie is hoger dan de update versie." 
+        return
+     }
+
 
 # Hier aangekomen dan is er een update beschikbaar.
+write-host "`nProgramma wordt geupdatet naar versie $updateto " -f Green
 
-write-host "Programma wordt geupdatet naar versie $updateto " -f Green
+# downloaden zip_download van Github en foutmeldingen opvangen
+$error.clear()
+try {
+    Invoke-WebRequest -Uri $tedownloadenbestand -OutFile $zip_download -ErrorAction Stop
+    }
+
+catch {
+    # foutmelding weergeven, loggen en stoppen
+    $melding = -join ($foutmeldingbegin, "Het updaten is niet gelukt omdat het updatebestand niet is gevonden op de website. 
+Neem contact op met de eigenaar van $url" )
+    Meldingnaarlogbestand -meldtekst $melding
+    write-host $melding -f Red
+    Start-Sleep -Seconds 8
+    return
+    }
 
 # backup maken van hele map voor het geval het mis gaat bij het uitpakken
 # eerst de backupbestand een naam geven
 $backupzip = "$startmap\backup.zip"
 # als deze al bestaat, verwijderen...
-if (test-path -path "$backupzip") { Remove-Item "$backupzip" }
+if (test-path -path "$backupzip" -PathType Leaf) { Remove-Item "$backupzip" }
 # Dan backup maken....
 try {
+    Write-Host "Er wordt een veiligheidsbackup gemaakt."
     Compress-Archive -Path "$startmap\*" -DestinationPath $backupzip -ErrorAction Stop
 }
 catch {
     # foutmelding weergeven en stoppen
-
     $melding = -join ($foutmeldingbegin, "Het updaten is niet gelukt omdat er geen veiligheidsback-up gemaakt kon worden. 
-Neem contact op met de sitebeheerder van de website $updatewebsite")
-    Foutenloggen $melding
+Neem contact op met de eigenaar van $url")
+    Meldingnaarlogbestand -meldtekst $melding
     write-host $melding -f Red
     Start-Sleep -Seconds 8
     return
     }
-
-# variabelen die nodig zijn voor het downloaden. 
-# bestand met update die gedownload wordt
-$scriptnaam = $global:programma.naam
-
-$zip_download = -join ($scriptnaam,"_",$updateto,".zip")
-# pad naar bestand met update op de website, samenvoegen met update die gedownload wordt
-$downloadbestand = -join ("$latestupdate","/","$zip_download")
-# pad naar bestand met update op lokale pc
-$zip_download = -join ("$startmap","\","$zip_download")
-
-# downloaden zip_download van website en foutmeldingen opvangen
-$error.clear()
-try {
-    Invoke-WebRequest "$downloadbestand" -outfile "$zip_download" -ErrorAction Stop
-    }
-
-catch {
-    # foutmelding weergeven, loggen en stoppen
-
-    $melding = -join ($foutmeldingbegin, "Het updaten is niet gelukt omdat het updatebestand niet is gevonden op de website. 
-Neem contact op met de sitebeheerder van de website $updatewebsite" )
-    Foutenloggen $melding
-    write-host $melding -f Red
-    Start-Sleep -Seconds 8
-    return
-    }
-
 
 # uitpakken en installeren van programma
 $error.clear()
@@ -3282,8 +3265,8 @@ catch {
     # foutmelding weergeven en stoppen
     
     $melding = -join ($foutmeldingbegin, "Het updaten is niet gelukt omdat er iets fout ging bij het uitpakken van de nieuwe bestanden. 
-Neem contact op met de sitebeheerder van de website $updatewebsite" )
-    Foutenloggen $melding
+Neem contact op met de eigenaar van $url" )
+    Meldingnaarlogbestand -meldtekst $melding
     write-host $melding -f Red
     Start-Sleep -Seconds 8
     
@@ -3297,22 +3280,23 @@ Neem contact op met de sitebeheerder van de website $updatewebsite" )
     return
     }
 
-# zipbestand en backup na het uitpakken verwijderen
-Remove-Item "$zip_download"
+# de backup na het uitpakken verwijderen. de zipbestand niet omdat bij het starten dan gezien kan worden dat al een update is uitgevoerd.
+# Remove-Item "$zip_download"
 if (test-path -path "$backupzip") { Remove-Item "$backupzip" }
 
-Write-Host -b White -f Red "Het programma heeft een update uitgevoerd en heeft nu de versie $updateto.
+Write-Host -f Yellow "Het programma heeft een update uitgevoerd en heeft nu de versie $updateto.
 Het programma wordt opnieuw opgestart  ..."
+
+Meldingnaarlogbestand -meldtekst "Het programma heeft een update uitgevoerd en heeft nu de versie $updateto." -type "INFORMATIE"
 
 Start-Sleep -Seconds 5
 
-# opnieuw opstarten script met een andere procesnummer, zie de regel met start-proces hieronder, wordt niet meer gebruikt sinds 4.5.3.
-# Dit was nodig toen Sharepoint werd gebruikt. Nu wordt weer de oude methode gebruikt.
-$scriptnaam = $global:programma.naam
-# start-process PowerShell.exe -argumentlist '-file',".\$scriptnaam.ps1"
-powershell -file "$PSScriptRoot\$scriptnaam.ps1"
+# opnieuw opstarten script met een andere procesnummer (sessie). De de oude kan worden afgesloten.
+start-process PowerShell.exe -argumentlist '-file',".\$programmanaam.ps1"
+# dit was de oude manier van starten:
+# powershell -file "$PSScriptRoot\$scriptnaam.ps1"
 
-# beëindigen van programma als updaten is uitgevoerd. Anders kan je na een update niet afsluiten.
+# beëindigen van huidige proces. Script gaat verder in het nieuwe proces dat met start-process is gestart.
 exit;
 
 
@@ -3426,21 +3410,19 @@ $global:afbeeldingen.ForEach( {
 
 })
 
-<# Tijdelijk uitgeschakeld omdat moppenbot.nl een error geeft!
 $keuzeoptie7                     = New-Object system.Windows.Forms.ComboBox
-$keuzeoptie7.width               = 80
+$keuzeoptie7.width               = 230
 $keuzeoptie7.autosize            = $true
 $keuzeoptie7.DropDownStyle       = "DropDownList"
 $keuzeoptie7.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie7.location = "450,345" 
-[void] $keuzeoptie7.Items.Add("Ja")
-[void] $keuzeoptie7.Items.Add("Nee")
-if ($global:init["algemeen"]["schuinemoppen"] -eq "Ja") {
-    $keuzeoptie7.Selectedindex = 0
-    } else {
-    $keuzeoptie7.Selectedindex = 1
-    }
-#>
+$keuzeoptie7.location = "300,335" 
+
+[int]$teller = 0
+$global:moppen.ForEach( {
+    [void] $keuzeoptie7.Items.Add($_.naam)
+    if ($_.naam -eq $global:init["algemeen"]["websitemoppen"]) {$keuzeoptie7.Selectedindex = $teller}
+    $teller+=1
+})
 
 $keuzeoptie8 = New-Object System.Windows.Forms.TextBox 
 $keuzeoptie8.Location = New-Object System.Drawing.Size(300,15) 
@@ -3493,7 +3475,7 @@ $Description2                     = New-Object system.Windows.Forms.Label
 $Description2.text                = "Homemap kandidaten wissen na uitvoeren van een back-up"
 $Description2.AutoSize            = $false
 $Description2.width               = 400
-$Description2.height              = 30
+$Description2.height              = 40
 $Description2.location            = New-Object System.Drawing.Point(40,100)
 $Description2.Font                = 'Microsoft Sans Serif,11'
 $Description2.ForeColor = [System.Drawing.Color]::Blue
@@ -3526,7 +3508,7 @@ $Description4.add_MouseHover({
 })
 
 $Description5                     = New-Object system.Windows.Forms.Label
-$Description5.text                = "Standaard dagen voor het verwijderen van logbestanden van het programma"
+$Description5.text                = "Aantal dagen dat de logbestanden van het programma bewaard blijven"
 $Description5.AutoSize            = $false
 $Description5.width               = 400
 $Description5.height              = 40
@@ -3549,9 +3531,9 @@ $Description6.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Wijzigen van albeelding in hoofdmenu" )
 })
 
-<# Tijdelijk uitgeschakeld omdat moppenbot.nl een error geeft!
+
 $Description7                     = New-Object system.Windows.Forms.Label
-$Description7.text                = "De moppenbot toont ook schuine moppen"
+$Description7.text                = "Keuze voor website met moppen"
 $Description7.AutoSize            = $false
 $Description7.width               = 400
 $Description7.height              = 40
@@ -3559,9 +3541,9 @@ $Description7.location            = New-Object System.Drawing.Point(40,340)
 $Description7.Font                = 'Microsoft Sans Serif,11'
 $Description7.ForeColor = [System.Drawing.Color]::Blue
 $Description7.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bepaal of je ook schuine moppen wil tonen met de moppenbot." )
+    $global:tooltip1.SetToolTip($this, "Bepaal welke website standaard de moppen genereerd." )
 })
-#>
+
 
 $Description8                     = New-Object system.Windows.Forms.Label
 $Description8.text                = "Jouw naam"
@@ -3616,7 +3598,7 @@ $Btnstandaard.add_click({
     $keuzeoptie4.SelectedItem=$temp_init["opschonen"]["opschonenlogs"]
     $keuzeoptie5.Text=$temp_init["opschonen"]["dagenbewarenlogs"]
     $keuzeoptie6.SelectedItem=$temp_init["algemeen"]["afbeelding"]
-    # $keuzeoptie7.SelectedItem=$temp_init["algemeen"]["schuinemoppen"]
+    $keuzeoptie7.SelectedItem=$temp_init["algemeen"]["websitemoppen"]
     $keuzeoptie9.SelectedItem=$temp_init["algemeen"]["consolesluiten"]
     $keuzeoptie10.SelectedItem=$temp_init["algemeen"]["controlevoorklaarzetten"]
 }) # einde Btnstandaard.add_click
@@ -3689,8 +3671,8 @@ Als u de instellingen wilt bewaren klikt u op Bewaren.
 Als u terug wilt zonder de instellingen te bewaren klikt u op Terug.
 " 
 
-$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie6, $keuzeoptie1, $keuzeoptie2, $keuzeoptie3, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie10,
-$description1, $description2, $description3, $description4, $description5, $description6, $description8, $description9, $description10,
+$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie6, $keuzeoptie1, $keuzeoptie2, $keuzeoptie3, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie10, $keuzeoptie7,
+$description1, $description2, $description3, $description4, $description5, $description6, $description8, $description9, $description10, $description7,
 $Btnaccept, $Btnescape, $Btnstandaard, $Global:vraagtekenicoon, $gifbox2 ))
 
 Form2afsluitenbijescape;
@@ -3706,7 +3688,7 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
     $global:init["algemeen"]["wissennabackup"]=$keuzeoptie2.Selecteditem
     $global:init["algemeen"]["maplegenvoorverplaatsen"]=$keuzeoptie3.Selecteditem
     $global:init["opschonen"]["opschonenlogs"]=$keuzeoptie4.Selecteditem
-    # $global:init["algemeen"]["schuinemoppen"]=$keuzeoptie7.Selecteditem
+    $global:init["algemeen"]["websitemoppen"]=$keuzeoptie7.Selecteditem
     $global:init["algemeen"]["consolesluiten"]=$keuzeoptie9.Selecteditem
     $global:init["algemeen"]["controlevoorklaarzetten"]=$keuzeoptie10.Selecteditem
     # alle spaties aan begin en eind weghalen
@@ -3719,8 +3701,8 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
     if (!($keuzeoptie5.Text -eq "" )) {
         # eventueel de nullen ervoor weghalen
         [int32]$getal1=$keuzeoptie5.Text
-        # alleen als getal1 groter dan 0 is wordt de wijging doorgevoerd
-        if ($getal1 -gt 0) { $global:init["opschonen"]["dagenbewarenlogs"]=$getal1 }
+        # alleen als getal1 groter of gelijk is aan 0 is wordt de wijging doorgevoerd
+        if ($getal1 -ge 0) { $global:init["opschonen"]["dagenbewarenlogs"]=$getal1 }
     }
     $global:init["algemeen"]["afbeelding"]=$keuzeoptie6.Selecteditem
     # afbeelding in hoofdmenu wordt aangepast
@@ -3740,9 +3722,9 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
     # Console open houden of sluiten
     if (($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'prerelease')) {
         if ($keuzeoptie9.Selectedindex -eq 0) {
-        Hide-ConsoleWindow;
+        ShowHide-ConsoleWindow 0;
         } else {
-        ShowConsole;
+        ShowHide-ConsoleWindow 5;
         }
     }
 
@@ -3788,7 +3770,7 @@ try {
 }
 catch {
         $melding = -join ("Taak verwijderen van backups van de homemappen is gestart : ", "`n", $_.exception.message )
-        Foutenloggen $melding
+        Meldingnaarlogbestand -meldtekst $melding
        }
 # Knop Bevestigen laten zien als er mappen zijn om te verwijderen
 if ($tellerbackups -eq 0 ) { $Btnaccept.Enabled=$false }
@@ -4105,8 +4087,8 @@ $form.show()
 function opschonenlogsbijstart {
 
 
-# alleen starten als dit is ingesteld in opschonenlogs en programma.mode niet de status alpha of beta heeft.
-if (($global:init.opschonen.opschonenlogs -eq "Nee") -or ("alpha","beta" -contains($global:programma.mode)) ) {
+# alleen starten als dit is ingesteld in opschonenlogs en programma.mode niet de status alpha heeft.
+if (($global:init.opschonen.opschonenlogs -eq "Nee") -or ("alpha" -contains($global:programma.mode)) ) {
     return;
 }
 
@@ -4155,7 +4137,7 @@ try {
 catch {
         # melding loggen en weergeven
         $melding = -join ($melding_opschonen_begint, "`n", $_.exception.message )
-        Foutenloggen $melding
+        Meldingnaarlogbestand -meldtekst $melding
         Write-Host $melding -ForegroundColor Red
         return;
 }
@@ -4167,7 +4149,7 @@ if ( $tellerlogs -eq 0) {
 
 # start proces verwijderen
 
-Write-Host "Opschonen van oude logbestanden."
+Write-Host "Opschonen van $tellerlogs logbestanden."
 
 # in logbestand schrijven
 $melding_opschonen_begint | out-file $logbestand -Append
@@ -4199,7 +4181,8 @@ catch {
 
 # in logbestand eindtijd schrijven
 # eerst eindtijd naar variabele
-# alleen uitvoeren als aantal dagen verwijderen logs > 0. Zo wordt alles verwijderd als je dit als 0 instelt. Nu blijft de laatste log met het opschonen bestaan.
+# alleen uitvoeren als aantal dagen verwijderen logs > 0. Zo wordt alles verwijderd als je dit als 0 instelt. 
+# Nu blijft de laatste log met het opschonen bestaan.
 if ( $getal2 -gt 0) {
     $logtijd = bepaaltijd
 
@@ -4211,7 +4194,10 @@ if ( $getal2 -gt 0) {
     # tijdelijke log toevoegen aan eigen logbestand als deze al bestaat, anders bestand hernoemen.
     Logbestandtoevoegen $logbestand
 
-} # einde if 
+} else {
+    # tijdelijke logbestand verwijderen
+    Remove-Item -Path $logbestand -Force
+}
 
 } # einde opschonenlogsbijstart
 
@@ -4220,14 +4206,37 @@ function Venstermetgrap {
 
 function laadgrap {
 # een random grap ophalen en in tekst-variabele plaatsen
+
 try {
-    $quote = Invoke-RestMethod -Method Get -Uri 'http://api.apekool.nl/services/jokes/getjoke.php' -erroraction Stop
-    $tekst = $quote.joke
+    switch ($keuzewebsite.Selecteditem) {
+        'Apekool.nl' {
+        # toevoegen van -ContentType "application/json; charset=utf-8bom" heeft geen zin.
+        $quote = Invoke-RestMethod -Method Get -Uri 'http://api.apekool.nl/services/jokes/getjoke.php' -erroraction Stop
+        $tekst = $quote.joke 
+        $reload.Enabled = $true
+          }
+        'Appspot.com' {
+        $quote = Invoke-RestMethod -Method Get -Uri 'https://official-joke-api.appspot.com/jokes/random' -erroraction Stop
+        $tekst = $quote.setup + "`r`n" + $quote.punchline
+        $reload.Enabled = $true
+          }
+        'Icanhazdadjoke.com' {
+        $Header = @{'Accept' = 'application/json' }
+        $quote = (Invoke-RestMethod -Method Get -Uri 'https://icanhazdadjoke.com/' -Headers $Header -UseBasicParsing).joke
+        $tekst = $quote
+        $reload.Enabled = $true
+          }
+        Default { 
+        $tekst = 'Kies een website met moppen bij de keuzelijst hieronder.'
+        $reload.Enabled = $false 
+        }
+    }
+    
 }
 catch {
-$tekst = "Het is niet gelukt een mop te krijgen van de API van apekool.nl." + "`r`n" + "De website geeft de volgende melding: " + "`r`n" + $_.exception.message
-Foutenloggen $tekst
-$reload.Enabled = $false  
+    $tekst = "Het is niet gelukt een mop te krijgen van de API van " + $keuzewebsite.selecteditem + "`r`n" + "De website geeft de volgende melding: " + "`r`n" + $_.exception.message
+    Meldingnaarlogbestand -meldtekst $tekst
+    $reload.Enabled = $false  
 }
 
 return $tekst
@@ -4278,29 +4287,36 @@ $objtekst1.Text = laadgrap
 
 $Form2.Controls.Add($reload);
 
-<# Schuine moppen is alleen van toepassing bij moppenbot.nl maar deze website geeft een error.
+$keuzewebsite                     = New-Object system.Windows.Forms.ComboBox
+$keuzewebsite.width               = 360
+$keuzewebsite.autosize            = $true
+$keuzewebsite.DropDownStyle       = "DropDownList"
+$keuzewebsite.Font                = 'Microsoft Sans Serif,12'
+$keuzewebsite.location = "500,210" 
 
-$schuinemoppen = New-Object System.Windows.Forms.Checkbox 
-$schuinemoppen.Location = New-Object System.Drawing.Point(450,212)
-$schuinemoppen.Size = New-Object System.Drawing.Size(300,30)
-$schuinemoppen.Text = "Schuine moppen ook weergeven"
-$schuinemoppen.Font = 'Microsoft Sans Serif,11'
-$schuinemoppen.ForeColor = [System.Drawing.Color]::green
-$schuinemoppen.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Geef aan of je ook schuine moppen wil laten zien." )
+[int]$teller = 0
+$global:moppen.ForEach( {
+    [void] $keuzewebsite.Items.Add($_.naam)
+    # adhv ingestelde keuze bij instellingen bepaal je de geselecteerde item
+    if ($_.naam -eq $global:init["algemeen"]["websitemoppen"]) {$keuzewebsite.Selectedindex = $teller}
+    $teller+=1
+
 })
 
-if (($global:init["algemeen"]["schuinemoppen"]) -eq "Ja") {
-    $schuinemoppen.checked = $true
-    } else {
-    $schuinemoppen.checked = $false
-    }
-$Form2.Controls.Add($schuinemoppen);
-#>
+$keuzewebsite.add_SelectedIndexChanged({
+    $objtekst1.Text = laadgrap
+})
+
+# $reload en $keuzewebsite moeten eerst gedefinieerd moeten worden.
+# dit is nodig zodat als er geen mop geladen kan worden, de knop reload uitgeschakeld is.
+$objtekst1.Text = laadgrap
+
+$Form2.Controls.Add($keuzewebsite);
 
 # venster met uitleg over deze taak wordt gedeclareerd.
-declareren_uitlegvenster "Uitleg over het venster Moppen." 700 200 500 210 "Hier wordt een mop genereerd en weergegeven.
-De mop wordt opgehaald van de API van apekool.nl.
+declareren_uitlegvenster "Uitleg over het venster Moppen." 700 200 450 210 "Hier wordt een mop gegenereerd en weergegeven.
+Rechtsonder staat de website waaruit de mop is gehaald.
+Klik hierop om een andere website te kiezen.
 Met de knop Nog een grap kan je een nieuwe mop genereren.
 De knop Terug brengt je terug naar het hoofdvenster." 
 
@@ -4355,38 +4371,36 @@ $geselecteerdebronmap.Add($mijndocumentenmap)
 }
 
 Function geselecteerdemap_vullen ($selectie) {
+# vullen van de rechter venster met de inhoud van de geselecteerde map of submap
+    try { 
+        $inhoud = Get-ChildItem -Path "$selectie" -ErrorAction Stop | Sort-object 
 
-
-  try { 
-  # weergeven inhoud in rechter venster (inhoud geselecteerde map). En fouten opvangen.
-  $inhoud = Get-ChildItem -Path "$selectie" -ErrorAction Stop | Sort-object 
-
-  # dan netjes in rijen plaatsen.
-  foreach ($item in $inhoud) {
+        # dan netjes in rijen plaatsen.
+        foreach ($item in $inhoud) {
         toevoegen_lijst1 $selectie $item.Name $item.LastWriteTime $item.Length
         $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $Item.Name)
-       }
-  }
-  catch {
-  # melding loggen en weergeven
-  $melding = -join ("Venster Verkenner is geopend : ", "`n", $_.exception.message )
-  Foutenloggen $melding
-  }
+            }
+        }
+    catch {
+        # melding loggen en weergeven
+        $melding = -join ("Venster Verkenner is geopend : ", "`n", $_.exception.message )
+        Meldingnaarlogbestand -meldtekst $melding
+        }
 
-  # aanpassen venster aan inhoud
-  $listView1.AutoResizeColumns(1) 
+    # aanpassen venster aan inhoud
+    $listView1.AutoResizeColumns(1) 
 
-  # Weergeven submappen van homemap kandidaat in bovenste venster (submappenvenster)
-  if ( $listBox.selecteditems.count -eq 1) {
+    # Weergeven submappen van homemap kandidaat in bovenste venster (submappenvenster)
+    if ( $listBox.selecteditems.count -eq 1) {
         $objtekst2.Text = $listBox.SelectedItem
-     } else {
+    } else {
         $objtekst2.Text = ''
-     }
+    }
 
-  foreach ($item in $geselecteerdebronmap) {
+    foreach ($item in $geselecteerdebronmap) {
           $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $Item)
-  }
-} # einde geselecteerdemap_vullen
+        }
+    } # einde geselecteerdemap_vullen
 
 
 # ----------- Start function VensterVerkenner -------------------------------
@@ -4703,6 +4717,9 @@ if (test-path -path "$startmap\netwerkschijvencontroleren.exe") { Remove-Item "$
 if (test-path -path "$startmap\png\controleren-2.gif") { Remove-Item "$startmap\png\controleren-2.gif" }  
 if (test-path -path "$startmap\png\nieuwe map") { Remove-Item "$startmap\png\nieuwe map" -Force -Recurse }
 if (test-path -path "$startmap\snelkoppeling_maken.exe") { Remove-Item "$startmap\snelkoppeling_maken.exe" }   
+# verwijderen readme.txt en changelog.txt vanaf versie 4.7.1
+if (test-path -path "$startmap\readme.txt") { Remove-Item "$startmap\readme.txt" }  
+if (test-path -path "$startmap\changelog.txt") { Remove-Item "$startmap\changelog.txt" }  
 
 # Dit staat hier voor versies lager dan 4.5.0 om de logbestanden te hernoemen. Kan op een gegeven moment verwijderd worden.
 if (test-path -path "$logmap") {
@@ -4735,7 +4752,7 @@ $netwerkmapfout = $false
 
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.digitalebestanden $false )) { 
     $tempmap = $global:beheer.examenmappen.digitalebestanden
-    Foutenloggen "$foutmeldingbegin
+    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
 De volgende Netwerkmap is niet gevonden
 $tempmap
     "
@@ -4743,7 +4760,7 @@ $tempmap
 } 
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $false )) { 
     $tempmap = $global:beheer.examenmappen.homemapstudenten
-    Foutenloggen "$foutmeldingbegin
+    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
 De volgende Netwerkmap is niet gevonden
 $tempmap
     "
@@ -4751,7 +4768,7 @@ $tempmap
     } 
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.backupmap $false )) { 
     $tempmap = $global:beheer.examenmappen.backupmap
-    Foutenloggen "$foutmeldingbegin
+    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
 De volgende Netwerkmap is niet gevonden
 $tempmap
     "
@@ -4771,7 +4788,7 @@ write-host "Opstarten hoofdvenster."
 # Hide Console. Alleen bij mode = release of prerelease
 if (( ($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'prerelease')) -and ($global:init.algemeen.consolesluiten -eq 'Ja')) { 
     write-host "De console wordt afgesloten..."
-    Hide-ConsoleWindow 
+    ShowHide-ConsoleWindow 0;
     }
 
 # Hoofdvenster declareren --------------------------------------------------------------------
