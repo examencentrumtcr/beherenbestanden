@@ -116,8 +116,7 @@ Zie <https://www.gnu.org/licenses/> voor meer informatie.
 Als dit gebeurt:  
 ➡️ Wacht tot de taak is afgerond en controleer of het script nog werkt.  
 
-✅ Dit probleem is opgelost vanaf **versie 4.2.2**.  
-Zie changelog: <https://github.com/examencentrumtcr/beherenbestanden/tree/main>  
+✅ Dit probleem is opgelost vanaf **versie 4.2.2** (Zie changelog).
 
 ---
 
@@ -139,4 +138,4 @@ Zie changelog: <https://github.com/examencentrumtcr/beherenbestanden/tree/main>
 
 ## 9. Changelog
 
-Zie: <https://github.com/examencentrumtcr/beherenbestanden/tree/main>
+Zie: <https://github.com/examencentrumtcr/beherenbestanden/tree/main/changelog.md>
