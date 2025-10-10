@@ -13,7 +13,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 - In de programma code wijzigingen aangebracht in hoe met bepaalde fases wordt omgegaan.
 - Van 2 functies 1 gemaakt om de programma code te verbeteren.
 - Bij de moppenbot heb je de keuze uit moppen van 3 websites.
-- Het is mogelijk om logbestanden helemaal niet meer te bewaren.
+- Het is mogelijk om logbestanden helemaal niet meer te bewaren door als invoer 0 te geven.
 - Het script wordt nu geüpdatet vanuit een repository in Github.
 - Een aantal verbeteringen aan het updateproces toegepast; 
   Na een update start de script in een andere sessie en controleert niet opnieuw.

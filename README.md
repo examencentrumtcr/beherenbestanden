@@ -11,20 +11,22 @@ De belangrijkste update was de herschrijving in **PowerShell**.
 
 ### Hoofdfunctionaliteiten
 - Bestanden kopiëren naar mappen  
-- Bestanden back-uppen  
+- Een back-up maken van mappen
 
 ### Extra functionaliteiten
-- Bestanden verwijderen  
+- Bestanden in mappen verwijderen  
 - Bestanden tussen mappen verplaatsen of kopiëren  
-- Doelmappen verkennen  
-- Script automatisch updaten  
-- Belangrijke taken loggen  
-- Logbestanden bekijken  
+- Inhoud van mappen verkennen  
 - Standaard persoonlijke instellingen aanpassen  
 - Oude back-ups opruimen  
-- Logbestanden opruimen bij opstart  
+- Gebeurtenissen (logs) bekijken
+- Gebeurtenissen (logs) verwijderen bij de start van het programma    
 - Programmainfo, README en changelog tonen  
-- Een grapje ophalen van [apekool.nl](https://apekool.nl)  
+- Een grapje ophalen van een website (Er zijn 3 websites waaruit te kiezen is) 
+
+### Functionaliteiten die automatisch worden uitgevoerd
+- Script updaten bij de start van het programma 
+- Gebeurtenissen (logs) in een bestand bijhouden
 
 ---
 
@@ -33,7 +35,9 @@ De belangrijkste update was de herschrijving in **PowerShell**.
 Dit script werkt op **Windows 10 of nieuwer** en vereist **PowerShell 5.1 of hoger**.
 
 ### Methode 1: Installer (aanbevolen)
-Download: [setup-beherenbestanden.exe](https://beherenbestanden.neveshuis.nl/setup)
+- Download: [setup-beherenbestanden.zip](https://github.com/examencentrumtcr/beherenbestanden/tree/main/setup)
+- Uitpakken
+- Dubbelklik op setup-beheren.exe
 
 > ⚠️ Microsoft Defender SmartScreen kan het bestand blokkeren, maar deze waarschuwing kan veilig genegeerd worden.
 
@@ -45,7 +49,8 @@ Tijdens de installatie kun je kiezen voor:
 De standaardopties zijn aanbevolen. Klik op **"Installeren"** om verder te gaan.
 
 ### Methode 2: ZIP-bestand
-Download: [latest.zip](http://beherenbestanden.neveshuis.nl/updates/latest)
+- Download: [beherenbestanden_versie.zip](https://github.com/examencentrumtcr/beherenbestanden/tree/main/release)
+- Uitpakken
 
 Pak het bestand uit in een map waar de gebruiker schrijfrechten heeft.  
 > ⚠️ Bij deze methode moet je handmatig een snelkoppeling maken en rekening houden met beperkingen van PowerShell-scripts.  
@@ -59,7 +64,9 @@ Configuratie is alleen nodig als:
 - PowerShell beperkt is in het uitvoeren van scripts.  
 
 ### Snelkoppeling maken
-Voer `snelkoppeling_maken.exe` uit – dit maakt een snelkoppeling en zet PowerShell in een onbeperkte modus.  
+Voer `snelkoppeling_maken.ps1` uit → klik met de rechtermuisknop op het script en kies  
+  `Openen met > Windows PowerShell` of `Uitvoeren met PowerShell`.  
+Dit maakt een snelkoppeling en zet PowerShell in een onbeperkte modus.  
 
 ### PowerShell-uitvoering toestaan
 Voer `Wijzig_Executionpolicy_bypass.bat` uit.  
@@ -72,7 +79,7 @@ Zonder dit kan PowerShell een **Execution Policy-waarschuwing** tonen.
 ## 4. Gebruik
 
 - Als je een snelkoppeling hebt gemaakt → **dubbelklik erop**.  
-- Anders → klik met de rechtermuisknop op het script en kies  
+- Anders → klik met de rechtermuisknop op het `beherenbestanden.ps1` en kies  
   `Openen met > Windows PowerShell` of `Uitvoeren met PowerShell`.  
 
 ---
@@ -110,7 +117,7 @@ Als dit gebeurt:
 ➡️ Wacht tot de taak is afgerond en controleer of het script nog werkt.  
 
 ✅ Dit probleem is opgelost vanaf **versie 4.2.2**.  
-Zie changelog: <https://beherenbestanden.neveshuis.nl>  
+Zie changelog: <https://github.com/examencentrumtcr/beherenbestanden/tree/main>  
 
 ---
 
@@ -132,4 +139,4 @@ Zie changelog: <https://beherenbestanden.neveshuis.nl>
 
 ## 9. Changelog
 
-Zie: <https://beherenbestanden.neveshuis.nl>
+Zie: <https://github.com/examencentrumtcr/beherenbestanden/tree/main>
