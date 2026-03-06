@@ -38,9 +38,9 @@ $scriptnaam = $scriptnaam.Replace(".ps1","")
 
 #>
 $global:programma = @{
-    versie = '4.7.1'
-    extralabel = '179.251008' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
-    mode = 'release' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    versie = '4.8.0'
+    extralabel = 'alpha.251008' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
+    mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = $scriptnaam
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
 }
@@ -547,14 +547,19 @@ $algemeen=@{
     consolesluiten = 'Ja'
     controlevoorklaarzetten = 'Ja'
     websitemoppen = 'Apekool.nl'
+    nieuwelayout =  'Ja'
 }
 $opschonen=@{
     dagenbewarenlogs = 365
     opschonenlogs = 'Ja'
 }
+$uitvoerennaopstarten=@{
+    updateinfo = 'Ja'
+}
 $Std_inst=@{
     algemeen  = $algemeen
     opschonen = $opschonen
+    uitvoerennaopstarten = $uitvoerennaopstarten
 }
 
 return $Std_inst
@@ -3291,6 +3296,12 @@ Meldingnaarlogbestand -meldtekst "Het programma heeft een update uitgevoerd en h
 
 Start-Sleep -Seconds 5
 
+# Zorgen dat na de update de update informatie wordt weergegeven in het hoofdvenster. Hiervoor wordt een waarde in het init bestand aangepast. 
+# Deze waarde wordt bij het opstarten van het programma gelezen en zorgt ervoor dat de update informatie wordt weergegeven. 
+$Global:init.uitvoerennaopstarten.updateinfo='Ja'
+$gebruikersbestand = bepaalinitnaamgebruiker
+$global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
+
 # opnieuw opstarten script met een andere procesnummer (sessie). De de oude kan worden afgesloten.
 start-process PowerShell.exe -argumentlist '-file',".\$programmanaam.ps1"
 # dit was de oude manier van starten:
@@ -5073,11 +5084,29 @@ $Form.Controls.Add($gifbox)
 
 # Einde hoofdvenster declareren
 
-# Als het programma in testfase is, dan venster tonen met melding
+# Bij het tonen van het hoofdvenster, een aantal controles uitvoeren. Bijvoorbeeld een melding tonen als het programma nog in testfase is.
 $form.add_Shown({ 
+    # Als het programma in testfase is, dan venster tonen met melding
     $mode=$global:programma.mode
     if ($global:programma.mode -ne 'release') {
         $null = venstermetvraag -titel "Programma is nog in testfase" -vraag "`r`nLET OP : Programma is nog in testfase $mode.`r`nGebruik het programma nu alleen voor testdoeleinden."
+    }
+
+    # Als er een update is uitgevoerd of het programma is net geïnstalleerd, dan venster tonen met melding dat er een update is uitgevoerd of dat het programma net is geïnstalleerd.
+    # Deze melding wordt alleen 1 keer getoond 
+    if ($Global:init.uitvoerennaopstarten.updateinfo -eq 'Ja') {
+        # Na elke update of bij nieuwe installatie is er een venster met informatie over de update. Deze wordt alleen 1 keer getoond.
+        $null = venstermetvraag -titel "Informatie over uitgevoede update" -vraag "Het programma heeft een update uitgevoerd. `r`n
+De belangrijkste wijzigingen zijn: 
+- Er wordt na elke update informatie getoond in een venster.
+- Er is een nieuwe layout van het programma. `r`n
+Als u de oude layout wilt gebruiken dan kunt u dit bij instellingen altijd wijzigen." -schuifbalk "beide"
+
+        # Deze vraag niet meer stellen -> Waarde op nee zetten en bewaren
+        $Global:init.uitvoerennaopstarten.updateinfo='Nee'
+        $gebruikersbestand = bepaalinitnaamgebruiker
+        # Tijdelijk uitgeschakeld. Moet weer ingeschakeld worden.
+        $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
     }
  } )
 
