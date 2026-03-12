@@ -39,7 +39,7 @@ $scriptnaam = $scriptnaam.Replace(".ps1","")
 #>
 $global:programma = @{
     versie = '4.8.0'
-    extralabel = 'alpha.251008' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
+    extralabel = 'alpha.260311' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = $scriptnaam
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
@@ -192,6 +192,39 @@ if ($global:programma.mode -eq "alpha") {
         $global:beheer.examenmappen = $lokalemappen
         }
 
+# Lijst met bestandsformaten die worden herkend als afbeelding. Deze worden gebruikt bij functies Bestanden kopieren en Verkenner.
+$global:bestandsformaten = @(
+    [PSCustomObject]@{
+        naam = 'Explorer'
+        icoon = 'explorer-icoon.png'
+        typen = @('folder')
+        app = 'verkenner'
+    },
+    [PSCustomObject]@{
+        naam = 'Tekst'
+        icoon = 'file-icoon.png'
+        typen = @('txt', 'log', 'ini', 'json', 'md')
+        app = 'C:\Windows\System32\notepad.exe'
+    },
+    [PSCustomObject]@{
+        naam = 'Word'
+        icoon = 'file-icoon-word.png'
+        typen = @('doc', 'docx')
+        app = 'C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE'
+    },
+    [PSCustomObject]@{
+        naam = 'Excel'
+        icoon = 'file-icoon-excel.png'
+        typen = @('xls', 'xlsx')
+        app = 'C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE'
+    },
+    [PSCustomObject]@{
+        naam = 'PDF'
+        icoon = 'file-icoon-pdf.png'
+        typen = @('pdf')
+        app = 'C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe'
+    }
+)
 
 # Einde declareren variabelen
 
@@ -711,42 +744,14 @@ Function Declareericoontjes {
 
 $std_imageList = new-Object System.Windows.Forms.ImageList 
 $std_imageList.ImageSize = New-Object System.Drawing.Size(30,30) 
-$bitm0=[System.Drawing.Image]::FromFile("$icoontjesmap\explorer-icoon.png")
-$bitm1=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon.png")
-$bitm2=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-word.png")
-$bitm3=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-excel.png")
-$bitm4=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-pdf.png")
-$bitm5=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-visio.png")
-$bitm6=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-afbeelding.png")
-$bitm7=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-exe.png")
-$bitm8=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-link.png")
-$bitm9=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-muziek.png")
-$bitm10=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-pka.png")
-$bitm11=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-sjabloon.png")
-$bitm12=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-video.png")
-$bitm13=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-zip.png")
-$bitm14=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-powerpoint.png")
-$bitm15=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-website.png")
-$bitm16=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-programmeren.png")
-$bitm17=[System.Drawing.Image]::FromFile("$icoontjesmap\file-icoon-database.png")
-$std_imageList.Images.Add("explorer", $bitm0) 
-$std_imageList.Images.Add("file-icoon", $bitm1) 
-$std_imageList.Images.Add("word", $bitm2) 
-$std_imageList.Images.Add("excel", $bitm3) 
-$std_imageList.Images.Add("pdf", $bitm4) 
-$std_imageList.Images.Add("visio", $bitm5) 
-$std_imageList.Images.Add("afbeelding", $bitm6) 
-$std_imageList.Images.Add("exe", $bitm7) 
-$std_imageList.Images.Add("link", $bitm8) 
-$std_imageList.Images.Add("muziek", $bitm9) 
-$std_imageList.Images.Add("pka", $bitm10) 
-$std_imageList.Images.Add("sjabloon", $bitm11) 
-$std_imageList.Images.Add("video", $bitm12) 
-$std_imageList.Images.Add("zip", $bitm13) 
-$std_imageList.Images.Add("powerpoint", $bitm14) 
-$std_imageList.Images.Add("website", $bitm15) 
-$std_imageList.Images.Add("programmeren", $bitm16) 
-$std_imageList.Images.Add("database", $bitm17) 
+
+# uitlezen bestandsformaten en bijbehorende icoontjes uit de array $global:bestandsformaten. 
+$global:bestandsformaten | ForEach-Object {
+    $naam = $_.naam
+    $icoon = $_.icoon
+    $bitm = [System.Drawing.Image]::FromFile("$icoontjesmap\$icoon")
+    $std_imageList.Images.Add($naam, $bitm)
+}
 
 return $std_imageList
 }
@@ -769,49 +774,18 @@ if (( test-path -path "$controlemap\$bestand" -pathtype container) -eq $true)  {
     $positiepunt += 1
     $extensie = $bestand.Substring($positiepunt)
 
-    switch ($extensie) {
-            "docx"  { $gevondennr = 2 }
-            "xlsx"  { $gevondennr = 3 }
-            "xlsm"  { $gevondennr = 3 }
-            "csv"  { $gevondennr = 3 }
-            "pdf"   { $gevondennr = 4 }
-            "vsdx"  { $gevondennr = 5 }
-            "vss"  { $gevondennr = 5 }
-            "png"  { $gevondennr = 6 }
-            "jpeg"  { $gevondennr = 6 }
-            "jpg"   { $gevondennr = 6 }
-            "bmp"   { $gevondennr = 6 }
-            "gif"  { $gevondennr = 6 }
-            "ico"  { $gevondennr = 6 }
-            "exe"  { $gevondennr = 7 }
-            "lnk"  { $gevondennr = 8 }
-            "wav"   { $gevondennr = 9 }
-            "wma"  { $gevondennr = 9 }
-            "mp3"  { $gevondennr = 9 }
-            "pka"  { $gevondennr = 10 }
-            "pkt"  { $gevondennr = 10 }
-            "dotx"   { $gevondennr = 11 }
-            "mov"  { $gevondennr = 12 }
-            "avi"  { $gevondennr = 12 }
-            "mpeg"  { $gevondennr = 12 }
-            "mp4"  { $gevondennr = 12 }
-            "mpg"  { $gevondennr = 12 }
-            "zip"  { $gevondennr = 13 }
-            "7zip"  { $gevondennr = 13 }
-            "gz"  { $gevondennr = 13 }
-            "rar"  { $gevondennr = 13 }
-            "pptx"  { $gevondennr = 14 }
-            "html"  { $gevondennr = 15 }
-            "php"  { $gevondennr = 15 }
-            "css"  { $gevondennr = 15 }
-            "asp"  { $gevondennr = 15 }
-            "xps"  { $gevondennr = 15 }
-            "ps1"  { $gevondennr = 16 }
-            "py"  { $gevondennr = 16 }
-            "js"  { $gevondennr = 16 }
-            "sql"  { $gevondennr = 17 }
-            default { $gevondennr = 1 }
-      } # einde switch
+    # Standaard krijgt elk bestand icoontje 1, maar afhankelijk van de extensie krijgt het een ander nummer. 
+    # De nummering is afhankelijk van de volgorde van aanmaken bij functie Declareericoontjes. zie hierboven.
+    $gevondennr = 1
+    $teller = 0
+    $global:bestandsformaten | ForEach-Object {
+        $formats = $_.typen
+        if ($formats.Contains($extensie) ) { 
+            $gevondennr  = $teller 
+            return 
+        }
+        $teller += 1
+    } # einde ForEach-Object - loop
     }
 
 return $gevondennr
@@ -4619,13 +4593,60 @@ $listView1.add_doubleClick( {
      $selectie = -join ($selectie, '\', $listView1.SelectedItems.text)
       
      # Er moet een item geselecteerd zijn (je kan namelijk ook dubbelklikken op een lege plek) en de item moet een map zijn.
-     if (( $listView1.selecteditems.count -eq 1) -and ((test-path -path $selectie -pathtype container) -eq $true) ) {
-          # toevoegen aan array
-          $geselecteerdebronmap.Add($listView1.SelectedItems.text)
-          # Vullen van rechter venster
-          $listView1.items.clear()
-          geselecteerdemap_vullen $selectie
-     }
+     if ( $listView1.selecteditems.count -eq 1) {
+        # als het item een map is, deze openen.
+        if ((test-path -path $selectie -pathtype container) -eq $true) {
+
+            # toevoegen aan array
+            $geselecteerdebronmap.Add($listView1.SelectedItems.text)
+            # Vullen van rechter venster
+            $listView1.items.clear()
+            geselecteerdemap_vullen $selectie
+            } else {
+            # Als het item een bestand is, start-process gebruiken om deze te openen met bijbehorend programma. 
+
+            # eerst bewaren naam van geselecteerde item in variabele, deze naam is nodig voor het bepalen van de extensie en het bijbehorende programma.
+            $selectie_naam = $listView1.SelectedItems.text
+          
+            # $extensie bepalen door te splitsen op punt en laatste deel te pakken.
+            $positiepunt = $selectie_naam.LastIndexOf(".")
+            $positiepunt += 1
+            $extensie = $selectie_naam.Substring($positiepunt)
+    
+            # Uit $bestandsformaten bepalen welk programma bij deze extensie hoort.
+            # $gevondenapp krijgt eerst een standaarwaarde.
+            $gevondenapp = 'geen'
+
+            $global:bestandsformaten | ForEach-Object {
+                $formats = $_.typen
+                if ($formats.Contains($extensie) ) { 
+                    $gevondenapp = $_.app
+                    return 
+                }
+                $teller += 1
+            } # einde ForEach-Object - loop
+            
+            # alleen als er een programma is gevonden, deze starten. Anders een melding geven dat er geen programma is gevonden.
+            if ($gevondenapp -ne 'geen') {  
+                try {
+                # Write-Host "Bestand openen : $selectie_naam met app $gevondenapp" -ForegroundColor Green
+                
+                # Het programma openen met start-process, hierbij het bestand als argument meegeven.
+                start-process -filepath "$gevondenapp" -argumentlist "`"$selectie`"" -ErrorAction Stop
+                }
+                catch {
+                # melding loggen en weergeven
+                # $melding = -join ("Het is niet gelukt het bestand $selectie_naam te openen : ", "`n", $_.exception.message )
+                # Meldingnaarlogbestand -meldtekst $melding
+                }
+            } else {
+                # melding loggen en weergeven
+                $melding = -join ("Er is geen programma gevonden voor het bestand $selectie_naam met extensie $extensie." )
+                Meldingnaarlogbestand -meldtekst $melding
+                Write-Host $melding -ForegroundColor Red
+            } # einde if ($gevondenapp -ne 'geen') ... else ...
+        } # einde if ((test-path -path $selectie -pathtype container) -eq $true) ... else ...
+     } # einde if ( $listView1.selecteditems.count -eq 1)
 } ) # einde $listView1.add_doubleClick
 
 # Sorteren op een kolom die je aanklikt
@@ -5096,8 +5117,9 @@ $form.add_Shown({
     # Deze melding wordt alleen 1 keer getoond 
     if ($Global:init.uitvoerennaopstarten.updateinfo -eq 'Ja') {
         # Na elke update of bij nieuwe installatie is er een venster met informatie over de update. Deze wordt alleen 1 keer getoond.
-        $null = venstermetvraag -titel "Informatie over uitgevoede update" -vraag "Het programma heeft een update uitgevoerd. `r`n
+        $null = venstermetvraag -titel "Informatie over uitgevoerde update" -vraag "Het programma heeft een update uitgevoerd. `r`n
 De belangrijkste wijzigingen zijn: 
+- Via de Verkenner kan je bestanden ook openen.
 - Er wordt na elke update informatie getoond in een venster.
 - Er is een nieuwe layout van het programma. `r`n
 Als u de oude layout wilt gebruiken dan kunt u dit bij instellingen altijd wijzigen." -schuifbalk "beide"
