@@ -39,10 +39,11 @@ $scriptnaam = $scriptnaam.Replace(".ps1","")
 #>
 $global:programma = @{
     versie = '4.8.0'
-    extralabel = 'alpha.260311' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
+    extralabel = 'alpha.260313' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = $scriptnaam
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
+    icoon = 'script_icoon.ico'
 }
 
 write-host ""
@@ -198,7 +199,7 @@ $global:bestandsformaten = @(
         naam = 'Explorer'
         icoon = 'explorer-icoon.png'
         typen = @('folder')
-        app = 'verkenner'
+        app = 'eigen_verkenner'
     },
     [PSCustomObject]@{
         naam = 'Tekst'
@@ -275,7 +276,7 @@ $StandaardForm.TopMost                    = $false
 $StandaardForm.StartPosition              = 'CenterScreen'
 $StandaardForm.BackColor = "white"
 $StandaardForm.MaximizeBox = $False
-$StandaardForm.Icon                       = [System.Drawing.Icon]::ExtractAssociatedIcon('beheren.ico')
+$StandaardForm.Icon                       = [System.Drawing.Icon]::ExtractAssociatedIcon($global:programma.icoon)
 
 return $StandaardForm
 }
@@ -504,7 +505,7 @@ $Global:Form_uitleg_taak.MaximumSize        = New-Object System.Drawing.size($si
 $Global:Form_uitleg_taak.MinimumSize        = New-Object System.Drawing.size($size_x,$size_y)
 $Global:Form_uitleg_taak.text               = $titel
 $Global:Form_uitleg_taak.ControlBox         = $False
-$Global:Form_uitleg_taak.Icon               = [System.Drawing.Icon]::ExtractAssociatedIcon('beheren.ico')
+$Global:Form_uitleg_taak.Icon               = [System.Drawing.Icon]::ExtractAssociatedIcon($global:programma.icoon)
 
 [int]$tekst_x = $size_x -10
 [int]$tekst_y = $size_y -85
@@ -4701,9 +4702,6 @@ $form.show()
 #>
 
 
-# controleren op een update. 
-updateuitvoeren;
-
 # Bepalen van de persoonlijke initialisatiebestand.
 $gebruikersbestand = bepaalinitnaamgebruiker
 
@@ -4729,6 +4727,9 @@ if (test-path -path $oudenaam -pathtype leaf) {
 
 # inlezen van gebruikers instellingen
 Inlezengebruikersinstellingen;
+
+# controleren op een update. 
+updateuitvoeren;
 
 #Overige controles en tijdelijke taken uitvoeren
 write-host "Oude bestanden opschonen of herstellen."
@@ -4838,7 +4839,7 @@ $Form.TopMost                    = $false
 $Form.StartPosition              = 'CenterScreen'
 $form.BackColor                  = "white"
 $form.MaximizeBox                = $False
-$form.Icon                       = [System.Drawing.Icon]::ExtractAssociatedIcon('beheren.ico')
+$form.Icon                       = [System.Drawing.Icon]::ExtractAssociatedIcon($global:programma.icoon)
 
 $Description                     = New-Object system.Windows.Forms.Label
 $Description.text                = "Welkom " + $global:init.algemeen.gebruiker

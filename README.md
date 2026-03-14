@@ -88,10 +88,11 @@ Zonder dit kan PowerShell een **Execution Policy-waarschuwing** tonen.
 
 - `Beherenbestanden.ps1` – Hoofdscript  
 - `Beheren.ico` – Programma-icoon  
-- `Snelkoppeling_maken.exe` – Hulpmiddel om een snelkoppeling te maken  
+- `Snelkoppeling_maken.ps1` – Hulpmiddel om een snelkoppeling te maken  
 - `Wijzig_Executionpolicy_bypass.bat` – Hulpmiddel om PowerShell Execution Policy te wijzigen  
-- `Changelog.txt` – Overzicht van wijzigingen per versie  
-- `Readme.txt` – Dit bestand  
+- `Changelog.md` – Overzicht van wijzigingen per versie  
+- `Readme.md` – Dit bestand  
+- `License` - Licentieovereenkomst
 - `PNG/` – Map met iconen en afbeeldingen  
 
 ---

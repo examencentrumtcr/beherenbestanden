@@ -4,6 +4,18 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
+## [4.8.0] - In ontwikeling
+### Nieuwe functies
+- Via de functie Verkenner kan je bestanden, in de studentmappen, openen.
+- Nieuwe layout met 2 knoppen in het hoofdscherm
+- Na elke update verschijnt er eenmalig een venster met informatie over de nieuwe versie.
+
+### Overige wijzigingen
+- README is aangepast. Een aantal verwijzingen naar de bestand stonden verkeerd.
+- De naam van het programma-icoontje is gewijzigd.
+
+---
+
 ## [4.7.1] - 2025-10-08
 ### Bugfixes
 - Tekstuele fouten bij functies **Moppenbot** en **Instellingen** opgelost.
