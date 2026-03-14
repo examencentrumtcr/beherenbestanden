@@ -86,9 +86,10 @@ $foutmeldingsbestand = -join ("$logmap","\","Foutmeldingen.txt")
    Zie ook functie gebruikersinstellingen onder sectie "Functions" #>
 $Global:init=@{}
 
-# de 2 bestanden met info voor venster informatieprogramma
+# de 3 bestanden met info voor venster informatieprogramma
 $readmebestand="readme.md"
 $changelogbestand="changelog.md"
+$licensebestand="license"
 
 # nodig voor werken met hashtabels. zie functies uitvoerentaken en overzichttaken
 $uitvoeren = [hashtable]::Synchronized(@{})
@@ -626,10 +627,11 @@ if (test-path -path $gebruikersbestand -pathtype leaf) {
         } # einde foreach $property - loop    
 
     # gekozen is om dit altijd te bewaren zodat je lijst met variabelen up to date is.
-    $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
+    # $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
+    Bewareninstellingen
     } 
 
-}
+} # einde Inlezengebruikersinstellingen
 
 Function Netwerkmapaanwezig ($netwerkmap, $vensterweergeven) {
 
@@ -790,6 +792,14 @@ if (( test-path -path "$controlemap\$bestand" -pathtype container) -eq $true)  {
     }
 
 return $gevondennr
+}
+
+Function Bewareninstellingen {
+# hier worden de instellingen bewaard in een ini-bestand. dit bestand wordt ingelezen bij het opstarten van het script.
+
+# Bepalen van de persoonlijke initialisatiebestand.
+$gebruikersbestand = bepaalinitnaamgebruiker
+$global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
 }
 
 # hieronder de hoofdfuncties ----------------------------------------------------------------
@@ -3274,8 +3284,10 @@ Start-Sleep -Seconds 5
 # Zorgen dat na de update de update informatie wordt weergegeven in het hoofdvenster. Hiervoor wordt een waarde in het init bestand aangepast. 
 # Deze waarde wordt bij het opstarten van het programma gelezen en zorgt ervoor dat de update informatie wordt weergegeven. 
 $Global:init.uitvoerennaopstarten.updateinfo='Ja'
-$gebruikersbestand = bepaalinitnaamgebruiker
-$global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
+
+Bewareninstellingen
+# $gebruikersbestand = bepaalinitnaamgebruiker
+# $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
 
 # opnieuw opstarten script met een andere procesnummer (sessie). De de oude kan worden afgesloten.
 start-process PowerShell.exe -argumentlist '-file',".\$programmanaam.ps1"
@@ -3702,8 +3714,9 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
 
     # bestand met nieuwe variabele bewaren.
     # Eerst wordt de persoonlijke initialisatiebestand bepaald.
-    $gebruikersbestand = bepaalinitnaamgebruiker
-    $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
+    Bewareninstellingen
+    # $gebruikersbestand = bepaalinitnaamgebruiker
+    # $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
 
     # Console open houden of sluiten
     if (($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'prerelease')) {
@@ -3905,7 +3918,7 @@ $form.show()
 
 function informatieprogramma {
 
-function info_venster_vullen ($keuze) {
+function info_venster_vullen {
 
 # infovenster en tijdelijke object legen. wordt gebruikt bij function informatieprogramma
 $objtekst1.Text = "Het bestand wordt geladen ..."
@@ -3916,35 +3929,41 @@ $tempreadmebestand="$startmap\$readmebestand"
 $tempchangelogbestand="$startmap\$changelogbestand"
 
 # inhoud bestand inlezen
-if ($keuze -eq "readme") { 
-    if ((test-path -path $tempreadmebestand -pathtype leaf)) { 
+
+if ((test-path -path $tempreadmebestand -pathtype leaf)) { 
         $volledigetext = Get-Content -Path "$tempreadmebestand"
         } else {
         $volledigetext = "Het Readme-document is niet gedownload en kan dus niet getoont worden."
         }
-    } else {
-    if ((test-path -path $tempchangelogbestand -pathtype leaf)) { 
+# dan netjes in rijen plaatsen.
+foreach ($item in $volledigetext) {
+               $objtekst_temp.Text = $objtekst_temp.Text + "$item" + "`r`n"
+               }
+$objtekst1.Text = $objtekst_temp.text 
+
+<#
+$objtekst_temp.text = ""
+if ((test-path -path $tempchangelogbestand -pathtype leaf)) { 
         $volledigetext = Get-Content -Path "$tempchangelogbestand"
         } else {
         $volledigetext = "Het Changelog-document is niet gedownload en kan dus niet getoont worden."
         }
-    }
+
 
 # dan netjes in rijen plaatsen.
 foreach ($item in $volledigetext) {
                $objtekst_temp.Text = $objtekst_temp.Text + "$item" + "`r`n"
                }
 
-$objtekst1.Text = $objtekst_temp.text 
+$objtekst2.Text = $objtekst_temp.text 
+#>
+
 } # einde info_venster_vullen
 
 # Begin van function info_venster_vullen
 
 # De hoofdmenu onzichtbaar maken
 $form.Hide()
-
-# aangeven wat de inhoud is van de infovenster, readme of changelog
-$global:infovenster = "changelog"
 
 # Powershell versie
 $psmajor = $PSVersionTable.PSVersion.Major
@@ -3956,6 +3975,10 @@ $psversie = "$PSMajor.$PSMinor.$PSbuild.$psrevision"
  
 # venster declareren
 $Form2 = declareren_standaardvenster "Informatie over het programma" 960 690
+# must 
+$Form2.ShowInTaskbar = $True
+# must 
+$Form2.KeyPreview = $True
 
 $Description2                     = New-Object system.Windows.Forms.Label
 $Description2.text                = "Naam van het programma :
@@ -3993,32 +4016,31 @@ $Description3.location            = New-Object System.Drawing.Point(250,10)
 $Description3.Font                = 'Microsoft Sans Serif,11'
 $Description3.ForeColor = [System.Drawing.Color]::Blue
 
+$FormTabControl = New-object System.Windows.Forms.TabControl
+$FormTabControl.Size = "903,440"
+$FormTabControl.Location = "25,135"
+$FormTabControl.SizeMode = 'Fixed'
+$FormTabControl.BackColor = "white"
+$FormTabControl.ItemSize = New-Object System.Drawing.Size(300,40)
+$FormTabControl.Font = [System.Drawing.Font]::new("Microsoft Sans Serif", 12)
 
-$Btninfovenster = New-object System.Windows.Forms.Button 
-#$Btninfovenster.text= "Changelog bekijken"
-$Btninfovenster.location = "230,600" 
-$Btninfovenster.size = "180,30"  
-$Btninfovenster.BackColor = 'blue'
-$Btninfovenster.ForeColor = 'white'
-if ($global:infovenster -eq "readme") { 
-        $Btninfovenster.text= "Changelog bekijken"
-        } else { 
-        $Btninfovenster.text= "Readme bekijken"
-        } 
-$Btninfovenster.add_click({ 
-    if ($global:infovenster -eq "readme") { 
-        $global:infovenster="changelog" 
-        $Btninfovenster.text= "Readme bekijken"
-        } else { 
-        $global:infovenster="readme" 
-        $Btninfovenster.text= "Changelog bekijken"
-        } 
-    # infovenster vullen met infobestand
-    info_venster_vullen $global:infovenster
-})
-$Btninfovenster.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Verander de inhoud van het informatievakje tussen Readme en Changelog." )
-})
+$Tab1 = New-object System.Windows.Forms.Tabpage
+$Tab1.DataBindings.DefaultDataSourceUpdateMode = 0
+$Tab1.UseVisualStyleBackColor = $True
+$Tab1.Name = "TAB1"
+$Tab1.Text = "Changelog"
+
+$Tab2 = New-object System.Windows.Forms.Tabpage
+$Tab2.DataBindings.DefaultDataSourceUpdateMode = 0
+$Tab2.UseVisualStyleBackColor = $True
+$Tab2.Name = "TAB2"
+$Tab2.Text = "Readme"
+
+$Tab3 = New-object System.Windows.Forms.Tabpage
+$Tab3.DataBindings.DefaultDataSourceUpdateMode = 0
+$Tab3.UseVisualStyleBackColor = $True
+$Tab3.Name = "TAB3"
+$Tab3.Text = "License"
 
 
 $Buttenok = New-object System.Windows.Forms.Button 
@@ -4032,9 +4054,10 @@ $Buttenok.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Ga terug naar het hoofdvenster." )
 })
 
+
 $objtekst1 = New-Object System.Windows.Forms.textbox
-$objtekst1.Location = New-Object System.Drawing.Size(25,135) 
-$objtekst1.Size = New-Object System.Drawing.Size(920,445)
+$objtekst1.Location = New-Object System.Drawing.Size(1,1) 
+$objtekst1.Size = New-Object System.Drawing.Size(892,399)
 $objtekst1.font = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
 $objtekst1.Text = ""
 $objtekst1.ReadOnly = $true
@@ -4042,12 +4065,65 @@ $objtekst1.Multiline = $true
 $objtekst1.ScrollBars = "Both"
 $objtekst1.BackColor  = 'white'
 
-# dit object maakt dat het laden van het bestand en laten zien in het venster sneller gaat
-# zie ook function info_venster_vullen
-$objtekst_temp = New-Object System.Windows.Forms.textbox
+$objtekst2 = New-Object System.Windows.Forms.textbox
+$objtekst2.Location = New-Object System.Drawing.Size(1,1) 
+$objtekst2.Size = New-Object System.Drawing.Size(892,399)
+$objtekst2.font = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
+$objtekst2.Text = ""
+$objtekst2.ReadOnly = $true
+$objtekst2.Multiline = $true
+$objtekst2.ScrollBars = "Both"
+$objtekst2.BackColor  = 'white'
 
-# infovenster vullen met infobestand
-info_venster_vullen $global:infovenster
+$objtekst3 = New-Object System.Windows.Forms.textbox
+$objtekst3.Location = New-Object System.Drawing.Size(1,1) 
+$objtekst3.Size = New-Object System.Drawing.Size(892,399)
+$objtekst3.font = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
+$objtekst3.Text = ""
+$objtekst3.ReadOnly = $true
+$objtekst3.Multiline = $true
+$objtekst3.ScrollBars = "Both"
+$objtekst3.BackColor  = 'white'
+
+# tijdelijke variabelen benoemen
+$tempreadmebestand="$startmap\$readmebestand"
+$tempchangelogbestand="$startmap\$changelogbestand"
+$templicensebestand="$startmap\$licensebestand"
+
+# inhoud bestand inlezen van het Changelog-document en in het venster plaatsen
+# deze manier maakt dat het laden van het bestand en laten zien in het venster sneller gaat
+if ((test-path -path $tempchangelogbestand -pathtype leaf)) { 
+        $volledigetext = Get-Content -Path "$tempchangelogbestand"
+        } else {
+        $volledigetext = "Het Changelog-document is niet gedownload en kan dus niet getoont worden."
+        }
+# dan netjes in rijen plaatsen.
+foreach ($item in $volledigetext) {
+               $objtekst1.Text = $objtekst1.Text + "$item" + "`r`n"
+               }
+
+
+# inhoud bestand inlezen van het Readme-document en in het venster plaatsen
+if ((test-path -path $tempreadmebestand -pathtype leaf)) { 
+            $volledigetext = Get-Content -Path "$tempreadmebestand"
+            } else {
+            $volledigetext = "Het Readme-document is niet gedownload en kan dus niet getoont worden."
+            }
+    # dan netjes in rijen plaatsen.
+    foreach ($item in $volledigetext) {
+                $objtekst2.Text = $objtekst2.Text + "$item" + "`r`n"
+                }
+
+# inhoud bestand inlezen van het License-document en in het venster plaatsen
+if ((test-path -path $templicensebestand -pathtype leaf)) { 
+            $volledigetext = Get-Content -Path "$templicensebestand"
+            } else {
+            $volledigetext = "Het License-document is niet gedownload en kan dus niet getoont worden."
+            }
+    # dan netjes in rijen plaatsen.
+    foreach ($item in $volledigetext) {
+                $objtekst3.Text = $objtekst3.Text + "$item" + "`r`n"
+                }
 
 # venster met uitleg over deze taak wordt gedeclareerd. 
 declareren_uitlegvenster "Uitleg over het venster Informatie over het programma." 680 250 500 600 "Bovenaan ziet u enkele gegevens over dit programma.
@@ -4058,7 +4134,15 @@ De CHANGELOG-bestand is een bestand met de wijzigingen per versie.
 
 Door op de blauwe knop onderaan te klikken wijzigt u de inhoud." 
 
-$Form2.Controls.AddRange(@($Description2, $Description3, $Buttenok, $Btninfovenster, $objtekst1, $Global:vraagtekenicoon))
+$Form2.Controls.AddRange(@($FormTabControl, $Description2, $Description3, $Buttenok, $objtekst1, $Global:vraagtekenicoon))
+
+$FormTabControl.Controls.Add($Tab1)
+$FormTabControl.Controls.Add($Tab2)
+$FormTabControl.Controls.Add($Tab3)
+
+$Tab1.Controls.Add($objtekst1)
+$Tab2.Controls.Add($objtekst2)
+$Tab3.Controls.Add($objtekst3)
 
 Form2afsluitenbijescape;
 
@@ -5120,16 +5204,17 @@ $form.add_Shown({
         # Na elke update of bij nieuwe installatie is er een venster met informatie over de update. Deze wordt alleen 1 keer getoond.
         $null = venstermetvraag -titel "Informatie over uitgevoerde update" -vraag "Het programma heeft een update uitgevoerd. `r`n
 De belangrijkste wijzigingen zijn: 
-- Via de Verkenner kan je bestanden ook openen.
-- Er wordt na elke update informatie getoond in een venster.
-- Er is een nieuwe layout van het programma. `r`n
-Als u de oude layout wilt gebruiken dan kunt u dit bij instellingen altijd wijzigen." -schuifbalk "beide"
+- De functie Verkenner kan gebruikt worden om bestanden in de kandidaatmappen te openen.
+- Na elke update wordt, eenmaal bij de start van het script, informatie getoond over de update.
+- Er is een nieuwe layout voor het hoofdvenster. 
+  Als u de oude layout wilt gebruiken dan kunt u dit bij instellingen altijd wijzigen." -schuifbalk "beide"
 
         # Deze vraag niet meer stellen -> Waarde op nee zetten en bewaren
         $Global:init.uitvoerennaopstarten.updateinfo='Nee'
-        $gebruikersbestand = bepaalinitnaamgebruiker
+        Bewareninstellingen
+        # $gebruikersbestand = bepaalinitnaamgebruiker
         # Tijdelijk uitgeschakeld. Moet weer ingeschakeld worden.
-        $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
+        # $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
     }
  } )
 

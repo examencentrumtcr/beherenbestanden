@@ -6,13 +6,15 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ## [4.8.0] - In ontwikeling
 ### Nieuwe functies
-- Via de functie Verkenner kan je bestanden, in de studentmappen, openen.
-- Nieuwe layout met 2 knoppen in het hoofdscherm
+- Met de functie **Verkenner** kan je nu ook bestanden, in de studentmappen, openen.
+- Nieuwe layout voor het hoofdvenster. Deze heeft 2 grote knoppen, een menuknop en een afsluitknop.
 - Na elke update verschijnt er eenmalig een venster met informatie over de nieuwe versie.
 
 ### Overige wijzigingen
-- README is aangepast. Een aantal verwijzingen naar de bestand stonden verkeerd.
+- README is aangepast. Een aantal verwijzingen naar bestanden stonden verkeerd.
 - De naam van het programma-icoontje is gewijzigd.
+- In het venster **Informatie** wordt nu ook de licentie getoond.
+- Code hergestructureerd en opgeschoond.
 
 ---
 
@@ -23,11 +25,11 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ### Overige wijzigingen
 - In de programma code wijzigingen aangebracht in hoe met bepaalde fases wordt omgegaan.
-- Van 2 functies 1 gemaakt om de programma code te verbeteren.
-- Bij de moppenbot heb je de keuze uit moppen van 3 websites.
+-  Van 2 functies, console openen en -sluiten, 1 gemaakt.
+- Bij de **Moppenbot** heb je de keuze uit moppen van 3 websites.
 - Het is mogelijk om logbestanden helemaal niet meer te bewaren door als invoer 0 te geven.
 - Het script wordt nu geüpdatet vanuit een repository in Github.
-- Een aantal verbeteringen aan het updateproces toegepast; 
+- Code optimalisatie. Updateproces gewijzigd; 
   Na een update start de script in een andere sessie en controleert niet opnieuw.
   Updateproces kan nu omgaan met getallen > 9 in de versienummer.
   Het updateproces wordt nu ook gelogd.
