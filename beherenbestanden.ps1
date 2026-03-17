@@ -20,7 +20,7 @@ $scriptnaam = $MyInvocation.InvocationName
 $scriptnaam = Split-Path -leaf $scriptnaam
 $scriptnaam = $scriptnaam.Replace(".ps1","")
 
-<# object met alle variabelen die het programma beschrijven. 
+<# $global:programma is een object met alle variabelen die het programma beschrijven. 
    versie wordt aangepast als er een nieuwe versie is.
    extralabel wordt aangepast als het programma naar een andere fase gaat of als er een nieuwe versie is.
    mode wordt aangepast afhankelijk van wat je wil testen of als er een nieuwe versie is.
@@ -39,7 +39,7 @@ $scriptnaam = $scriptnaam.Replace(".ps1","")
 #>
 $global:programma = @{
     versie = '4.8.0'
-    extralabel = 'alpha.260313' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
+    extralabel = 'alpha.260317' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = $scriptnaam
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
@@ -200,32 +200,93 @@ $global:bestandsformaten = @(
         naam = 'Explorer'
         icoon = 'explorer-icoon.png'
         typen = @('folder')
-        app = 'eigen_verkenner'
-    },
+       },
     [PSCustomObject]@{
         naam = 'Tekst'
         icoon = 'file-icoon.png'
         typen = @('txt', 'log', 'ini', 'json', 'md')
-        app = 'C:\Windows\System32\notepad.exe'
     },
     [PSCustomObject]@{
         naam = 'Word'
         icoon = 'file-icoon-word.png'
         typen = @('doc', 'docx')
-        app = 'C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE'
     },
     [PSCustomObject]@{
         naam = 'Excel'
         icoon = 'file-icoon-excel.png'
         typen = @('xls', 'xlsx')
-        app = 'C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE'
     },
     [PSCustomObject]@{
         naam = 'PDF'
         icoon = 'file-icoon-pdf.png'
         typen = @('pdf')
-        app = 'C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe'
+    },
+    [PSCustomObject]@{
+        naam = 'Visio'
+        icoon = 'file-icoon-visio.png'
+        typen = @('vsd', 'vss', 'vst', 'vsdx', 'vssx', 'vstx')
+    },
+    [PSCustomObject]@{
+        naam = 'Afbeeldingen'
+        icoon = 'file-icoon-afbeelding.png'
+        typen = @('png', 'jpg', 'jpeg', 'bmp', 'gif')
+    },
+    [PSCustomObject]@{
+        naam = 'Uitvoerbaar'
+        icoon = 'file-icoon-exe.png'
+        typen = @('exe', 'msi')
+    },
+    [PSCustomObject]@{
+        naam = 'Snelkoppelingen'
+        icoon = 'file-icoon-link.png'
+        typen = @('lnk', 'url')
+    },
+    [PSCustomObject]@{
+        naam = 'Muziek'
+        icoon = 'file-icoon-muziek.png'
+        typen = @('mp3', 'wav', 'flac', 'aac', 'wma')
+    },
+    [PSCustomObject]@{
+        naam = 'Packettracert'
+        icoon = 'file-icoon-pka.png'
+        typen = @('pka','pkt')
+    },
+    [PSCustomObject]@{
+        naam = 'Sjablonen'
+        icoon = 'file-icoon-sjabloon.png'
+        typen = @('dotx')
+    },
+    [PSCustomObject]@{
+        naam = 'Video'
+        icoon = 'file-icoon-video.png'
+        typen = @('mp4', 'avi', 'mkv', 'mov', 'wmv', 'flv', 'mpeg', 'mpg')
+    },
+    [PSCustomObject]@{
+        naam = 'Gecomprimeerd'
+        icoon = 'file-icoon-zip.png'
+        typen = @('zip', 'rar', '7z')
+    },
+    [PSCustomObject]@{
+        naam = 'PowerPoint'
+        icoon = 'file-icoon-powerpoint.png'
+        typen = @('ppt', 'pptx')
+    },
+    [PSCustomObject]@{
+        naam = 'Websites'
+        icoon = 'file-icoon-website.png'
+        typen = @('php', 'html', 'htm', 'css', 'xml', 'asp', 'aspx', 'jsp', 'xps')
+    },
+    [PSCustomObject]@{
+        naam = 'scripts'
+        icoon = 'file-icoon-programmeren.png'
+        typen = @('ps1', 'psm1', 'py', 'js', 'vbs', 'bat', 'cmd')
+    },
+    [PSCustomObject]@{
+        naam = 'databases'
+        icoon = 'file-icoon-database.png'
+        typen = @('sql', 'db', 'mdb', 'accdb')
     }
+
 )
 
 # Einde declareren variabelen
@@ -4688,48 +4749,19 @@ $listView1.add_doubleClick( {
             $listView1.items.clear()
             geselecteerdemap_vullen $selectie
             } else {
-            # Als het item een bestand is, start-process gebruiken om deze te openen met bijbehorend programma. 
-
-            # eerst bewaren naam van geselecteerde item in variabele, deze naam is nodig voor het bepalen van de extensie en het bijbehorende programma.
+            # eerst bewaren naam van geselecteerde item in variabele, deze naam is nodig als het fout gaat bij de try catch.
             $selectie_naam = $listView1.SelectedItems.text
-          
-            # $extensie bepalen door te splitsen op punt en laatste deel te pakken.
-            $positiepunt = $selectie_naam.LastIndexOf(".")
-            $positiepunt += 1
-            $extensie = $selectie_naam.Substring($positiepunt)
-    
-            # Uit $bestandsformaten bepalen welk programma bij deze extensie hoort.
-            # $gevondenapp krijgt eerst een standaarwaarde.
-            $gevondenapp = 'geen'
-
-            $global:bestandsformaten | ForEach-Object {
-                $formats = $_.typen
-                if ($formats.Contains($extensie) ) { 
-                    $gevondenapp = $_.app
-                    return 
-                }
-                $teller += 1
-            } # einde ForEach-Object - loop
-            
-            # alleen als er een programma is gevonden, deze starten. Anders een melding geven dat er geen programma is gevonden.
-            if ($gevondenapp -ne 'geen') {  
-                try {
-                # Write-Host "Bestand openen : $selectie_naam met app $gevondenapp" -ForegroundColor Green
-                
-                # Het programma openen met start-process, hierbij het bestand als argument meegeven.
-                start-process -filepath "$gevondenapp" -argumentlist "`"$selectie`"" -ErrorAction Stop
+            # Als het item een bestand is, start-process gebruiken om deze te openen met bijbehorend programma. 
+            try {
+                # Het programma openen met start-process
+                start-process "`"$selectie`""
                 }
                 catch {
-                # melding loggen en weergeven
-                # $melding = -join ("Het is niet gelukt het bestand $selectie_naam te openen : ", "`n", $_.exception.message )
-                # Meldingnaarlogbestand -meldtekst $melding
+                # melding geven
+                $melding = -join ("Het is niet gelukt het bestand $selectie_naam te openen.","`r`n","De volgende foutmelding is gegeven :","`r`n", $_.exception.message )
+                $null = venstermetvraag -titel "Bestand kan niet geopend worden" -vraag $melding
                 }
-            } else {
-                # melding loggen en weergeven
-                $melding = -join ("Er is geen programma gevonden voor het bestand $selectie_naam met extensie $extensie." )
-                Meldingnaarlogbestand -meldtekst $melding
-                Write-Host $melding -ForegroundColor Red
-            } # einde if ($gevondenapp -ne 'geen') ... else ...
+
         } # einde if ((test-path -path $selectie -pathtype container) -eq $true) ... else ...
      } # einde if ( $listView1.selecteditems.count -eq 1)
 } ) # einde $listView1.add_doubleClick

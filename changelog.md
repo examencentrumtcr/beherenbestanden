@@ -7,13 +7,16 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 ## [4.8.0] - In ontwikeling
 ### Nieuwe functies
 - Met de functie **Verkenner** kan je nu ook bestanden, in de studentmappen, openen.
-- Nieuwe layout voor het hoofdvenster. Deze heeft 2 grote knoppen, een menuknop en een afsluitknop.
+- Nieuwe indeling en nieuwe knop in hoofdvenster;
+  Hoofdvenster heeft 2 knoppen voor de standaardtaken, een menuknop en een afsluitknop.
+  Met de menuknop schakel je over naar de overige taken en weer terug.
 - Na elke update verschijnt er eenmalig een venster met informatie over de nieuwe versie.
 
 ### Overige wijzigingen
 - README is aangepast. Een aantal verwijzingen naar bestanden stonden verkeerd.
 - De naam van het programma-icoontje is gewijzigd.
-- In het venster **Informatie** wordt nu ook de licentie getoond.
+- Het venster **Informatie** bestaat nu uit 3 tabbladen: Changelog, Readme en License;
+  De tabblad License met licentie-informatie is nieuw.
 - Code hergestructureerd en opgeschoond.
 
 ---
