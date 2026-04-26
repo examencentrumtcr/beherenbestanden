@@ -17,7 +17,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 - De naam van het programma-icoontje is gewijzigd.
 - Het venster **Informatie** bestaat nu uit 3 tabbladen: Changelog, Readme en License;
   De tabblad License met licentie-informatie is nieuw.
-- Code hergestructureerd en opgeschoond.
+- Code gestructureerd en opgeschoond.
 
 ---
 
@@ -30,7 +30,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 - In de programma code wijzigingen aangebracht in hoe met bepaalde fases wordt omgegaan.
 -  Van 2 functies, console openen en -sluiten, 1 gemaakt.
 - Bij de **Moppenbot** heb je de keuze uit moppen van 3 websites.
-- Het is mogelijk om logbestanden helemaal niet meer te bewaren door als invoer 0 te geven.
+- Het is mogelijk om het aantal dagen dat de logbestanden bewaard blijven op 0 te zetten.
 - Het script wordt nu geüpdatet vanuit een repository in Github.
 - Code optimalisatie. Updateproces gewijzigd; 
   Na een update start de script in een andere sessie en controleert niet opnieuw.

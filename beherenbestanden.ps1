@@ -643,7 +643,7 @@ $algemeen=@{
     consolesluiten = 'Ja'
     controlevoorklaarzetten = 'Ja'
     websitemoppen = 'Apekool.nl'
-    nieuwelayout =  'Ja'
+    nieuwelayout =  'Nee'
 }
 $opschonen=@{
     dagenbewarenlogs = 365
@@ -862,6 +862,80 @@ Function Bewareninstellingen {
 $gebruikersbestand = bepaalinitnaamgebruiker
 $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
 }
+
+ function subtakenverbergen {
+        # subtaken zijn de knoppen 4 t/m 11, uitgezonderd de knoppen 7 en 8
+
+        # subtaken verbergen
+        $Button4.visible = $false
+        $Button3.visible = $false
+        $Button9.visible = $false
+        $Button10.visible = $false
+        $Button6.visible = $false
+        $Button5.visible = $false
+        $Button11.visible = $false
+        $Button1.visible = $true
+        $Button2.visible = $true
+        $uitleg2.visible = $true
+        $uitleg1.visible = $true
+        $Button13.visible = $false
+        $Button12.visible = $true
+    }
+
+    function subtakentonen {
+        $Button4.visible = $true
+        $Button3.visible = $true
+        $Button9.visible = $true
+        $Button10.visible = $true
+        $Button6.visible = $true
+        $Button5.visible = $true
+        $Button11.visible = $true
+        $Button1.visible = $false
+        $Button2.visible = $false
+        $uitleg2.visible = $false
+        $uitleg1.visible = $false
+        $Button13.visible = $true
+        $Button12.visible = $false
+        
+    }
+
+    function Nieuwelayoutgebruiken {
+        # deze functie zorgt dat de layout van het hoofdvenster wordt aangepast als er voor een andere taak wordt gekozen waarbij subtaken worden weergegeven. 
+   
+        $Form.ClientSize = New-Object System.Drawing.Point(700,480)
+        $Button1.Location = New-Object System.Drawing.Point(164,50)
+        $Button2.Location = New-Object System.Drawing.Point(376,50)
+        $uitleg1.Location = New-Object System.Drawing.Point(168, 215)
+        $uitleg2.Location = New-Object System.Drawing.Point(402, 215)
+
+        $Button3.Location = New-Object System.Drawing.Point(286,150)
+        $Button4.Location = New-Object System.Drawing.Point(286,50)
+        $Button5.Location = New-Object System.Drawing.Point(164,150)
+        $Button6.Location = New-Object System.Drawing.Point(398,50)
+        $Button9.Location = New-Object System.Drawing.Point(510,50)
+        $Button10.Location = New-Object System.Drawing.Point(398,150)
+        $Button11.Location = New-Object System.Drawing.Point(164,50)
+    }
+
+    function Oudelayoutgebruiken {
+        # deze functie zorgt dat de layout van het hoofdvenster wordt aangepast als er voor een andere taak wordt gekozen waarbij subtaken worden verborgen. 
+ 
+        $Button3.Location = New-Object System.Drawing.Point(588,150)
+        $Button4.Location = New-Object System.Drawing.Point(588,50)
+        $Button5.Location = New-Object System.Drawing.Point(52,250)
+        $Button6.Location = New-Object System.Drawing.Point(52,350)
+        $Button9.Location = New-Object System.Drawing.Point(588,250)
+        $Button10.Location = New-Object System.Drawing.Point(588,350)
+        $Button11.Location = New-Object System.Drawing.Point(52,150)
+        # $Button2.Location = New-Object System.Drawing.Point(376,50)
+        $Button1.visible = $true
+        $Button2.visible = $true
+        $uitleg2.visible = $true
+        $uitleg1.visible = $true
+        $Button12.Visible = $false
+        $Button13.Visible = $false
+         
+    }
 
 # hieronder de hoofdfuncties ----------------------------------------------------------------
 
@@ -3396,7 +3470,7 @@ $keuzeoptie2.width               = 80
 $keuzeoptie2.autosize            = $true
 $keuzeoptie2.DropDownStyle       = "DropDownList"
 $keuzeoptie2.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie2.location = "450,95" 
+$keuzeoptie2.location = "450,135" 
 [void] $keuzeoptie2.Items.Add("Ja")
 [void] $keuzeoptie2.Items.Add("Nee")
 if ($global:init["algemeen"]["wissennabackup"] -eq "Ja") {
@@ -3410,7 +3484,7 @@ $keuzeoptie3.width               = 80
 $keuzeoptie3.autosize            = $true
 $keuzeoptie3.DropDownStyle       = "DropDownList"
 $keuzeoptie3.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie3.location = "450,135" 
+$keuzeoptie3.location = "450,175" 
 [void] $keuzeoptie3.Items.Add("Ja")
 [void] $keuzeoptie3.Items.Add("Nee")
 if ($global:init["algemeen"]["maplegenvoorverplaatsen"] -eq "Ja") {
@@ -3424,7 +3498,7 @@ $keuzeoptie4.width               = 80
 $keuzeoptie4.autosize            = $true
 $keuzeoptie4.DropDownStyle       = "DropDownList"
 $keuzeoptie4.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie4.location = "450,175" 
+$keuzeoptie4.location = "450,255" 
 [void] $keuzeoptie4.Items.Add("Ja")
 [void] $keuzeoptie4.Items.Add("Nee")
 if ($global:init["opschonen"]["opschonenlogs"] -eq "Ja") {
@@ -3434,7 +3508,7 @@ if ($global:init["opschonen"]["opschonenlogs"] -eq "Ja") {
     }
 
 $keuzeoptie5 = New-Object System.Windows.Forms.TextBox 
-$keuzeoptie5.Location = New-Object System.Drawing.Size(450,215) 
+$keuzeoptie5.Location = New-Object System.Drawing.Size(450,295) 
 $keuzeoptie5.Size = New-Object System.Drawing.Size(80,60)
 $keuzeoptie5.MaxLength = 4
 $keuzeoptie5.Font = 'Microsoft Sans Serif,11'
@@ -3444,11 +3518,11 @@ $keuzeoptie5.Add_TextChanged({
 })
 
 $keuzeoptie6                     = New-Object system.Windows.Forms.ComboBox
-$keuzeoptie6.width               = 160
+$keuzeoptie6.width               = 170
 $keuzeoptie6.autosize            = $true
 $keuzeoptie6.DropDownStyle       = "DropDownList"
 $keuzeoptie6.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie6.location = "780,15" 
+$keuzeoptie6.location = "770,55" 
 
 [int]$teller = 0
 $global:afbeeldingen.ForEach( {
@@ -3470,11 +3544,11 @@ $global:afbeeldingen.ForEach( {
 })
 
 $keuzeoptie7                     = New-Object system.Windows.Forms.ComboBox
-$keuzeoptie7.width               = 230
+$keuzeoptie7.width               = 170
 $keuzeoptie7.autosize            = $true
 $keuzeoptie7.DropDownStyle       = "DropDownList"
 $keuzeoptie7.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie7.location = "300,335" 
+$keuzeoptie7.location = "770,15" 
 
 [int]$teller = 0
 $global:moppen.ForEach( {
@@ -3495,7 +3569,7 @@ $keuzeoptie9.width               = 80
 $keuzeoptie9.autosize            = $true
 $keuzeoptie9.DropDownStyle       = "DropDownList"
 $keuzeoptie9.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie9.location = "450,255" 
+$keuzeoptie9.location = "450,335" 
 [void] $keuzeoptie9.Items.Add("Ja")
 [void] $keuzeoptie9.Items.Add("Nee")
 if ($global:init["algemeen"]["consolesluiten"] -eq "Ja") {
@@ -3509,13 +3583,27 @@ $keuzeoptie10.width               = 80
 $keuzeoptie10.autosize            = $true
 $keuzeoptie10.DropDownStyle       = "DropDownList"
 $keuzeoptie10.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie10.location = "450,295" 
+$keuzeoptie10.location = "450,215" 
 [void] $keuzeoptie10.Items.Add("Ja")
 [void] $keuzeoptie10.Items.Add("Nee")
 if ($global:init["algemeen"]["controlevoorklaarzetten"] -eq "Ja") {
     $keuzeoptie10.Selectedindex = 0
     } else {
     $keuzeoptie10.Selectedindex = 1
+    }
+
+$keuzeoptie11                     = New-Object system.Windows.Forms.ComboBox
+$keuzeoptie11.width               = 80
+$keuzeoptie11.autosize            = $true
+$keuzeoptie11.DropDownStyle       = "DropDownList"
+$keuzeoptie11.Font                = 'Microsoft Sans Serif,12'
+$keuzeoptie11.location = "450,95" 
+[void] $keuzeoptie11.Items.Add("Ja")
+[void] $keuzeoptie11.Items.Add("Nee")
+if ($global:init["algemeen"]["nieuwelayout"] -eq "Ja") {
+    $keuzeoptie11.Selectedindex = 0
+    } else {
+    $keuzeoptie11.Selectedindex = 1
     }
 
 $Description1                     = New-Object system.Windows.Forms.Label
@@ -3535,7 +3623,7 @@ $Description2.text                = "Homemap kandidaten wissen na uitvoeren van 
 $Description2.AutoSize            = $false
 $Description2.width               = 400
 $Description2.height              = 40
-$Description2.location            = New-Object System.Drawing.Point(40,100)
+$Description2.location            = New-Object System.Drawing.Point(40,140)
 $Description2.Font                = 'Microsoft Sans Serif,11'
 $Description2.ForeColor = [System.Drawing.Color]::Blue
 $Description2.add_MouseHover({
@@ -3547,7 +3635,7 @@ $Description3.text                = "Doelmap wissen alvorens het verplaatsen van
 $Description3.AutoSize            = $false
 $Description3.width               = 400
 $Description3.height              = 30
-$Description3.location            = New-Object System.Drawing.Point(40,140)
+$Description3.location            = New-Object System.Drawing.Point(40,180)
 $Description3.Font                = 'Microsoft Sans Serif,11'
 $Description3.ForeColor = [System.Drawing.Color]::Blue
 $Description3.add_MouseHover({
@@ -3559,7 +3647,7 @@ $Description4.text                = "Automatisch verwijderen oude logbestanden b
 $Description4.AutoSize            = $false
 $Description4.width               = 400
 $Description4.height              = 40
-$Description4.location            = New-Object System.Drawing.Point(40,180)
+$Description4.location            = New-Object System.Drawing.Point(40,260)
 $Description4.Font                = 'Microsoft Sans Serif,11'
 $Description4.ForeColor = [System.Drawing.Color]::Blue
 $Description4.add_MouseHover({
@@ -3571,7 +3659,7 @@ $Description5.text                = "Aantal dagen dat de logbestanden van het pr
 $Description5.AutoSize            = $false
 $Description5.width               = 400
 $Description5.height              = 40
-$Description5.location            = New-Object System.Drawing.Point(40,220)
+$Description5.location            = New-Object System.Drawing.Point(40,300)
 $Description5.Font                = 'Microsoft Sans Serif,11'
 $Description5.ForeColor = [System.Drawing.Color]::Blue
 $Description5.add_MouseHover({
@@ -3583,7 +3671,7 @@ $Description6.text                = "Afbeelding in het hoofdvenster"
 $Description6.AutoSize            = $false
 $Description6.width               = 400
 $Description6.height              = 40
-$Description6.location            = New-Object System.Drawing.Point(560,20)
+$Description6.location            = New-Object System.Drawing.Point(560,60)
 $Description6.Font                = 'Microsoft Sans Serif,11'
 $Description6.ForeColor = [System.Drawing.Color]::Blue
 $Description6.add_MouseHover({
@@ -3592,11 +3680,11 @@ $Description6.add_MouseHover({
 
 
 $Description7                     = New-Object system.Windows.Forms.Label
-$Description7.text                = "Keuze voor website met moppen"
+$Description7.text                = "Website met moppen"
 $Description7.AutoSize            = $false
 $Description7.width               = 400
 $Description7.height              = 40
-$Description7.location            = New-Object System.Drawing.Point(40,340)
+$Description7.location            = New-Object System.Drawing.Point(560,20)
 $Description7.Font                = 'Microsoft Sans Serif,11'
 $Description7.ForeColor = [System.Drawing.Color]::Blue
 $Description7.add_MouseHover({
@@ -3621,7 +3709,7 @@ $Description9.text                = "Console, venster met informatie over het sc
 $Description9.AutoSize            = $false
 $Description9.width               = 400
 $Description9.height              = 40
-$Description9.location            = New-Object System.Drawing.Point(40,260)
+$Description9.location            = New-Object System.Drawing.Point(40,340)
 $Description9.Font                = 'Microsoft Sans Serif,11'
 $Description9.ForeColor = [System.Drawing.Color]::Blue
 $Description9.add_MouseHover({
@@ -3633,11 +3721,23 @@ $Description10.text                = "Controleer of de homemappen van de kandida
 $Description10.AutoSize            = $false
 $Description10.width               = 400
 $Description10.height              = 40
-$Description10.location            = New-Object System.Drawing.Point(40,300)
+$Description10.location            = New-Object System.Drawing.Point(40,220)
 $Description10.Font                = 'Microsoft Sans Serif,11'
 $Description10.ForeColor = [System.Drawing.Color]::Blue
 $Description10.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Bepaal of je de homemappen van de kandidaten wil controleren voordat je bestanden klaarzet." )
+})
+
+$Description11                     = New-Object system.Windows.Forms.Label
+$Description11.text                = "Toon het nieuwe hoofdvenster na het opstartproces."
+$Description11.AutoSize            = $false
+$Description11.width               = 400
+$Description11.height              = 40
+$Description11.location            = New-Object System.Drawing.Point(40,100)
+$Description11.Font                = 'Microsoft Sans Serif,11'
+$Description11.ForeColor = [System.Drawing.Color]::Blue
+$Description11.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Toon het nieuwe layout in het hoofdvenster." )
 })
 
 $Btnstandaard = New-object System.Windows.Forms.Button 
@@ -3660,6 +3760,7 @@ $Btnstandaard.add_click({
     $keuzeoptie7.SelectedItem=$temp_init["algemeen"]["websitemoppen"]
     $keuzeoptie9.SelectedItem=$temp_init["algemeen"]["consolesluiten"]
     $keuzeoptie10.SelectedItem=$temp_init["algemeen"]["controlevoorklaarzetten"]
+    $keuzeoptie11.SelectedItem=$temp_init["algemeen"]["nieuwelayout"]
 }) # einde Btnstandaard.add_click
 $Btnstandaard.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Zet alle instellingen terug naar de standaard waarden." )
@@ -3701,8 +3802,8 @@ $global:afbeeldingen.ForEach( {
         }
 })
 $gifbox2.Image    = [System.Drawing.Image]::FromFile("$gifjesmap\$keuzeafbeelding")
-$gifbox2.location = New-Object System.Drawing.Point(570,40)
-$gifbox2.Size     = "370,360" 
+$gifbox2.location = New-Object System.Drawing.Point(570,80)
+$gifbox2.Size     = "370,320" 
 $gifbox2.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Zoom
 $gifbox2.add_click({
     if ($keuzeoptie6.Selectedindex -eq 6) {
@@ -3730,8 +3831,8 @@ Als u de instellingen wilt bewaren klikt u op Bewaren.
 Als u terug wilt zonder de instellingen te bewaren klikt u op Terug.
 " 
 
-$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie6, $keuzeoptie1, $keuzeoptie2, $keuzeoptie3, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie10, $keuzeoptie7,
-$description1, $description2, $description3, $description4, $description5, $description6, $description8, $description9, $description10, $description7,
+$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie1, $keuzeoptie11, $keuzeoptie2, $keuzeoptie3, $keuzeoptie10, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie7, $keuzeoptie6,
+$description1, $description2, $description3, $description4, $description5, $description6, $description8, $description9, $description10, $description7, $Description11,
 $Btnaccept, $Btnescape, $Btnstandaard, $Global:vraagtekenicoon, $gifbox2 ))
 
 Form2afsluitenbijescape;
@@ -3750,21 +3851,22 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
     $global:init["algemeen"]["websitemoppen"]=$keuzeoptie7.Selecteditem
     $global:init["algemeen"]["consolesluiten"]=$keuzeoptie9.Selecteditem
     $global:init["algemeen"]["controlevoorklaarzetten"]=$keuzeoptie10.Selecteditem
+    $global:init["algemeen"]["nieuwelayout"]=$keuzeoptie11.Selecteditem
     # alle spaties aan begin en eind weghalen
     # $keuzeoptie8.Text.Trim()
     $global:init["algemeen"]["gebruiker"]=$keuzeoptie8.Text.Trim()
 
     # Ook gelijk weergeven in hoofdvenster
     $Description.text = "Welkom " + $global:init.algemeen.gebruiker
-
+    # Controle of het ingevoerd getal voor "aantal dagen bewaren logs" klopt
     if (!($keuzeoptie5.Text -eq "" )) {
         # eventueel de nullen ervoor weghalen
         [int32]$getal1=$keuzeoptie5.Text
         # alleen als getal1 groter of gelijk is aan 0 is wordt de wijging doorgevoerd
         if ($getal1 -ge 0) { $global:init["opschonen"]["dagenbewarenlogs"]=$getal1 }
     }
-    $global:init["algemeen"]["afbeelding"]=$keuzeoptie6.Selecteditem
     # afbeelding in hoofdmenu wordt aangepast
+    $global:init["algemeen"]["afbeelding"]=$keuzeoptie6.Selecteditem
     # een match zoeken met de gekozen afbeelding in je persoonlijke instellingen
     $global:afbeeldingen.ForEach( {
     if ($_.naam -eq $global:init["algemeen"]["afbeelding"]) {
@@ -3776,9 +3878,17 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
     # bestand met nieuwe variabele bewaren.
     # Eerst wordt de persoonlijke initialisatiebestand bepaald.
     Bewareninstellingen
-    # $gebruikersbestand = bepaalinitnaamgebruiker
-    # $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
 
+    # Nieuwe hoofdvenster tonen of niet
+    if ($keuzeoptie11.Selectedindex -eq 0) {
+        # nieuwe hoofdvenster tonen
+        Nieuwelayoutgebruiken
+        subtakenverbergen
+        } else {
+        # Oude layout gebruiken
+        Oudelayoutgebruiken
+        # subtakentonen
+        }
     # Console open houden of sluiten
     if (($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'prerelease')) {
         if ($keuzeoptie9.Selectedindex -eq 0) {
@@ -4850,12 +4960,6 @@ updateuitvoeren;
 #Overige controles en tijdelijke taken uitvoeren
 write-host "Oude bestanden opschonen of herstellen."
 
-# verwijderen updater.ps1. vanaf versie 4.5.0
-if (test-path -path "$startmap\updater.ps1") { Remove-Item "$startmap\updater.ps1" } 
-# verwijderen 2 bestanden vanaf versie 4.5.1. snelkoppeling_maken.ps1 wordt weer gebruikt vanaf 4.6.2
-# if (test-path -path "$startmap\snelkoppeling_maken.ps1") { Remove-Item "$startmap\snelkoppeling_maken.ps1" } 
-if (test-path -path "$startmap\beheren.ini") { Remove-Item "$startmap\beheren.ini" } 
-if (test-path -path "$startmap\updateinfo.ini") { Remove-Item "$startmap\updateinfo.ini" }
 # verwijderen beheer.ini vanaf versie 4.6.0
 if (test-path -path "$startmap\beheer.ini") { Remove-Item "$startmap\beheer.ini" }  
 # verwijderen filetransfer.gif vanaf versie 4.6.0
@@ -4869,29 +4973,8 @@ if (test-path -path "$startmap\snelkoppeling_maken.exe") { Remove-Item "$startma
 # verwijderen readme.txt en changelog.txt vanaf versie 4.7.1
 if (test-path -path "$startmap\readme.txt") { Remove-Item "$startmap\readme.txt" }  
 if (test-path -path "$startmap\changelog.txt") { Remove-Item "$startmap\changelog.txt" }  
-
-# Dit staat hier voor versies lager dan 4.5.0 om de logbestanden te hernoemen. Kan op een gegeven moment verwijderd worden.
-if (test-path -path "$logmap") {
-$persnr = $env:username
-Get-ChildItem -Path "$logmap\log_??????????.txt" -Name | ForEach-Object {
-    $file = $_
-    $nieuw = $file.Insert(14,'_'+$persnr)
-    $oudbestand = -join ($logmap,'\',$file)
-    Rename-Item -Path $oudbestand -NewName $nieuw
-}
-}
-
-# Dit staat hier voor versies vanaf 4.5.3 om de logbestanden te hernoemen die fout zijn gegaan bij versie 4.5.2. Kan op een gegeven moment verwijderd worden.
-if (test-path -path "$logmap") {
-$persnr = $env:username
-Get-ChildItem -Path "log\log_??????????_.txt" -Name | ForEach-Object {
-    $file = $_
-    $nieuw = $file.Insert(15,$persnr)
-    $oudbestand = -join ($logmap,'\',$file)
-    Rename-Item -Path $oudbestand -NewName $nieuw
-}
-}
-
+# verwijderen beheren.ico vanaf versie 4.8.0
+if (test-path -path "$startmap\beheren.ico") { Remove-Item "$startmap\beheren.ico" }
 
 # Controleren of netwerkschijven aanwezig zijn en eventueel herstellen.
 # Eerste regel van elke foutmelding tijdens deze controle.
@@ -5017,10 +5100,10 @@ $Form.controls.add($Button2)
 $Button4                         = New-Object system.Windows.Forms.Button
 $Button4.width                   = 60
 $Button4.height                  = 60
-$Button4.location                = New-Object System.Drawing.Point(588,50)
+$Button4.location                = New-Object System.Drawing.Point(286,50)
 $Button4.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
 $Button4.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icon verplaatsen.png")
-# $Button4.BackColor = [System.Drawing.Color]::green
+$Button4.visible                 = $false # deze knop is alleen zichtbaar als subtaken worden weergeven
 $Button4.Add_Click({ vensterverplaatsen })
 $Button4.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Bestanden van een pc verplaatsen of kopieëren naar een andere pc." )
@@ -5030,10 +5113,10 @@ $Form.controls.add($Button4)
 $Button3                         = New-Object system.Windows.Forms.Button
 $Button3.width                   = 60
 $Button3.height                  = 60
-$Button3.location                = New-Object System.Drawing.Point(588,150)
+$Button3.location                = New-Object System.Drawing.Point(286,150)
 $Button3.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
 $Button3.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icon wissen.png")
-# $Button3.BackColor = [System.Drawing.Color]::green
+$Button3.visible                 = $false # deze knop is alleen zichtbaar als subtaken worden weergeven
 $Button3.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Bestanden verwijderen uit de geselecteerde pcs in het netwerk." )
 })
@@ -5043,9 +5126,10 @@ $Form.controls.add($Button3)
 $Button9                         = New-Object system.Windows.Forms.Button
 $Button9.width                   = 60
 $Button9.height                  = 60
-$Button9.location                = New-Object System.Drawing.Point(588,250)
+$Button9.location                = New-Object System.Drawing.Point(510,50)
 $Button9.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
 $Button9.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-settings.png")
+$Button9.visible                 = $false # deze knop is alleen zichtbaar als subtaken worden weergeven
 $Button9.Add_Click({ vensterinstellingen })
 $Button9.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "De persoonlijke keuzes voor het programma wijzigen." )
@@ -5055,8 +5139,9 @@ $Form.controls.add($Button9)
 $Button10                         = New-Object system.Windows.Forms.Button
 $Button10.width                   = 60
 $Button10.height                  = 60
-$Button10.location                = New-Object System.Drawing.Point(588,350)
+$Button10.location                = New-Object System.Drawing.Point(398,150)
 $Button10.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-clean.png")
+$Button10.visible                = $false # deze knop is alleen zichtbaar als subtaken worden weergeven
 $Button10.Add_Click({ vensteropschonen })
 $Button10.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Oude back-ups verwijderen." )
@@ -5066,10 +5151,9 @@ $Form.controls.add($Button10)
 $Button7                         = New-Object system.Windows.Forms.Button
 $Button7.width                   = 60
 $Button7.height                  = 60
-$Button7.location                = New-Object System.Drawing.Point(52,350)
+$Button7.location                = New-Object System.Drawing.Point(52,50)
 $Button7.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
 $Button7.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-stoppen.png")
-$Button7.BackColor = [System.Drawing.Color]::red
 $Button7.Add_Click({ 
     # $result = programmaafsluiten
     $result = venstermetvraag -titel "Stoppen?" -vraag "`r`nWilt u het programma stoppen?" -knopok "Stoppen" -knopterug "Terug"
@@ -5088,8 +5172,9 @@ $Form.controls.add($Button7)
 $Button6                         = New-Object system.Windows.Forms.Button
 $Button6.width                   = 60
 $Button6.height                  = 60
-$Button6.location                = New-Object System.Drawing.Point(52,250)
+$Button6.location                = New-Object System.Drawing.Point(398,50)
 $Button6.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-info.png")
+$Button6.visible                = $false # deze knop is alleen zichtbaar als $subtaken = $true
 $Button6.Add_Click({ informatieprogramma })
 $Button6.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Algemene informatie over het programma lezen." )
@@ -5099,9 +5184,10 @@ $Form.controls.add($Button6)
 $Button5                         = New-Object system.Windows.Forms.Button
 $Button5.width                   = 60
 $Button5.height                  = 60
-$Button5.location                = New-Object System.Drawing.Point(52,150)
+$Button5.location                = New-Object System.Drawing.Point(164,150)
 $Button5.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
 $Button5.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-log.png")
+$Button5.visible                = $false # deze knop is alleen zichtbaar als $subtaken = $true
 $Button5.Add_Click({ vensterlogbestand })
 $Button5.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "De logbestanden van de uitgevoerde taken bekijken." )
@@ -5111,14 +5197,46 @@ $Form.controls.add($Button5)
 $Button11                         = New-Object system.Windows.Forms.Button
 $Button11.width                   = 60
 $Button11.height                  = 60
-$Button11.location                = New-Object System.Drawing.Point(52,50)
+$Button11.location                = New-Object System.Drawing.Point(164,50)
 $Button11.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-verkenner.png")
+$Button11.visible                = $false # deze knop is alleen zichtbaar als $subtaken = $true
 $Button11.Add_Click({ vensterverkenner })
 $Button11.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Bestanden verkennen." )
 })
 $Form.controls.add($Button11)
 
+#$Button12 = new-object Windows.Forms.PictureBox
+$Button12 = New-Object system.Windows.Forms.Button
+$Button12.Location = New-Object System.Drawing.Size(52,150) 
+$Button12.Size = New-Object System.Drawing.Size(60,60)
+$Button12.Image = [System.Drawing.Image]::FromFile("$icoontjesmap\icoon-opties.png")
+$Button12.Add_Click({ 
+    # venster met subtaken tonen 
+    # subtaken zijn de knoppen 4 t/m 11, uitgezonderd de knoppen 7 en 8
+    # uitvoeren via function zodat deze makkelijk weer kan worden gebruikt bij het teruggaan van een subtaken naar het hoofdmenu
+    subtakentonen
+
+ })
+$Button12.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Naar de subtaken gaan" )
+})
+$Form.controls.add($Button12)
+
+#$Button13 = new-object Windows.Forms.PictureBox
+$Button13  = New-Object system.Windows.Forms.Button
+$Button13.Location = New-Object System.Drawing.Size(52,150) 
+$Button13.Size = New-Object System.Drawing.Size(60,60)
+$Button13.Image = [System.Drawing.Image]::FromFile("$icoontjesmap\icoontje-home.png")
+$Button13.visible = $false # deze knop is alleen zichtbaar als $subtaken = $true
+$Button13.Add_Click({ 
+    subtakenverbergen;
+    
+ })
+$Button13.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Terug naar de hoofdtaken" )
+})
+ $Form.controls.add($Button13)
 
 <# handmatig updaten is niet meer mogelijk!
    Hiervoor was $Button8 gedefinieerd
@@ -5219,6 +5337,25 @@ $gifBox.add_MouseHover({
 })
 
 $Form.Controls.Add($gifbox)
+
+# Kiezen tusen de standaard layout of de layout waarbij subtaken worden weergegeven. Standaard is dit laatste.
+if ($global:init.algemeen.nieuwelayout -eq 'Ja') {
+    # subtakentonen
+    Nieuwelayoutgebruiken
+    } else {
+    Oudelayoutgebruiken
+    $Button4.visible = $true
+    $Button3.visible = $true
+    $Button9.visible = $true
+    $Button10.visible = $true
+    $Button6.visible = $true
+    $Button5.visible = $true
+    $Button11.visible = $true
+    $Button1.visible = $true
+    $Button2.visible = $true
+    $uitleg2.visible = $true
+    $uitleg1.visible = $true
+    }
 
 # Einde hoofdvenster declareren
 
