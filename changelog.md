@@ -7,16 +7,25 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 ## [4.8.0] - In ontwikeling
 ### Nieuwe functies
 - Met de functie **Verkenner** kan je nu ook bestanden, in de studentmappen, openen.
-- Nieuwe indeling en nieuwe knop in hoofdvenster;
+- Nieuwe indeling en nieuwe knop in het hoofdvenster;
   Hoofdvenster heeft 2 knoppen voor de standaardtaken, een menuknop en een afsluitknop.
-  Met de menuknop schakel je over naar de overige taken en weer terug.
 - Na elke update verschijnt er eenmalig een venster met informatie over de nieuwe versie.
+- Script werkt nu ook met PowerShell vanaf versie 7.
+  Je kan bij **Instellingen** dit aanzetten. PowerShell 7 wordt indien nodig geïnstalleerd.
+- Het controleren en installeren van updates kan je uitzetten bij **Instellingen**.
+
+### Bugfix
+- Bij **Verkenner** werkt het 'op volgorde zetten' door te klikken op de kolommen 'Gewijzigd' 
+  en 'Grootte' niet zoals het de bedoeling is. Dit is gewijzigd.
 
 ### Overige wijzigingen
-- README is aangepast. Een aantal verwijzingen naar bestanden stonden verkeerd.
+- README is aangepast. Een aantal verwijzingen naar bestanden stonden verkeerd, nieuwe functies
+  zijn toegevoegd en wijzigingen zijn doorgevoerd.
 - De naam van het programma-icoontje is gewijzigd.
-- Het venster **Informatie** bestaat nu uit 3 tabbladen: Changelog, Readme en License;
+- Het venster **Informatie** heeft nu 3 tabbladen: Changelog, Readme en License;
   De tabblad License met licentie-informatie is nieuw.
+- Logbestanden ouder dan 2025 worden niet meer getoond.
+- De manier waarop de escapetoets wordt gebruikt bij uitvoeren van taken gewijzigd.
 - Code gestructureerd en opgeschoond.
 
 ---

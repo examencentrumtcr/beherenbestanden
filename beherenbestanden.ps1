@@ -14,11 +14,13 @@ Auteur: Benvindo Neves
    alleen de naam vh bestand, dus zonder bovenliggende mappen
    extensie .ps1 wordt verwijderd 
    de naam van het programma wordt ook gebruikt in de titelbalk van het hoofdvenster.
-   #>
-
+   
+-> Scriptnaam wordt ingesteld bij object $global:progamma.naam en heeft een vaste waarde. Voor Powershell 7 zou onderstaande niet overal werken. 
+   Hoe $scriptnaam wel te laten werken is niet uitvoerig getest. Daarom deze oplossing
 $scriptnaam = $MyInvocation.InvocationName
 $scriptnaam = Split-Path -leaf $scriptnaam
 $scriptnaam = $scriptnaam.Replace(".ps1","")
+#>
 
 <# $global:programma is een object met alle variabelen die het programma beschrijven. 
    versie wordt aangepast als er een nieuwe versie is.
@@ -26,6 +28,7 @@ $scriptnaam = $scriptnaam.Replace(".ps1","")
    mode wordt aangepast afhankelijk van wat je wil testen of als er een nieuwe versie is.
    naam is de naam van het script. Deze wordt gebruikt in de titelbalk van het hoofdvenster.
    github is de locatie waar de updates vandaan gehaald worden. Dit is altijd hetzelfde.
+   icoon is de naam van het gebruikte icoon in de titelbalk bij alle vensters.
 
    Mode kan de volgende waarden hebben:
     alpha      : Logbestanden verwijderen is uit, Automatisch updates is uit, Lokale mappen worden gebruikt en Console blijft open
@@ -37,15 +40,19 @@ $scriptnaam = $scriptnaam.Replace(".ps1","")
     Bij het opstarten krijg je een melding als je in de fase alpha, beta of prelease zit.
 
 #>
+# startmap van het programma bepalen
+$startmap=Split-Path -Parent $PSCommandPath
+
 $global:programma = @{
     versie = '4.8.0'
-    extralabel = 'alpha.260317' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
+    extralabel = 'alpha.260514' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
-    naam = $scriptnaam
+    naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
-    icoon = 'script_icoon.ico'
+    icoon = -join ($startmap, "\", "script_icoon.ico")
 }
 
+$scriptnaam = $global:programma.naam
 write-host ""
 write-host "** Programma $scriptnaam " -f Green
 write-host "** Versie is "$global:programma.versie -f Green
@@ -66,9 +73,6 @@ Add-Type -AssemblyName System.Windows.Forms
 
 # VisualStyles aan zetten ------------------------------------------------------------------
 [System.Windows.Forms.Application]::EnableVisualStyles()
-
-# startmap van het programma bepalen
-$startmap=Split-Path -Parent $PSCommandPath
 
 # map met png icoontjes bepalen
 $icoontjesmap = -join ("$startmap","\","png")
@@ -460,6 +464,21 @@ For ($i=$keuzeeerstenr; $i -le $keuzelaatstenr; $i++) {
 return $listbox_temp
 }
 
+function Add-EscapeClose {
+    param(
+        [System.Windows.Forms.Form]$FormEscapeClose
+    )
+
+    $FormEscapeClose.KeyPreview = $true
+
+    $FormEscapeClose.Add_KeyDown({
+        param($sendervar, $e)
+
+        if ($e.KeyCode -eq [System.Windows.Forms.Keys]::Escape) {
+            $sendervar.Close()
+        }
+    })
+} # einde Add-EscapeClose
 
 function venstermetvraag {
 
@@ -468,13 +487,14 @@ param (
     [Parameter(Mandatory = $true)] [string]$vraag,
     [string]$knopok = "Ok",
     [string]$knopterug = "geen",
-    [string]$schuifbalk = "geen"
+    [switch]$schuifbalk,
+    [switch]$bredevenster
 )
 
 
 # venster declareren
-if ($schuifbalk -eq "beide") { 
-    $formvraag = declareren_standaardvenster $titel 600 300
+if ($bredevenster) { 
+    $formvraag = declareren_standaardvenster $titel 800 300
 } else {
     $formvraag = declareren_standaardvenster $titel 600 200
 }
@@ -491,10 +511,13 @@ $objtekst2.TabStop = $false  # tekst wordt niet geselecteerd in het begin. is du
 $objtekst2.ReadOnly = $true # je kan niet in het venster typen
 $objtekst2.Multiline = $true # meerdere regels kan je weergeven
 
-# Schuifbalk alleen aangeven als je true hebt toegevoegd ah eind van de functie aanroep.
-if ($schuifbalk -eq "beide") { 
-    $objtekst2.ScrollBars = "Both" 
-    $objtekst2.Size = New-Object System.Drawing.Size(530,210)
+# Schuifbalk alleen aangeven als je de switchh ebt toegevoegd ah eind van de functie aanroep.
+if ($schuifbalk) { 
+    $objtekst2.ScrollBars = "Vertical"
+    # $objtekst2.ScrollBars = "Both" 
+    } 
+if ($bredevenster) { 
+    $objtekst2.Size = New-Object System.Drawing.Size(730,210)
     } else {
     $objtekst2.Size = New-Object System.Drawing.Size(530,110)
     }
@@ -504,7 +527,7 @@ $formvraag.Controls.Add($objtekst2)
 # knop ok wordt altijd weergegeven. knop annuleren alleen als een 2e knop-naam gegeven is.
 $vraagok = New-object System.Windows.Forms.Button 
 $vraagok.text= $knopok
-if ($schuifbalk -eq "beide") { 
+if ($bredevenster) { 
     $vraagok.location = New-Object System.Drawing.Point(50,220)
 } else {
     $vraagok.location = New-Object System.Drawing.Point(50,120)
@@ -521,7 +544,7 @@ if (!($knopterug -eq "geen") ) {
 $vraagescape = New-object System.Windows.Forms.Button 
 $vraagescape.text= $knopterug
 # $vraagescape.location = "250,220" 
-if ($schuifbalk -eq "beide") { 
+if ($bredevenster) { 
     $vraagescape.location = New-Object System.Drawing.Point(250,220)
 } else {
     $vraagescape.location = New-Object System.Drawing.Point(250,120)
@@ -534,12 +557,7 @@ $formvraag.Controls.Add($vraagescape)
 }
 
 # Bij Escape-toets het venster sluiten.
-$formvraag.Add_KeyDown({
-    param($sender, $e)
-    if ($e.KeyCode -eq [System.Windows.Forms.Keys]::Escape) { $formvraag.Close() }
-})
-
-$formvraag.KeyPreview = $true
+Add-EscapeClose -Form $formvraag
 
 $result = $formvraag.ShowDialog()
     
@@ -597,11 +615,7 @@ $knopsluiten.DialogResult = [System.Windows.Forms.DialogResult]::ok
 $Global:Form_uitleg_taak.Controls.Add($knopsluiten)
 
 # Bij Escape-toets het venster sluiten.
-$Global:Form_uitleg_taak.KeyPreview = $true
-$Global:Form_uitleg_taak.Add_KeyDown({
-    param($sender, $e)
-    if ($e.KeyCode -eq [System.Windows.Forms.Keys]::Escape) { $Global:Form_uitleg_taak.Close() }
-})
+Add-EscapeClose -Form $Global:Form_uitleg_taak 
 
 # vraagteken weergeven om extra info te geven.
 $Global:vraagtekenicoon                     = new-object Windows.Forms.PictureBox
@@ -651,6 +665,8 @@ $opschonen=@{
 }
 $uitvoerennaopstarten=@{
     updateinfo = 'Ja'
+    powershell7start = 'Nee'
+    controleopupdate = 'Ja'
 }
 $Std_inst=@{
     algemeen  = $algemeen
@@ -772,33 +788,19 @@ foreach( $property in $global:beheer.locaties.keys ) {
 return $lijstlocaties
 }
 
-
-Function Form2afsluitenbijescape {
-# Bij Escape-toets het venster sluiten.
-# Dit wordt bij alle vensters, behalve hoofdvenster, gebruikt.
-
-$form2.Add_KeyDown({
-    param($sender, $e)
-    if ($e.KeyCode -eq [System.Windows.Forms.Keys]::Escape) { $form2.Close() }
-})
-
-$form2.KeyPreview = $true
-}
-
-
 function SortListView {
 # Bestanden sorteren op de kolom waar je op klikt. Dit wordt bij functie Verkenner gebruikt.
 
     Param(
-        [System.Windows.Forms.ListView]$sender,
+        [System.Windows.Forms.ListView]$sendersort,
         $column
     )
-    $temp = $sender.Items | Foreach-Object { $_ }
+    $temp = $sendersort.Items | Foreach-Object { $_ }
     $Script:SortingDescending = !$Script:SortingDescending
-    $sender.Items.Clear()
-    $sender.ShowGroups = $false
-    $sender.Sorting = 'none'
-    $sender.Items.AddRange(($temp | Sort-Object -Descending:$script:SortingDescending -Property @{ Expression={ $_.SubItems[$column].Text } }))
+    $sendersort.Items.Clear()
+    $sendersort.ShowGroups = $false
+    $sendersort.Sorting = 'none'
+    $sendersort.Items.AddRange(($temp | Sort-Object -Descending:$script:SortingDescending -Property @{ Expression={ $_.SubItems[$column].Text } }))
 }
 
 Function Declareericoontjes {
@@ -980,14 +982,14 @@ switch ($uitvoeren.taak) {
 
                 #backup maken
                 # de toevoeging \\? voor de bronmap en doelmap zorgt ervoor dat lange namen - meer dan maximaal 256 tekens, geen foutmelding geven en dus het kopieren en verwijderen ook dan lukt.
-                Copy-Item -path "\\?\$bronmap" -destination "\\?\$doelmap" -recurse -Force -container -ErrorAction Stop
+                Copy-Item -path "$bronmap" -destination "$doelmap" -recurse -Force -container -ErrorAction Stop
 
                 # en daarna wissen als dit geselecteerd is
                 if ($uitvoeren.wissennabackup -eq $true) { 
                     # verwijderen van bestanden. Eerst de inhoud van mijn documenten
-                    Remove-Item "\\?\$bronmap\mijn documenten\*" -Recurse -Force -ErrorAction Stop
+                    Remove-Item "$bronmap\mijn documenten\*" -Recurse -Force -ErrorAction Stop
                     # dan de root van rpc-map exclusief map mijn documenten
-                    Remove-Item "\\?\$bronmap\*" -Recurse -Force -Exclude "mijn documenten" -ErrorAction Stop
+                    Remove-Item "$bronmap\*" -Recurse -Force -Exclude "mijn documenten" -ErrorAction Stop
                     }
                 } # einde try
 
@@ -1082,9 +1084,9 @@ switch ($uitvoeren.taak) {
                 if (!(Test-Path $doelmaproot)) { throw "Map $doelmaproot niet gevonden."}
 
                 # verwijderen van bestanden. Eerst de inhoud van mijn documenten
-                Remove-Item "\\?\$doelmap\*" -Recurse -Force -ErrorAction Stop
+                Remove-Item "$doelmap\*" -Recurse -Force -ErrorAction Stop
                 # dan de root van rpc-map exclusief map mijn documenten
-                Remove-Item "\\?\$doelmaproot\*" -Recurse -Force -Exclude "mijn documenten" -ErrorAction Stop
+                Remove-Item "$doelmaproot\*" -Recurse -Force -Exclude "mijn documenten" -ErrorAction Stop
                 }
             catch {
 
@@ -1115,7 +1117,7 @@ switch ($uitvoeren.taak) {
                 # extra test of de specifieke rpc-map wel bestaat
                 if (!(Test-Path $doelmap)) { throw "Map $doelmap niet gevonden."}
                 # verwijderen van bestanden in doelmap
-                Remove-Item "\\?\$doelmap\*" -Recurse -Force -ErrorAction Stop
+                Remove-Item "$doelmap\*" -Recurse -Force -ErrorAction Stop
                 }
             catch {
 
@@ -1138,11 +1140,11 @@ switch ($uitvoeren.taak) {
             if (!(Test-Path $bronmap)) { throw "Map $bronmap niet gevonden."}
             
             # eerst kopiëren
-            Copy-Item -path "\\?\$bronmap" -destination "\\?\$doelmap" -recurse -ErrorAction Stop
+            Copy-Item -path "$bronmap" -destination "$doelmap" -recurse -ErrorAction Stop
 
             # verwijderen van bestanden als keuze is verplaatsen. alleen de inhoud van mijn documenten
             if ($uitvoeren.keuzeverplaatsen -eq "verplaatsen") {
-                Remove-Item "\\?\$bronmap" -Recurse -Force -ErrorAction Stop
+                Remove-Item "$bronmap" -Recurse -Force -ErrorAction Stop
                 }
             }
         catch {
@@ -1173,7 +1175,7 @@ switch ($uitvoeren.taak) {
             $error.clear()
             try {
                 # compleet verwijderen van mappen. 
-                Remove-Item "\\?\$doelmap" -Recurse -Force -ErrorAction Stop
+                Remove-Item "$doelmap" -Recurse -Force -ErrorAction Stop
 
                 }
             catch {
@@ -1281,7 +1283,7 @@ if (($uitvoeren.taak -eq "kopiëren") -and ($uitvoeren.controlemappen)) {
     $vraagdoorgaan="LET OP : Op een aantal RPC-nummers zijn al bestanden aanwezig!" + "`r`n" + "Als u doorgaat worden de bestanden toegevoegd." + "`r`n" +
     "Klik op Terug als u terug wilt." + "`r`n" + "`r`n" + "De volgende $teller RPC-nummers zijn niet leeg: $nietlegemappen" 
 
-    $result=venstermetvraag -titel "Controle of homemappen van de kandidaten leeg zijn." -vraag $vraagdoorgaan -knopok "Doorgaan" -knopterug "Terug" -schuifbalk "beide"
+    $result=venstermetvraag -titel "Controle of homemappen van de kandidaten leeg zijn." -vraag $vraagdoorgaan -knopok "Doorgaan" -knopterug "Terug" -schuifbalk
 
     if ( $result -eq "Cancel") { return }
     }
@@ -1336,7 +1338,7 @@ if (!(Test-Path "$logmap")) { New-Item -Path "$logmap" -ItemType Directory | Out
 
 # in logbestand info over de taak schrijven en beginnen met uitvoeren van taak ---------------------------
 
-"De taak " + $uitvoeren.taak + " is gestart." | out-file $logbestand -Append
+"De taak " + $uitvoeren.taak + " is gestart." | out-file $logbestand -Append -Encoding utf8BOM
 "Starttijd : $logtijd" | out-file $logbestand -Append
 
 if ($uitvoeren.taak -eq "kopiëren") {
@@ -1575,6 +1577,7 @@ $LogButton.height = 40
 $LogButton.BackColor = 'green'
 $LogButton.ForeColor = 'white'
 $LogButton.hide()
+$LogButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
 $LogButton.add_click({ 
     $Form2.dispose()
     $uitvoeren.Form3.dispose()
@@ -1722,27 +1725,28 @@ if ($taak -eq "kopiëren") {
 $uitvoeren.Form3.Controls.AddRange(@($Description2, $Description3, $StartButton, $EndButton, $Btnescape, $LogButton, $Label, $objtekst1, $objtekst2 ))
 
 # Toevoegen gebruik van escapetoets.
-# na indrukken wordt venster gesloten en hoofdvenster geopend.
+# Function Add-EscapeClose kan hier niet gebruikt worden omdat deze niet in Runspace is gedefinieerd. Daarom wordt de code hier direct toegevoegd.
+# Add-EscapeClose -Form $uitvoeren.Form3
 $uitvoeren.Form3.Add_KeyDown({
-    param($sender, $e)
+    param($senderEscape, $e)
     if ($e.KeyCode -eq [System.Windows.Forms.Keys]::Escape) { 
-
-    $uitvoeren.Form3.dispose() 
-    $Form2.Close()
-    $form.show()
+    $senderEscape.Close()
     }
 })
 # zorgen dat speciale toetsen worden gedetecteerd.
 $uitvoeren.Form3.KeyPreview = $true
 
+
 $result = $uitvoeren.form3.ShowDialog()
 
 $uitvoeren.Form3.dispose()
 
-# Alleen als knop Sluiten is ingedrukt.
+# Als knop Sluiten is ingedrukt dan terug naar hoofdmenu. Als knop Terug is ingedrukt dan terug naar keuzevenster van de taak.
 if ($result -eq [system.windows.forms.dialogResult]::OK) { 
     $Form2.Close()
     $form.show()
+    } elseif ($result -eq [system.windows.forms.dialogResult]::Cancel) {
+    $form2.show()
     }
 
 } # einde overzichttaken
@@ -2454,7 +2458,8 @@ $Form2.controls.AddRange(@($listBox, $lijstlocaties, $lijstcrebonrs, $lijstkernt
 $listview1, $listView2, $Btnstart, $Btnescape, $Controlemappen, $Description2,
 $Description3, $Description4, $Description5, $Description8, $Global:vraagtekenicoon ))
 
-Form2afsluitenbijescape;
+# toevoegen van escape key functionaliteit aan het venster, zodat deze ook met de escape key gesloten kan worden.
+Add-EscapeClose -Form $form2
 
 # venster tonen
 $null = $form2.ShowDialog()
@@ -2593,7 +2598,8 @@ Om naar het overzicht te gaan waar u de back-up kan starten moet u op Bevestigen
 
 $form2.controls.AddRange(@($lijstlocaties, $listBox, $Btnstart, $Btnescape, $wissennabackup, $Description3, $Description4, $Global:vraagtekenicoon ))
 
-Form2afsluitenbijescape;
+# toevoegen van escape key functionaliteit aan het venster, zodat deze ook met de escape key gesloten kan worden.
+Add-EscapeClose -Form $form2
 
 $null = $form2.ShowDialog()
     
@@ -2711,7 +2717,7 @@ Om naar het overzicht te gaan waar u het verwijderen kan starten moet u op Beves
 
 $form2.controls.AddRange(@($lijstlocaties, $listBox, $Btnstart, $Btnescape, $Description3, $Description4, $Global:vraagtekenicoon))
 
-Form2afsluitenbijescape;
+Add-EscapeClose -Form $form2
 
 $null = $form2.ShowDialog()
     
@@ -2917,7 +2923,7 @@ Om naar het overzicht te gaan waar u het verplaatsen kan starten moet u op Beves
 $form2.controls.AddRange(@($lijstlocaties, $keuzeoptie1, $bronselectie, $doelselectie, $doelmaplegen, $Btnstart, $Btnescape, $Description2, 
 $Description3, $Description4, $Description5, $Description6, $Global:vraagtekenicoon ))
 
-Form2afsluitenbijescape;
+Add-EscapeClose -Form $form2;
 
 $null = $form2.ShowDialog()
     
@@ -3015,7 +3021,7 @@ $filterjaar.DropDownStyle       = "DropDownList"
 $filterjaar.Font                = 'Microsoft Sans Serif,12'
 $filterjaar.location = "120,15" 
 # vullen met jaren
-for ($i=2022; $i -le 2040; $i++) {
+for ($i=2025; $i -le 2040; $i++) {
     [void] $filterjaar.Items.Add($i)
 }
 $filterjaar.add_SelectedIndexChanged({
@@ -3026,8 +3032,10 @@ $filterjaar.add_SelectedIndexChanged({
     # Inlezen logs en in array plaatsen
     Inlezenlogs | Sort-Object -Descending | ForEach-Object {
         $datumlog = bepaaldatumuitlognaam "$_"
+        #test
+        # Write-Host "filterjaar: $($filterjaar.selecteditem) - datumlog: $datumlog"
 
-        if ($datumlog.Contains($filterjaar.selecteditem)) { 
+        if ($datumlog -like "*$($filterjaar.SelectedItem)*") { 
             [void] $listbox2.Items.Add($datumlog)
         }
     }
@@ -3035,7 +3043,7 @@ $filterjaar.add_SelectedIndexChanged({
         else { $objtekst1.Text = "" }
 })
 $filterjaar.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Toon alleen de logbestanden van de geselecteerde jaar." )
+    $global:tooltip1.SetToolTip($this, "Toon alleen de logbestanden van het geselecteerde jaar." )
 })
 
 $filtermaand                     = New-Object system.Windows.Forms.ComboBox
@@ -3055,11 +3063,11 @@ for ($i=01; $i -le 12; $i++) {
 }
 $filtermaand.add_SelectedIndexChanged({
     $listbox2.Items.clear()
-
+    # bepaal de te filteren maand en jaar
+    $filter = "$($filtermaand.SelectedItem)-$($filterjaar.SelectedItem)"
     Inlezenlogs | Sort-Object -Descending | ForEach-Object {
         $datumlog = bepaaldatumuitlognaam "$_"
-        $filter = -join ($filtermaand.selecteditem,"-",$filterjaar.selecteditem)
-        if ($datumlog.Contains($filter)) { 
+        if ($datumlog -like "*$filter*") { 
             [void] $listbox2.Items.Add($datumlog)
         }
     }
@@ -3158,7 +3166,7 @@ $Form2.Controls.AddRange(@($Description2, $Description3, $Description4, $Descrip
 # eerste logbestand is geselecteerd.
 $listBox2.SelectedIndex = 0
 
-Form2afsluitenbijescape;
+Add-EscapeClose -Form $form2
 
 $null = $form2.ShowDialog()
 
@@ -3217,6 +3225,11 @@ if ("alpha","beta" -contains($global:programma.mode)) {
     return
 }
 
+# alleen starten als je dit bij instelling hebt staan. Dit is om te voorkomen dat er onbedoeld een update wordt uitgevoerd.
+if ($global:init["uitvoerennaopstarten"]["Controleopupdate"] -ne "Ja") {
+    Write-Host "Controle op updates is uitgeschakeld. Er wordt geen update uitgevoerd." -ForegroundColor Yellow
+    return
+}
 # bepalen programma naam tbv controle hieronder en doorzoeken website naar laatste versie
 $programmanaam = $global:programma.naam
 
@@ -3239,7 +3252,8 @@ if (Test-Path -path $zip_download -pathtype leaf) {
         return
     }
 
-# controleren of het script al is opgestart. Als dit zo is kan het mis gaan bij het updaten.
+# controleren of het script al is opgestart. Als dit zo is kan het mis gaan bij het updaten. Dit werkt alleen voor Poweshell 5 omdat naar powershell.exe wordt gekeken. 
+# Bij powershell 7 moet er naar pwsh.exe worden gekeken.
 try {
     $gevonden = Get-CimInstance Win32_Process -Filter "Name='powershell.exe' AND CommandLine like '%$programmanaam%'" -ErrorAction Stop
     }
@@ -3440,11 +3454,8 @@ function vensterinstellingen {
 # De hoofdmenu onzichtbaar maken
 $form.Hide()
 
-# variabelen
-$keuzelocatie=$global:init["algemeen"]["locatiekeuze"]
-
 # venster declareren
-$Form2 = declareren_standaardvenster "Instellingen wijzigen" 1000 500
+$Form2 = declareren_standaardvenster "Instellingen wijzigen" 1000 590
 
 $keuzeoptie1                     = New-Object system.Windows.Forms.ComboBox
 $keuzeoptie1.width               = 80
@@ -3455,6 +3466,7 @@ $keuzeoptie1.location = "450,55"
 
 # locaties toevoegen aan lijst
 $teller=0
+$keuzelocatie=$global:init["algemeen"]["locatiekeuze"]
 foreach( $property in $global:beheer.locaties.keys ) {
     # locatiecode toevoegen
     [void] $keuzeoptie1.Items.Add("$property")
@@ -3606,6 +3618,34 @@ if ($global:init["algemeen"]["nieuwelayout"] -eq "Ja") {
     $keuzeoptie11.Selectedindex = 1
     }
 
+$keuzeoptie12                     = New-Object system.Windows.Forms.ComboBox
+$keuzeoptie12.width               = 80
+$keuzeoptie12.autosize            = $true
+$keuzeoptie12.DropDownStyle       = "DropDownList"
+$keuzeoptie12.Font                = 'Microsoft Sans Serif,12'
+$keuzeoptie12.location = "450,375" 
+[void] $keuzeoptie12.Items.Add("Ja")
+[void] $keuzeoptie12.Items.Add("Nee")
+if ($global:init["uitvoerennaopstarten"]["powershell7start"] -eq "Ja") {
+    $keuzeoptie12.Selectedindex = 0
+    } else {
+    $keuzeoptie12.Selectedindex = 1
+    }
+
+$keuzeoptie13                     = New-Object system.Windows.Forms.ComboBox
+$keuzeoptie13.width               = 80
+$keuzeoptie13.autosize            = $true
+$keuzeoptie13.DropDownStyle       = "DropDownList"
+$keuzeoptie13.Font                = 'Microsoft Sans Serif,12'
+$keuzeoptie13.location = "450,415" 
+[void] $keuzeoptie13.Items.Add("Ja")
+[void] $keuzeoptie13.Items.Add("Nee")
+if ($global:init["uitvoerennaopstarten"]["Controleopupdate"] -eq "Ja") {
+    $keuzeoptie13.Selectedindex = 0
+    } else {
+    $keuzeoptie13.Selectedindex = 1
+    }
+
 $Description1                     = New-Object system.Windows.Forms.Label
 $Description1.text                = "Standaard locatie"
 $Description1.AutoSize            = $false
@@ -3729,7 +3769,7 @@ $Description10.add_MouseHover({
 })
 
 $Description11                     = New-Object system.Windows.Forms.Label
-$Description11.text                = "Toon het nieuwe hoofdvenster na het opstartproces."
+$Description11.text                = "Toon de nieuwe layout in het hoofdvenster."
 $Description11.AutoSize            = $false
 $Description11.width               = 400
 $Description11.height              = 40
@@ -3737,12 +3777,36 @@ $Description11.location            = New-Object System.Drawing.Point(40,100)
 $Description11.Font                = 'Microsoft Sans Serif,11'
 $Description11.ForeColor = [System.Drawing.Color]::Blue
 $Description11.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Toon het nieuwe layout in het hoofdvenster." )
+    $global:tooltip1.SetToolTip($this, "Bepaal of je het nieuwe layout in het hoofdvenster wil tonen." )
+})
+
+$Description12                     = New-Object system.Windows.Forms.Label
+$Description12.text                = "Het script met powershell 7 starten en deze indien nodig installeren."
+$Description12.AutoSize            = $false
+$Description12.width               = 400
+$Description12.height              = 40
+$Description12.location            = New-Object System.Drawing.Point(40,380)
+$Description12.Font                = 'Microsoft Sans Serif,11'
+$Description12.ForeColor = [System.Drawing.Color]::Blue
+$Description12.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Bepaal of je het script wil opstarten met PowerShell 7 of hoger als deze met powershell 5 is opgestart. Als het nodig is wordt PowerShell 7 geïnstalleerd." )
+})
+
+$Description13                     = New-Object system.Windows.Forms.Label
+$Description13.text                = "Automatisch controleren en installeren van updates bij het opstarten van het programma."
+$Description13.AutoSize            = $false
+$Description13.width               = 400
+$Description13.height              = 40
+$Description13.location            = New-Object System.Drawing.Point(40,420)
+$Description13.Font                = 'Microsoft Sans Serif,11'
+$Description13.ForeColor = [System.Drawing.Color]::Blue
+$Description13.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Bepaal of je op een update van het programma wil controleren en deze installeren bij het opstarten van het programma. Dit wordt dan automatisch gedaan." )
 })
 
 $Btnstandaard = New-object System.Windows.Forms.Button 
 $Btnstandaard.text= "Herstel de standaardinstellingen"
-$Btnstandaard.location = "450,390" 
+$Btnstandaard.location = "450,470" 
 $Btnstandaard.size = "250,30"  
 $Btnstandaard.BackColor = 'blue'
 $Btnstandaard.ForeColor = 'white'
@@ -3761,6 +3825,8 @@ $Btnstandaard.add_click({
     $keuzeoptie9.SelectedItem=$temp_init["algemeen"]["consolesluiten"]
     $keuzeoptie10.SelectedItem=$temp_init["algemeen"]["controlevoorklaarzetten"]
     $keuzeoptie11.SelectedItem=$temp_init["algemeen"]["nieuwelayout"]
+    $keuzeoptie12.SelectedItem=$temp_init["uitvoerennaopstarten"]["powershell7start"]
+    $keuzeoptie13.SelectedItem=$temp_init["uitvoerennaopstarten"]["Controleopupdate"]
 }) # einde Btnstandaard.add_click
 $Btnstandaard.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Zet alle instellingen terug naar de standaard waarden." )
@@ -3768,7 +3834,7 @@ $Btnstandaard.add_MouseHover({
 
 $Btnaccept = New-object System.Windows.Forms.Button 
 $Btnaccept.text= "Bewaren"
-$Btnaccept.location = "50,390" 
+$Btnaccept.location = "50,470" 
 $Btnaccept.size = "150,30"  
 $Btnaccept.BackColor = 'green'
 $Btnaccept.ForeColor = 'white'
@@ -3779,7 +3845,7 @@ $Btnaccept.add_MouseHover({
 
 $Btnescape = New-object System.Windows.Forms.Button 
 $Btnescape.text= "Terug"
-$Btnescape.location = "250,390" 
+$Btnescape.location = "250,470" 
 $Btnescape.size = "150,30"  
 $Btnescape.BackColor = 'red'
 $Btnescape.ForeColor = 'white'
@@ -3796,14 +3862,15 @@ $gifbox2.AutoSize = $false
 $keuzeafbeelding = 'Samenwerken'
 
 # een match zoeken met de gekozen afbeelding in je persoonlijke instellingen
-$global:afbeeldingen.ForEach( {
-    if ($_.naam -eq $keuzeoptie6.Selecteditem) {
-        $keuzeafbeelding = $_.bestand
-        }
-})
+foreach ($afbeelding in $global:afbeeldingen) {
+    if ($afbeelding.naam -eq $keuzeoptie6.Selecteditem) {
+        $keuzeafbeelding = $afbeelding.bestand
+        break
+    }
+}
 $gifbox2.Image    = [System.Drawing.Image]::FromFile("$gifjesmap\$keuzeafbeelding")
 $gifbox2.location = New-Object System.Drawing.Point(570,80)
-$gifbox2.Size     = "370,320" 
+$gifbox2.Size     = "370,400"
 $gifbox2.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Zoom
 $gifbox2.add_click({
     if ($keuzeoptie6.Selectedindex -eq 6) {
@@ -3818,7 +3885,7 @@ $gifbox2.add_MouseHover({
 
 
 # venster met uitleg over deze taak wordt gedeclareerd. hieronder worden enkele variabelen aangepast aan deze taakvenster
-declareren_uitlegvenster "Uitleg over het venster Instellingen." 680 300 920 400 "Wijzig hier de standaard instellingen van het programma. 
+declareren_uitlegvenster "Uitleg over het venster Instellingen." 680 300 920 480 "Wijzig hier de standaard instellingen van het programma. 
 Met deze instellingen wijzig je de voorkeuren die standaard zijn ingesteld bij een taak
 maar vaak kan je de voorkeuren bij een taak nog voor het uitvoeren aanpassen.
 De instellingen voor je naam en de afbeelding zie je alleen terug in het hoofdscherm.
@@ -3831,19 +3898,22 @@ Als u de instellingen wilt bewaren klikt u op Bewaren.
 Als u terug wilt zonder de instellingen te bewaren klikt u op Terug.
 " 
 
-$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie1, $keuzeoptie11, $keuzeoptie2, $keuzeoptie3, $keuzeoptie10, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie7, $keuzeoptie6,
-$description1, $description2, $description3, $description4, $description5, $description6, $description8, $description9, $description10, $description7, $Description11,
+$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie1, $keuzeoptie11, $keuzeoptie2, $keuzeoptie3, $keuzeoptie10, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie7, $keuzeoptie6, $keuzeoptie12, $keuzeoptie13,
+$description1, $description2, $description3, $description4, $description5, $description6, $description8, $description9, $description10, $description7, $Description11, $Description12, $Description13, 
 $Btnaccept, $Btnescape, $Btnstandaard, $Global:vraagtekenicoon, $gifbox2 ))
 
-Form2afsluitenbijescape;
+Add-EscapeClose -Form $form2
 
 # openen venster
 $result = $form2.ShowDialog()
 
 # bewaren van instellingen
 if ($result -eq [system.windows.forms.dialogResult]::yes) { 
+    # variabele  die de huidige instellingen bevatten. Deze worden gebruikt om te bepalen of er een wijziging is in de keuze voor het starten van powershell 7.
+    # Als deze keuze is gewijzigd, wordt het script opnieuw opgestart. Zie verderop in deze functie.
+    $keuzepowershell7start = $global:init["uitvoerennaopstarten"]["powershell7start"]
 
-    # keuzes worden ingesteld
+    # keuzes worden opgehaald en in variabelen gezet. Deze worden vervolgens in het globale init object gezet. Daarna worden deze bewaard in het persoonlijke init bestand van de gebruiker.
     $global:init["algemeen"]["locatiekeuze"]=$keuzeoptie1.Selecteditem
     $global:init["algemeen"]["wissennabackup"]=$keuzeoptie2.Selecteditem
     $global:init["algemeen"]["maplegenvoorverplaatsen"]=$keuzeoptie3.Selecteditem
@@ -3852,6 +3922,9 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
     $global:init["algemeen"]["consolesluiten"]=$keuzeoptie9.Selecteditem
     $global:init["algemeen"]["controlevoorklaarzetten"]=$keuzeoptie10.Selecteditem
     $global:init["algemeen"]["nieuwelayout"]=$keuzeoptie11.Selecteditem
+    $global:init["uitvoerennaopstarten"]["powershell7start"]=$keuzeoptie12.Selecteditem
+    $global:init["uitvoerennaopstarten"]["Controleopupdate"]=$keuzeoptie13.Selecteditem
+
     # alle spaties aan begin en eind weghalen
     # $keuzeoptie8.Text.Trim()
     $global:init["algemeen"]["gebruiker"]=$keuzeoptie8.Text.Trim()
@@ -3878,6 +3951,27 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
     # bestand met nieuwe variabele bewaren.
     # Eerst wordt de persoonlijke initialisatiebestand bepaald.
     Bewareninstellingen
+
+    # Als de keuze voor opstarten met Powershell 7 is gewijzigd, opnieuw opstarten
+    if ($keuzepowershell7start -ne $keuzeoptie12.Selecteditem) {
+        # Eerst vragen of de gebruiker het script opnieuw wil opstarten met Powershell 7. Dit is nodig omdat deze wijziging pas van kracht wordt bij een nieuw proces.
+        $melding = "U heeft een wijziging aangebracht op de PowerShell versie waarop het script wordt uitgevoerd.`r`nOm deze wijziging door te voeren moet het script opnieuw worden opgestart. `r`nWilt u het script nu opnieuw starten?"
+        $result = venstermetvraag -titel "Script opnieuw opstarten?" -vraag $melding -knopok "Ja" -knopterug "Nee"
+
+        if ($result -eq 'OK') {
+            # opnieuw opstarten script met een andere procesnummer (sessie). De de oude kan worden afgesloten.
+            # Eerst wordt het programma naam bepaald.
+            $scriptnaam = $global:programma.naam
+            $scriptnaam = -join ($startmap, "\", $scriptnaam, ".ps1")
+            start-process PowerShell.exe -argumentlist '-File', "`"$scriptnaam`"" 
+            # Sluiten van huidige vensters. Als je hier exit gebruikt krijg je een error maar het proces wordt wel afgesloten. 
+            # Daarom worden hier de vensters gesloten en daarna gaat het script verder in het nieuwe proces dat met start-process is gestart.
+            $form2.Close()
+            $form.Close()
+            # beëindigen van huidige proces. Script gaat verder in het nieuwe proces dat met start-process is gestart.
+            # exit;
+        }
+    }
 
     # Nieuwe hoofdvenster tonen of niet
     if ($keuzeoptie11.Selectedindex -eq 0) {
@@ -3932,9 +4026,9 @@ $listBox.items.clear()
 $backupmap = $global:beheer.examenmappen.backupmap
 # inlezen backupmap en fouten opvangen
 try {
-   Get-ChildItem -Path "$backupmap" -ErrorAction Stop | Where-Object {($_.psiscontainer -and $_.LastWriteTime -lt (Get-Date).AddDays(-$getal1))} | foreach-object {
+   Get-ChildItem -Path "$backupmap" -ErrorAction Stop | Where-Object {( ($_.psiscontainer) -and ($_.LastWriteTime -lt (Get-Date).AddDays(-$getal1)) )} | foreach-object {
         $tellerbackups++
-        $listbox.Items.Add($_) 
+        $listbox.Items.Add($_.Name) 
         }
    
 }
@@ -4076,7 +4170,7 @@ $Form2.Controls.AddRange(@( $objTextBox1, $global:listbox, $description1, $descr
 # eerst inlezen mappen
 inlezenmappen;
 
-Form2afsluitenbijescape;
+Add-EscapeClose -Form $form2
 
 # openen venster
 $null = $form2.ShowDialog()
@@ -4089,66 +4183,15 @@ $form.show()
 
 function informatieprogramma {
 
-function info_venster_vullen {
-
-# infovenster en tijdelijke object legen. wordt gebruikt bij function informatieprogramma
-$objtekst1.Text = "Het bestand wordt geladen ..."
-$objtekst_temp.text = ""
-
-# tijdelijke variabelen benoemen
-$tempreadmebestand="$startmap\$readmebestand"
-$tempchangelogbestand="$startmap\$changelogbestand"
-
-# inhoud bestand inlezen
-
-if ((test-path -path $tempreadmebestand -pathtype leaf)) { 
-        $volledigetext = Get-Content -Path "$tempreadmebestand"
-        } else {
-        $volledigetext = "Het Readme-document is niet gedownload en kan dus niet getoont worden."
-        }
-# dan netjes in rijen plaatsen.
-foreach ($item in $volledigetext) {
-               $objtekst_temp.Text = $objtekst_temp.Text + "$item" + "`r`n"
-               }
-$objtekst1.Text = $objtekst_temp.text 
-
-<#
-$objtekst_temp.text = ""
-if ((test-path -path $tempchangelogbestand -pathtype leaf)) { 
-        $volledigetext = Get-Content -Path "$tempchangelogbestand"
-        } else {
-        $volledigetext = "Het Changelog-document is niet gedownload en kan dus niet getoont worden."
-        }
-
-
-# dan netjes in rijen plaatsen.
-foreach ($item in $volledigetext) {
-               $objtekst_temp.Text = $objtekst_temp.Text + "$item" + "`r`n"
-               }
-
-$objtekst2.Text = $objtekst_temp.text 
-#>
-
-} # einde info_venster_vullen
-
-# Begin van function info_venster_vullen
-
 # De hoofdmenu onzichtbaar maken
 $form.Hide()
 
 # Powershell versie
-$psmajor = $PSVersionTable.PSVersion.Major
-$psminor = $PSVersionTable.PSVersion.Minor
-$psbuild = $PSVersionTable.PSVersion.Build
-$psrevision = $PSVersionTable.PSVersion.Revision
+$psversie = $PSVersionTable.PSVersion.ToString()
 
-$psversie = "$PSMajor.$PSMinor.$PSbuild.$psrevision"
- 
 # venster declareren
 $Form2 = declareren_standaardvenster "Informatie over het programma" 960 690
-# must 
 $Form2.ShowInTaskbar = $True
-# must 
 $Form2.KeyPreview = $True
 
 $Description2                     = New-Object system.Windows.Forms.Label
@@ -4315,7 +4358,7 @@ $Tab1.Controls.Add($objtekst1)
 $Tab2.Controls.Add($objtekst2)
 $Tab3.Controls.Add($objtekst3)
 
-Form2afsluitenbijescape;
+Add-EscapeClose -Form $form2
 
 # venster starten
 $null = $form2.ShowDialog()
@@ -4562,7 +4605,7 @@ Met de knop Nog een grap kan je een nieuwe mop genereren.
 De knop Terug brengt je terug naar het hoofdvenster." 
 
 $Form2.controls.add($Global:vraagtekenicoon)
-Form2afsluitenbijescape;
+Add-EscapeClose -Form $form2
 
 # venster starten
 $null = $form2.ShowDialog()
@@ -4570,25 +4613,6 @@ $null = $form2.ShowDialog()
 } # einde functie Venstermetgrap
 
 function vensterverkenner {
-
-function toevoegen_lijst1 ($controlemap, $toevoegitem, $toevoegdatum, $toevoeggrootte) {
-# toevoegen items en icoontjes, dit is een map of bestand, aan lijst
-
-    if (( test-path -path "$controlemap\$toevoegitem" -pathtype container) -eq $true)  {
-        [void] $listView1.Items.Add($toevoegitem, 0).SubItems.Add($toevoegdatum.ToString())
-        } else {
-
-        # Grootte van bestand weergeven in kilobytes
-        if ($toevoeggrootte -eq 0) { $lengte = '0 kB'}
-            elseif ($toevoeggrootte -lt 1024) { $lengte = '1 kB'}
-            else { 
-            $waarde =  [math]::round($toevoeggrootte / 1024)
-            $lengte = -join ($waarde," kB")
-            }
-        $extensienr = Bepaalicoontjenr $controlemap $toevoegitem
-        [void] $listView1.Items.Add($toevoegitem, $extensienr).SubItems.Addrange( @($toevoegdatum.ToString(),$lengte ) )
-        }
-}
 
 Function Selecteermap {
 # Selecteert de huidige gekozen map of submap.
@@ -4611,22 +4635,57 @@ $geselecteerdebronmap.Clear()
 $geselecteerdebronmap.Add($mijndocumentenmap)
 }
 
-Function geselecteerdemap_vullen ($selectie) {
-# vullen van de rechter venster met de inhoud van de geselecteerde map of submap
-    try { 
-        $inhoud = Get-ChildItem -Path "$selectie" -ErrorAction Stop | Sort-object 
+function Venstervullen ($pad) {
 
-        # dan netjes in rijen plaatsen.
-        foreach ($item in $inhoud) {
-        toevoegen_lijst1 $selectie $item.Name $item.LastWriteTime $item.Length
-        $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $Item.Name)
+    $listView1.BeginUpdate()
+    $listView1.Items.Clear()
+
+    try {
+        $items = Get-ChildItem -Path $pad -ErrorAction Stop | Sort-Object Name
+
+        foreach ($item in $items) {
+
+            # 📁 MAP
+            if ($item.PSIsContainer) {
+                $lvItem = $listView1.Items.Add($item.Name, 0)
+                $lvItem.SubItems.Add($item.LastWriteTime.ToString()) | Out-Null
+                $lvItem.SubItems.Add("") | Out-Null
+            }
+
+            # 📄 BESTAND
+            else {
+
+                $extensienr = Bepaalicoontjenr $pad $item.Name
+
+                if ($item.Length -eq 0) { 
+                    $grootte = '0 kB'
+                }
+                elseif ($item.Length -lt 1024) { 
+                    $grootte = '1 kB'
+                }
+                else {
+                    $grootte = "$([math]::Round($item.Length / 1024)) kB"
+                }
+
+                $lvItem = $listView1.Items.Add($item.Name, $extensienr)
+
+                $lvItem.SubItems.Add($item.LastWriteTime.ToString()) | Out-Null
+                $lvItem.SubItems.Add($grootte) | Out-Null
             }
         }
+    }
     catch {
         # melding loggen en weergeven
-        $melding = -join ("Venster Verkenner is geopend : ", "`n", $_.exception.message )
+        $melding = -join ("Venster Verkenner wordt gevuld : ", "`n", $_.exception.message )
         Meldingnaarlogbestand -meldtekst $melding
-        }
+    }
+
+    $listView1.EndUpdate()
+}
+
+Function geselecteerdemap_vullen ($selectie) {
+
+    Venstervullen $selectie
 
     # aanpassen venster aan inhoud
     $listView1.AutoResizeColumns(1) 
@@ -4641,7 +4700,7 @@ Function geselecteerdemap_vullen ($selectie) {
     foreach ($item in $geselecteerdebronmap) {
           $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $Item)
         }
-    } # einde geselecteerdemap_vullen
+} # einde geselecteerdemap_vullen
 
 
 # ----------- Start function VensterVerkenner -------------------------------
@@ -4661,7 +4720,7 @@ $global:listBox = lijstrpcnrsaanmaken $keuzelocatie $global:listBox
 # De hoofdmenu onzichtbaar maken
 $form.Hide()
 
-$Form2 = declareren_standaardvenster "Bestanden van homemappen van de kandidaten bekijken" 900 650;
+$Form2 = declareren_standaardvenster "Bestanden van homemappen van de kandidaten controleren en openen" 900 670;
 
 $Description2                     = New-Object system.Windows.Forms.Label
 $Description2.text                = "RPC-nummers"
@@ -4682,6 +4741,16 @@ $Description3.Font                = 'Microsoft Sans Serif,11'
 $Description3.location            = New-Object System.Drawing.Point(210,15)
 $Description3.ForeColor = [System.Drawing.Color]::Blue
 $Form2.controls.add($Description3)
+
+$Description4                     = New-Object system.Windows.Forms.Label
+$Description4.text                = "Dubbelklik op een bestand om deze te openen met het standaardprogramma voor dit type bestand."
+$Description4.AutoSize            = $false
+$Description4.width               = 680
+$Description4.height              = 20
+$Description4.Font                = 'Microsoft Sans Serif,11'
+$Description4.location            = New-Object System.Drawing.Point(210,535)
+$Description4.ForeColor = [System.Drawing.Color]::Green
+$Form2.controls.add($Description4)
 
 # listbox is al in het begin gedeclareerd. onderstaande waarden gelden voor deze functie.
 $listBox.Location = New-Object System.Drawing.Point(10,40)
@@ -4869,7 +4938,7 @@ $listView1.add_doubleClick( {
                 catch {
                 # melding geven
                 $melding = -join ("Het is niet gelukt het bestand $selectie_naam te openen.","`r`n","De volgende foutmelding is gegeven :","`r`n", $_.exception.message )
-                $null = venstermetvraag -titel "Bestand kan niet geopend worden" -vraag $melding
+                $null = venstermetvraag -titel "Bestand kan niet geopend worden" -vraag $melding -schuifbalk
                 }
 
         } # einde if ((test-path -path $selectie -pathtype container) -eq $true) ... else ...
@@ -4881,7 +4950,7 @@ $listView1.add_ColumnClick({SortListView $this $_.Column})
 
 $Btnescape = New-object System.Windows.Forms.Button 
 $Btnescape.text= "Terug"
-$Btnescape.location = "50,550" 
+$Btnescape.location = "50,570" 
 $Btnescape.size = "150,30"  
 $Btnescape.BackColor = 'red'
 $Btnescape.ForeColor = 'white'
@@ -4892,24 +4961,24 @@ $Btnescape.add_MouseHover({
 $Form2.controls.add($Btnescape)
 
 # venster met uitleg over deze taak wordt gedeclareerd. 
-declareren_uitlegvenster "Uitleg over het venster Verkenner." 680 320 480 560 "Hier kunt u de inhoud van de homemappen van de kandidaten bekijken.
-Dit kunt u gebruiken als controle na het uitvoeren van een taak.
+declareren_uitlegvenster "Uitleg over het venster Verkenner." 680 320 480 570 "Hier kunt u de bestanden van de homemappen van de kandidaten controleren en openen.
 
 Eventueel kunt u eerst kiezen om de standaardlocatie te wijzigen.
 Links kiest u vervolgens het RPC-nummer van de betreffende homemap.
 Rechts ziet u dan de mappen en bestanden van de homemap.
 
 U kunt op een map dubbelklikken om de inhoud weer te geven.
+U kunt op een bestand dubbelklikken om deze te openen met het standaardprogramma voor dit type bestand.
 Met het terug-icoontje gaat u een map terug.
 Met het home-icoontje gaat u terug naar het begin.
 
-Door op de blauwe knop onderaan te klikken gaat u terug naar het hoofdscherm." 
+Door op de rode knop onderaan te klikken gaat u terug naar het hoofdscherm." 
 $Form2.controls.add($Global:vraagtekenicoon)
 
 # venster tonen
 # $form2.Topmost = $false
 
-Form2afsluitenbijescape;
+Add-EscapeClose -Form $form2
 
 $null = $form2.ShowDialog()
 
@@ -4953,6 +5022,89 @@ if (test-path -path $oudenaam -pathtype leaf) {
 
 # inlezen van gebruikers instellingen
 Inlezengebruikersinstellingen;
+
+# Controleren of PowerShell 7 is geïnstalleerd en anders installeren en starten met PowerShell 7.
+# Eerst wordt de naam van het script in een maakbare vorm gezet, zodat deze gebruikt kan worden in de try-catch methodes. 
+# Deze naam is nodig voor het opnieuw starten van het script met PowerShell 7.
+# $scriptnaam wordt alleen hier gebruikt!
+$scriptnaam = $global:programma.naam
+$scriptnaam = -join ($startmap, "\", $scriptnaam, ".ps1")
+if (($PSVersionTable.PSVersion.Major -lt 7) -and ($global:init.uitvoerennaopstarten.powershell7start -eq "Ja")) {
+
+    function Start-Pwsh7 {
+        param($path)
+
+        Write-Host "Script wordt nu met PowerShell 7 opgestart."
+        Start-Sleep -Seconds 2
+        Start-Process $path -ArgumentList '-File', "`"$scriptnaam`"" 
+        Exit   # alleen hier exit!
+    }
+
+    # Probeer bestaande pwsh
+    try {
+        $pwsh7_locatie = (Get-Command pwsh -ErrorAction Stop).Source
+        Start-Pwsh7 $pwsh7_locatie
+    }
+    catch {
+        Write-Host "PowerShell 7 niet gevonden." -ForegroundColor Yellow
+    }
+
+    # Controleer winget
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        Write-Host "winget niet beschikbaar. Script gaat verder zonder PowerShell 7." -ForegroundColor Yellow
+         # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
+        $Global:init.uitvoerennaopstarten.powershell7start='Nee'
+        Meldingnaarlogbestand -meldtekst "PowerShell 7 check : winget niet beschikbaar. 
+PowerShell 7 kan niet automatisch worden geïnstalleerd. 
+Script gaat verder zonder PowerShell 7."
+        
+    }
+    else {
+        Write-Host "PowerShell 7 wordt geïnstalleerd..." -ForegroundColor Green
+
+        try {
+            winget install Microsoft.PowerShell --accept-source-agreements --accept-package-agreements --scope user
+        }
+        catch {
+            Write-Host "Installatie mislukt, script gaat verder zonder PowerShell 7." -ForegroundColor Yellow
+            Write-Host $_
+            # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
+            $Global:init.uitvoerennaopstarten.powershell7start='Nee'
+            Meldingnaarlogbestand -meldtekst "PowerShell 7 check : Er is een fout opgetreden bij het installeren van PowerShell 7 met winget.
+Script gaat verder zonder PowerShell 7."
+        }
+        Start-Sleep -Seconds 3
+
+        # opnieuw proberen pwsh te vinden
+        $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
+        if ($cmd) {
+            $pwsh7_locatie = $cmd.Source
+        } else {
+            $pwsh7_locatie = $null
+        }
+
+        if (-not $pwsh7_locatie) {
+            $pwsh7_locatie = "$env:LOCALAPPDATA\Microsoft\WindowsApps\pwsh.exe"
+        }
+
+        if (Test-Path $pwsh7_locatie) {
+            Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 is succesvol geïnstalleerd. 
+Script is gestart met PowerShell 7." -type "INFORMATIE"
+            Start-Pwsh7 $pwsh7_locatie
+        }
+        else {
+            Write-Host "PowerShell 7 kon niet gestart worden. Script gaat verder in huidige versie." -ForegroundColor Yellow
+            # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
+            $Global:init.uitvoerennaopstarten.powershell7start='Nee'
+            Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 kon niet gestart worden na installatie.
+Script gaat verder in huidige versie."
+        }
+    }
+    # Bewaren instellingen voor het geval "PowerShell 7 check" op nee is gezet, zodat deze niet meer wordt uitgevoerd. 
+    # Dit kan bij een eerdere catch gewijzigd zijn.
+    Bewareninstellingen
+    # GEEN EXIT → script loopt gewoon door in PS5
+}
 
 # controleren op een update. 
 updateuitvoeren;
@@ -5249,12 +5401,7 @@ $Form_uitlegprog = declareren_standaardvenster "Uitleg over het programma" 690 4
 $Form_uitlegprog.ControlBox = $False
 
 # Bij Escape-toets het venster sluiten.
-$Form_uitlegprog.KeyPreview = $true
-$Form_uitlegprog.Add_KeyDown({
-    param($sender, $e)
-    if ($e.KeyCode -eq [System.Windows.Forms.Keys]::Escape) { $Form_uitlegprog.Close() }
-})
-
+Add-EscapeClose -Form $Form_uitlegprog
 
 $uitlegprogtekst                     = New-Object system.Windows.Forms.Label
 $uitlegprogtekst.text                = "Met dit programma kunnen bestanden op meerdere pc's in een netwerk worden beheerd.
@@ -5376,7 +5523,7 @@ De belangrijkste wijzigingen zijn:
 - De functie Verkenner kan gebruikt worden om bestanden in de kandidaatmappen te openen.
 - Na elke update wordt, eenmaal bij de start van het script, informatie getoond over de update.
 - Er is een nieuwe layout voor het hoofdvenster. 
-  Als u de oude layout wilt gebruiken dan kunt u dit bij instellingen altijd wijzigen." -schuifbalk "beide"
+  Als u de oude layout wilt gebruiken dan kunt u dit bij instellingen altijd wijzigen." -schuifbalk -bredevenster
 
         # Deze vraag niet meer stellen -> Waarde op nee zetten en bewaren
         $Global:init.uitvoerennaopstarten.updateinfo='Nee'

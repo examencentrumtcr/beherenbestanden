@@ -16,12 +16,13 @@ De belangrijkste update was de herschrijving in **PowerShell**.
 ### Extra functionaliteiten
 - Bestanden in mappen verwijderen  
 - Bestanden tussen mappen verplaatsen of kopiëren  
-- Inhoud van mappen verkennen  
+- Inhoud van mappen verkennen
+- Bestanden in mappen openen.
 - Standaard persoonlijke instellingen aanpassen  
 - Oude back-ups opruimen  
 - Gebeurtenissen (logs) bekijken
 - Gebeurtenissen (logs) verwijderen bij de start van het programma    
-- Programmainfo, README en changelog tonen  
+- Programmainfo, readme, changelog en licentie, tonen 
 - Een grapje ophalen van een website (Er zijn 3 websites waaruit te kiezen is) 
 
 ### Functionaliteiten die automatisch worden uitgevoerd
