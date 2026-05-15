@@ -45,7 +45,7 @@ $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
     versie = '4.8.0'
-    extralabel = 'alpha.260514' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
+    extralabel = 'alpha.260515' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
@@ -73,6 +73,83 @@ Add-Type -AssemblyName System.Windows.Forms
 
 # VisualStyles aan zetten ------------------------------------------------------------------
 [System.Windows.Forms.Application]::EnableVisualStyles()
+
+# Comparator Class toevoegen voor sorteren van listview. Zie functie SortListView.
+Add-Type -ReferencedAssemblies @(
+    'System.Windows.Forms',
+    'System'
+) -TypeDefinition @"
+using System;
+using System.Collections;
+using System.Globalization;
+using System.Windows.Forms;
+
+public class ListViewItemComparer : IComparer
+{
+    private int col;
+    private SortOrder order;
+
+    public ListViewItemComparer(int column, SortOrder sortOrder)
+    {
+        col = column;
+        order = sortOrder;
+    }
+
+    public int Compare(object x, object y)
+    {
+        ListViewItem itemX = (ListViewItem)x;
+        ListViewItem itemY = (ListViewItem)y;
+
+        string a = itemX.SubItems[col].Text;
+        string b = itemY.SubItems[col].Text;
+
+        int result = 0;
+
+        // Kolom 1 = datum
+        if (col == 1)
+        {
+            DateTime da, db;
+            if (DateTime.TryParse(a, out da) && DateTime.TryParse(b, out db))
+                result = DateTime.Compare(da, db);
+            else
+                result = String.Compare(a, b, true);
+        }
+
+        // Kolom 2 = grootte
+        else if (col == 2)
+        {
+            long sa = ParseSize(a);
+            long sb = ParseSize(b);
+            result = sa.CompareTo(sb);
+        }
+
+        // Overige kolommen = tekst
+        else
+        {
+            result = String.Compare(a, b, true);
+        }
+
+        if (order == SortOrder.Descending)
+            result = -result;
+
+        return result;
+    }
+
+    private long ParseSize(string text)
+    {
+        if (String.IsNullOrWhiteSpace(text))
+            return -1; // lege grootte (mappen)
+
+        text = text.Replace("kB", "").Replace("KB", "").Trim();
+
+        double value;
+        if (Double.TryParse(text, NumberStyles.Any, CultureInfo.CurrentCulture, out value))
+            return (long)(value * 1024);
+
+        return 0;
+    }
+}
+"@
 
 # map met png icoontjes bepalen
 $icoontjesmap = -join ("$startmap","\","png")
@@ -786,21 +863,6 @@ foreach( $property in $global:beheer.locaties.keys ) {
     }
 
 return $lijstlocaties
-}
-
-function SortListView {
-# Bestanden sorteren op de kolom waar je op klikt. Dit wordt bij functie Verkenner gebruikt.
-
-    Param(
-        [System.Windows.Forms.ListView]$sendersort,
-        $column
-    )
-    $temp = $sendersort.Items | Foreach-Object { $_ }
-    $Script:SortingDescending = !$Script:SortingDescending
-    $sendersort.Items.Clear()
-    $sendersort.ShowGroups = $false
-    $sendersort.Sorting = 'none'
-    $sendersort.Items.AddRange(($temp | Sort-Object -Descending:$script:SortingDescending -Property @{ Expression={ $_.SubItems[$column].Text } }))
 }
 
 Function Declareericoontjes {
@@ -4702,6 +4764,29 @@ Function geselecteerdemap_vullen ($selectie) {
         }
 } # einde geselecteerdemap_vullen
 
+function SortListView {
+# Bestanden sorteren op de kolom waar je op klikt. Dit wordt bij functie Verkenner gebruikt.
+param(
+        [System.Windows.Forms.ListView]$sender,
+        [int]$column
+    )
+
+    if ($script:sortColumn -eq $column) {
+        # toggle ↑ ↓
+        if ($script:sortOrder -eq [System.Windows.Forms.SortOrder]::Ascending) {
+            $script:sortOrder = [System.Windows.Forms.SortOrder]::Descending
+        } else {
+            $script:sortOrder = [System.Windows.Forms.SortOrder]::Ascending
+        }
+    }
+    else {
+        $script:sortColumn = $column
+        $script:sortOrder = [System.Windows.Forms.SortOrder]::Ascending
+    }
+
+    $sender.ListViewItemSorter = New-Object ListViewItemComparer($column, $script:sortOrder)
+    $sender.Sort()
+} # einde SortListView
 
 # ----------- Start function VensterVerkenner -------------------------------
 
@@ -4945,8 +5030,12 @@ $listView1.add_doubleClick( {
      } # einde if ( $listView1.selecteditems.count -eq 1)
 } ) # einde $listView1.add_doubleClick
 
+# Nodig voor sorteren op kolom bij dubbelklikken op kolomnaam. Anders wordt er niet gesorteerd als je op een kolom klikt.
+$script:sortColumn = 0
+$script:sortOrder = [System.Windows.Forms.SortOrder]::Ascending
+
 # Sorteren op een kolom die je aanklikt
-$listView1.add_ColumnClick({SortListView $this $_.Column})
+$listView1.add_ColumnClick( { SortListView -sender $listView1 -column $_.Column } )
 
 $Btnescape = New-object System.Windows.Forms.Button 
 $Btnescape.text= "Terug"
@@ -5523,7 +5612,10 @@ De belangrijkste wijzigingen zijn:
 - De functie Verkenner kan gebruikt worden om bestanden in de kandidaatmappen te openen.
 - Na elke update wordt, eenmaal bij de start van het script, informatie getoond over de update.
 - Er is een nieuwe layout voor het hoofdvenster. 
-  Als u de oude layout wilt gebruiken dan kunt u dit bij instellingen altijd wijzigen." -schuifbalk -bredevenster
+  Als u de nieuwe layout wilt gebruiken dan kunt u dit bij instellingen wijzigen.
+- Script werkt nu ook met PowerShell vanaf versie 7.
+  Je kan bij functie Instellingen dit aanzetten. PowerShell 7 wordt indien nodig geïnstalleerd.
+- Het controleren en installeren van updates kan je uitzetten bij functie Instellingen." -schuifbalk -bredevenster
 
         # Deze vraag niet meer stellen -> Waarde op nee zetten en bewaren
         $Global:init.uitvoerennaopstarten.updateinfo='Nee'
