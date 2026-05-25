@@ -12,7 +12,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 - Na elke update verschijnt er eenmalig een venster met informatie over de nieuwe versie.
 - Script werkt nu ook met PowerShell vanaf versie 7.
   Je kan bij **Instellingen** dit aanzetten. PowerShell 7 wordt indien nodig geïnstalleerd.
-- Het controleren en installeren van updates kan je uitzetten bij **Instellingen**.
+- Updateproces aangepast. Bij **Instellingen** kan je dit uitzetten of eenmalig controleren.
 
 ### Bugfix
 - Bij **Verkenner** werkt het 'op volgorde zetten' door te klikken op de kolommen 'Gewijzigd' 

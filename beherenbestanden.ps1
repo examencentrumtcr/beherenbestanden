@@ -45,8 +45,8 @@ $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
     versie = '4.8.0'
-    extralabel = 'alpha.260515' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
-    mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    extralabel = 'rc.2.260526' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
+    mode = 'prerelease' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
     icoon = -join ($startmap, "\", "script_icoon.ico")
@@ -744,6 +744,7 @@ $uitvoerennaopstarten=@{
     updateinfo = 'Ja'
     powershell7start = 'Nee'
     controleopupdate = 'Ja'
+    handmatigupdate = 'Nee'
 }
 $Std_inst=@{
     algemeen  = $algemeen
@@ -3236,10 +3237,16 @@ $null = $form2.ShowDialog()
 $form.show()
 } # einde vensterlogbestand
 
+function controleerupdate {
 
-function updateuitvoeren {
+    param (
+        [string]$tedownloadenbestand,
+        [string]$updateto
+    )
+    # controleren of er een update is. Dit gebeurt door de website te controleren op de laatste versie en deze te vergelijken met de huidige versie.
+    # Er wordt alleen parameters doorgegeven die nodig zijn voor deze controle. 
 
-    Function vergelijk_versies ($huidigeversie, $updateversie) {
+Function vergelijk_versies ($huidigeversie, $updateversie) {
     # Haal eventuele +rc.x of -rc.x suffixen eruit en bewaar ze
     $huidigeMain = $huidigeversie -replace '\.rc\.\d+$', ''
     $updateMain = $updateversie -replace '\.rc\.\d+$', ''
@@ -3280,68 +3287,17 @@ function updateuitvoeren {
     return 0  # Versies zijn gelijk
 } # einde vergelijk_versies
 
-# de function updateuitvoeren begint hier ****************************************
+# Hier begint function controleerupdate **************************************
 
-# alleen starten als programma.mode niet de status alpha of beta heeft.
-if ("alpha","beta" -contains($global:programma.mode)) {
-    return
-}
-
-# alleen starten als je dit bij instelling hebt staan. Dit is om te voorkomen dat er onbedoeld een update wordt uitgevoerd.
-if ($global:init["uitvoerennaopstarten"]["Controleopupdate"] -ne "Ja") {
-    Write-Host "Controle op updates is uitgeschakeld. Er wordt geen update uitgevoerd." -ForegroundColor Yellow
-    return
-}
-# bepalen programma naam tbv controle hieronder en doorzoeken website naar laatste versie
-$programmanaam = $global:programma.naam
-
-# Eerste regel van elke foutmelding
-$foutmeldingbegin = "Uitvoeren van een update :
-"
+# standaard tekst voor foutmelding bij deze functie. Deze wordt aangevuld met de specifieke foutmelding.
+$foutmeldingbegin = "Controle op updates is gestart : `n"
 # huidige versie van het programma
 $huidigeversie = $global:programma.versie
-
+# bepalen programma naam tbv doorzoeken website naar laatste versie
+$programmanaam = $global:programma.naam
 # Standaard waarde. Als er geen update is gevonden, dan blijft deze waarde 0.0.0. 
 # Let op, dit betekent dat er een probleem is met de update.
 $updateto = "0.0.0" 
-
-# zip-bestand met update op lokale pc
-$zip_download = -join ("$startmap","\","updatebestand.zip")
-
-if (Test-Path -path $zip_download -pathtype leaf) {
-        write-host "Er is net een update uitgevoerd. Het gedownloade bestand wordt verwijderd."
-        Remove-Item $zip_download -Recurse -Force
-        return
-    }
-
-# controleren of het script al is opgestart. Als dit zo is kan het mis gaan bij het updaten. Dit werkt alleen voor Poweshell 5 omdat naar powershell.exe wordt gekeken. 
-# Bij powershell 7 moet er naar pwsh.exe worden gekeken.
-try {
-    $gevonden = Get-CimInstance Win32_Process -Filter "Name='powershell.exe' AND CommandLine like '%$programmanaam%'" -ErrorAction Stop
-    }
-catch {
-        # melding loggen
-        $melding = -join ($foutmeldingbegin, $_.exception.message )
-        Meldingnaarlogbestand -meldtekst $melding
-        $melding2 = -join ($foutmeldingbegin, "Fout tijdens de controle of het script al is gestart. Zie logbestand voor details." )
-        Write-Host $melding2 -ForegroundColor Yellow
-        return
-}
- 
- if ($gevonden) { 
-     # er moet altijd een proces gevonden worden omdat dit script in ieder geval draait. Probleem is er als er meerdere processen draaien.
-    if ($gevonden.processid.count -gt 1) { 
-        $melding = -join ($foutmeldingbegin, "Het updateproces is niet uitgevoerd omdat een andere proces van het script al is opgestart." )
-        Write-Host $melding -ForegroundColor Yellow
-        # Melding ook loggen
-        Meldingnaarlogbestand -meldtekst $melding -type "MEDEDELING"
-        Start-Sleep -Seconds 3
-        return
-    } 
- }
-
-# Info geven
-write-host "Controleren op een update."
 
 # dit is de url van de github repository. Hier wordt bepaald of de release of prerelease wordt gedownload.
 $url = $global:programma.github 
@@ -3358,11 +3314,13 @@ try {
 catch {
         $melding = -join ($foutmeldingbegin, "Het is niet gelukt om verbinding te maken met de website!
 Neem contact op met de eigenaar van $url"  ) 
-        # melding loggen
-        Meldingnaarlogbestand -meldtekst $melding
-        write-host $melding -f Red
-        Start-Sleep -Seconds 8
-        return
+        $fout = $true
+        return [PSCustomObject]@{
+        tedownloadenbestand = ""
+        updateto = ""
+        fout = $fout
+        melding = $melding
+        }
     }
        
 # Loop door de items in de response en controleer of er een nieuw update is
@@ -3395,28 +3353,127 @@ foreach ($item in $response) {
 
 # Als er geen update is gevonden, melding geven en loggen
 if ($updateto -eq "0.0.0") {
-        Write-Host "" -f Red
+        # Write-Host "" -f Red
+        $fout = $true
         $melding = -join ($foutmeldingbegin, "Er is geen update gevonden in de GitHub repository: $url
 Neem contact op met de eigenaar van $url"  ) 
+        return [PSCustomObject]@{
+        tedownloadenbestand = ""
+        updateto = ""
+        fout = $fout
+        melding = $melding
+        }
+    } else {
+    $fout = $false
+    # vergelijken van de huidige versie met de update versie
+    $resultaat = vergelijk_versies $huidigeversie $updateto
+    if ($resultaat -eq 0) {
+        # Huidige versie is gelijk aan de update versie
+        $melding = "Huidige versie is gelijk aan de update versie."
+        $updateto = "gelijk"
+        } elseif ($resultaat -gt 0) {
+        # Huidige versie is hoger dan de update versie
+         $melding = "Huidige versie is hoger dan de update versie." 
+         $updateto = "hoger"
+        }
+    } # einde if $updateto -eq "0.0.0" .. else ..
+
+return [PSCustomObject]@{
+        tedownloadenbestand = $tedownloadenbestand
+        updateto = $updateto
+        fout = $fout
+        melding = $melding
+    }
+
+} # einde controleerupdate
+
+function updateuitvoeren {
+
+# bepalen programma naam tbv controle hieronder en doorzoeken website naar laatste versie
+$programmanaam = $global:programma.naam
+
+# Eerste regel van elke foutmelding
+$foutmeldingbegin = "Uitvoeren van een update :
+"
+
+# Standaard waarde. Als er geen update is gevonden, dan blijft deze waarde 0.0.0. 
+# Let op, dit betekent dat er een probleem is met de update.
+$updateto = "0.0.0" 
+
+# controleren of ingesteld is om handmatig een update te forceren.
+$forceerupdate = $Global:init.uitvoerennaopstarten.handmatigupdate
+
+# zip-bestand met update op lokale pc
+$zip_download = -join ("$startmap","\","updatebestand.zip")
+
+if (Test-Path -path $zip_download -pathtype leaf) {
+        write-host "Er is net een update uitgevoerd. Het gedownloade bestand wordt verwijderd."
+        Remove-Item $zip_download -Recurse -Force
+        # alleen verder gaan als er niet ingesteld is om handmatig een update te forceren. Dit is om te voorkomen dat er onbedoeld een update wordt uitgevoerd.
+        if ($forceerupdate -eq "Nee") { return }
+    }
+
+if ($forceerupdate -eq "Nee") {
+    # Als de update niet handmatig is ingesteld dan pas controleren op de andere voorwaarden. Dit om zeker van te zijn dat een update wordt uitgevoerd.
+    # alleen starten als programma.mode niet de status alpha of beta heeft.
+    if ("alpha","beta" -contains($global:programma.mode)) {
+    return
+    }
+
+    # alleen starten als je dit bij instelling hebt staan. Dit is om te voorkomen dat er onbedoeld een update wordt uitgevoerd.
+    if ($global:init["uitvoerennaopstarten"]["Controleopupdate"] -ne "Ja") {
+    Write-Host "Controle op updates is uitgeschakeld. Er wordt geen update uitgevoerd." -ForegroundColor Yellow
+    return
+    }
+}  # einde if $forceerupdate -eq "Nee" 
+
+# controleren of het script al is opgestart. Als dit zo is kan het mis gaan bij het updaten. Dit werkt alleen voor Poweshell 5 omdat naar powershell.exe wordt gekeken. 
+# Bij powershell 7 moet er naar pwsh.exe worden gekeken.
+try {
+    $gevonden = Get-CimInstance Win32_Process -Filter "Name='powershell.exe' AND CommandLine like '%$programmanaam%'" -ErrorAction Stop
+    }
+catch {
         # melding loggen
+        $melding = -join ($foutmeldingbegin, $_.exception.message )
         Meldingnaarlogbestand -meldtekst $melding
-        write-host $melding -f Red
-        Start-Sleep -Seconds 8
+        $melding2 = -join ($foutmeldingbegin, "Fout tijdens de controle of het script al is gestart. Zie logbestand voor details." )
+        Write-Host $melding2 -ForegroundColor Yellow
+        return
+}
+ 
+ if ($gevonden) { 
+     # er moet altijd een proces gevonden worden omdat dit script in ieder geval draait. Probleem is er als er meerdere processen draaien.
+    if ($gevonden.processid.count -gt 1) { 
+        $melding = -join ($foutmeldingbegin, "Het updateproces is niet uitgevoerd omdat een andere proces van het script al is opgestart." )
+        Write-Host $melding -ForegroundColor Yellow
+        # Melding ook loggen
+        Meldingnaarlogbestand -meldtekst $melding -type "MEDEDELING"
+        Start-Sleep -Seconds 3
         return
     } 
+ }
 
-# vergelijken van de huidige versie met de update versie
-$resultaat = vergelijk_versies $huidigeversie $updateto
-if ($resultaat -eq 0) {
-        # Huidige versie is gelijk aan de update versie
-        write-host "Huidige versie is gelijk aan de update versie."
-        return
-    } elseif ($resultaat -gt 0) {
-        # Huidige versie is hoger dan de update versie
-        write-host "Huidige versie is hoger dan de update versie." 
-        return
-     }
+# Info geven
+write-host "Controleren op een update."
 
+# function controleerupdate uitvoeren en resultaat in variabele plaatsen
+$resultaatcontrole = controleerupdate 
+if ($resultaatcontrole.fout) {
+    # er is een fout opgetreden bij het controleren op een update. De foutmelding wordt hier gelogd en weergegeven.
+    Meldingnaarlogbestand -meldtekst $resultaatcontrole.melding
+    write-host $resultaatcontrole.melding -f Red
+    Start-Sleep -Seconds 8
+    return
+} elseif (($resultaatcontrole.updateto -eq "gelijk") -or ($resultaatcontrole.updateto -eq "hoger")) {
+    # er is geen update nodig, omdat de huidige versie gelijk is aan de update versie. Melding loggen en weergeven.
+    write-host $resultaatcontrole.melding 
+    #Start-Sleep -Seconds 3
+    return
+} 
+
+# waarden uit resultaatcontrole halen omdat er een update is gevonden.
+$tedownloadenbestand = $resultaatcontrole.tedownloadenbestand
+$updateto = $resultaatcontrole.updateto
 
 # Hier aangekomen dan is er een update beschikbaar.
 write-host "`nProgramma wordt geupdatet naar versie $updateto " -f Green
@@ -3495,6 +3552,9 @@ Start-Sleep -Seconds 5
 # Zorgen dat na de update de update informatie wordt weergegeven in het hoofdvenster. Hiervoor wordt een waarde in het init bestand aangepast. 
 # Deze waarde wordt bij het opstarten van het programma gelezen en zorgt ervoor dat de update informatie wordt weergegeven. 
 $Global:init.uitvoerennaopstarten.updateinfo='Ja'
+
+# zorgen dat na de update niet nog een keer geforceerd een update wordt uitgevoerd. Hiervoor wordt een waarde in het init bestand aangepast.
+$global:init.uitvoerennaopstarten.handmatigupdate = "Nee"
 
 Bewareninstellingen
 # $gebruikersbestand = bepaalinitnaamgebruiker
@@ -3707,6 +3767,13 @@ if ($global:init["uitvoerennaopstarten"]["Controleopupdate"] -eq "Ja") {
     } else {
     $keuzeoptie13.Selectedindex = 1
     }
+$keuzeoptie13.add_SelectedIndexChanged({
+    if ($keuzeoptie13.SelectedItem -eq "Ja") {
+        $Btnupdate.Visible = $false
+        } else {
+        $Btnupdate.Visible = $true
+        }
+})
 
 $Description1                     = New-Object system.Windows.Forms.Label
 $Description1.text                = "Standaard locatie"
@@ -3868,7 +3935,7 @@ $Description13.add_MouseHover({
 
 $Btnstandaard = New-object System.Windows.Forms.Button 
 $Btnstandaard.text= "Herstel de standaardinstellingen"
-$Btnstandaard.location = "450,470" 
+$Btnstandaard.location = "430,470" 
 $Btnstandaard.size = "250,30"  
 $Btnstandaard.BackColor = 'blue'
 $Btnstandaard.ForeColor = 'white'
@@ -3907,7 +3974,7 @@ $Btnaccept.add_MouseHover({
 
 $Btnescape = New-object System.Windows.Forms.Button 
 $Btnescape.text= "Terug"
-$Btnescape.location = "250,470" 
+$Btnescape.location = "240,470" 
 $Btnescape.size = "150,30"  
 $Btnescape.BackColor = 'red'
 $Btnescape.ForeColor = 'white'
@@ -3915,6 +3982,48 @@ $Btnescape.DialogResult = [System.Windows.Forms.DialogResult]::cancel
 $Btnescape.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Ga terug naar het hoofdvenster zonder de wijzigingen op te slaan." )
 })
+
+$Btnupdate = New-object System.Windows.Forms.Button 
+$Btnupdate.text= "Update controleren en installeren"
+$Btnupdate.location = "720,470" 
+$Btnupdate.size = "210,30"  
+$Btnupdate.BackColor = 'blue'
+$Btnupdate.ForeColor = 'white'
+# $Btnupdate.DialogResult = [System.Windows.Forms.DialogResult]::cancel
+$Btnupdate.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Controleer of er een update beschikbaar is voor het programma en installeer deze indien beschikbaar." )
+})
+if ($keuzeoptie13.Selectedindex -eq 0) {
+    $Btnupdate.Visible = $false
+    } else {
+    $Btnupdate.Visible = $true
+    }   
+$Btnupdate.add_click({
+    # function controleerupdate uitvoeren en resultaat in variabele plaatsen
+    $resultaatcontrole = controleerupdate 
+    if ($resultaatcontrole.fout) {
+        # er is een fout opgetreden bij het controleren op een update. De foutmelding wordt hier gelogd en weergegeven.
+        Meldingnaarlogbestand -meldtekst $resultaatcontrole.melding
+        $null = venstermetvraag -titel "Fout tijdens de controle op een update" -vraag "
+Er is iets mis gegaan bij het uitvoeren van de controle op een update.
+Controleer het logboek voor meer informatie over de foutmelding." -knopok "OK" 
+        } elseif (($resultaatcontrole.updateto -eq "gelijk") -or ($resultaatcontrole.updateto -eq "hoger")) {
+        $null = venstermetvraag -titel "Geen update gevonden" -vraag "
+Er is geen update beschikbaar.
+Het programma heeft de laatste versie geïnstalleerd." -knopok "OK" 
+        } else {
+        $nieuweversie = $resultaatcontrole.updateto
+        $result = venstermetvraag -titel "Update installeren?" -vraag "
+Een nieuwe versie van het programma is beschikbaar.
+Weet je zeker dat je versie $nieuweversie wilt installeren?
+Het programma zal opnieuw opgestart worden." -knopok "Ja" -knopterug "Nee"
+        if ($result -eq 'OK') {
+            $form2.DialogResult = [System.Windows.Forms.DialogResult]::OK
+            return
+        }
+    }   
+})
+
 
 #Gekozen afbeelding tonen naast de opties
 $gifbox2 = New-Object Windows.Forms.picturebox
@@ -3947,7 +4056,7 @@ $gifbox2.add_MouseHover({
 
 
 # venster met uitleg over deze taak wordt gedeclareerd. hieronder worden enkele variabelen aangepast aan deze taakvenster
-declareren_uitlegvenster "Uitleg over het venster Instellingen." 680 300 920 480 "Wijzig hier de standaard instellingen van het programma. 
+declareren_uitlegvenster "Uitleg over het venster Instellingen." 680 300 950 490 "Wijzig hier de standaard instellingen van het programma. 
 Met deze instellingen wijzig je de voorkeuren die standaard zijn ingesteld bij een taak
 maar vaak kan je de voorkeuren bij een taak nog voor het uitvoeren aanpassen.
 De instellingen voor je naam en de afbeelding zie je alleen terug in het hoofdscherm.
@@ -3962,7 +4071,7 @@ Als u terug wilt zonder de instellingen te bewaren klikt u op Terug.
 
 $Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie1, $keuzeoptie11, $keuzeoptie2, $keuzeoptie3, $keuzeoptie10, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie7, $keuzeoptie6, $keuzeoptie12, $keuzeoptie13,
 $description1, $description2, $description3, $description4, $description5, $description6, $description8, $description9, $description10, $description7, $Description11, $Description12, $Description13, 
-$Btnaccept, $Btnescape, $Btnstandaard, $Global:vraagtekenicoon, $gifbox2 ))
+$Btnaccept, $Btnescape, $Btnstandaard, $Btnupdate, $Global:vraagtekenicoon, $gifbox2 ))
 
 Add-EscapeClose -Form $form2
 
@@ -4055,6 +4164,19 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
     }
 
 } # einde bewaren van instellingen
+elseif ($result -eq [system.windows.forms.dialogResult]::OK) {
+    # instelling om bij het opstarten te controleren op updates en deze te installeren. Dit moet bewaard worden anders wordt het niet uitgevoerd.
+    $global:init.uitvoerennaopstarten.handmatigupdate = "Ja"
+    Bewareninstellingen
+
+    $scriptnaam = $global:programma.naam
+    $scriptnaam = -join ($startmap, "\", $scriptnaam, ".ps1")
+    start-process PowerShell.exe -argumentlist '-File', "`"$scriptnaam`"" 
+    # Sluiten van huidige vensters. Als je hier exit gebruikt krijg je een error maar het proces wordt wel afgesloten. 
+    # Daarom worden hier de vensters gesloten en daarna gaat het script verder in het nieuwe proces dat met start-process is gestart.
+    $form2.Close()
+    $form.Close()
+}
 
 # De hoofdmenu zichtbaar maken
 $form.show()
@@ -5197,6 +5319,15 @@ Script gaat verder in huidige versie."
 
 # controleren op een update. 
 updateuitvoeren;
+
+# deze waarde wordt alleen op Ja gezet bij venster Instellingen als de gebruiker heeft gekozen om een update uit te voeren. Handmatig dus.
+if ($global:init.uitvoerennaopstarten.handmatigupdate -eq "Ja") {
+    $global:init.uitvoerennaopstarten.handmatigupdate = "Nee"
+    Bewareninstellingen
+    Write-host "De handmatige controle op een update is uitgevoerd."
+    $null = venstermetvraag -titel "Updatecontrole" -vraag "De handmatige controle op een update is uitgevoerd. 
+Lees de informatie in de console en druk op OK om verder te gaan."
+}
 
 #Overige controles en tijdelijke taken uitvoeren
 write-host "Oude bestanden opschonen of herstellen."
