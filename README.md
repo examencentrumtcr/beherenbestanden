@@ -24,9 +24,9 @@ De belangrijkste update was de herschrijving in **PowerShell**.
 - Gebeurtenissen (logs) verwijderen bij de start van het programma    
 - Programmainfo, readme, changelog en licentie, tonen 
 - Een grapje ophalen van een website (Er zijn 3 websites waaruit te kiezen is) 
+- Script updaten bij de start van het programma 
 
 ### Functionaliteiten die automatisch worden uitgevoerd
-- Script updaten bij de start van het programma 
 - Gebeurtenissen (logs) in een bestand bijhouden
 
 ---

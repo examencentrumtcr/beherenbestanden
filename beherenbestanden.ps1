@@ -45,7 +45,7 @@ $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
     versie = '4.8.0'
-    extralabel = 'rc.2.260526' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
+    extralabel = 'rc.3.260528' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
     mode = 'prerelease' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
@@ -3409,7 +3409,7 @@ $zip_download = -join ("$startmap","\","updatebestand.zip")
 if (Test-Path -path $zip_download -pathtype leaf) {
         write-host "Er is net een update uitgevoerd. Het gedownloade bestand wordt verwijderd."
         Remove-Item $zip_download -Recurse -Force
-        # alleen verder gaan als er niet ingesteld is om handmatig een update te forceren. Dit is om te voorkomen dat er onbedoeld een update wordt uitgevoerd.
+        # alleen verder gaan als er is ingesteld is om handmatig een update te forceren. 
         if ($forceerupdate -eq "Nee") { return }
     }
 
@@ -3429,8 +3429,14 @@ if ($forceerupdate -eq "Nee") {
 
 # controleren of het script al is opgestart. Als dit zo is kan het mis gaan bij het updaten. Dit werkt alleen voor Poweshell 5 omdat naar powershell.exe wordt gekeken. 
 # Bij powershell 7 moet er naar pwsh.exe worden gekeken.
+if ($PSVersionTable.PSVersion.Major -ge 6) {
+    $programmanaamprocess = "pwsh.exe"
+    } else {
+    $programmanaamprocess = "powershell.exe"
+    }
+
 try {
-    $gevonden = Get-CimInstance Win32_Process -Filter "Name='powershell.exe' AND CommandLine like '%$programmanaam%'" -ErrorAction Stop
+    $gevonden = Get-CimInstance Win32_Process -Filter "Name='$programmanaamprocess' AND CommandLine like '%$programmanaam%'" -ErrorAction Stop
     }
 catch {
         # melding loggen
@@ -4057,16 +4063,16 @@ $gifbox2.add_MouseHover({
 
 # venster met uitleg over deze taak wordt gedeclareerd. hieronder worden enkele variabelen aangepast aan deze taakvenster
 declareren_uitlegvenster "Uitleg over het venster Instellingen." 680 300 950 490 "Wijzig hier de standaard instellingen van het programma. 
-Met deze instellingen wijzig je de voorkeuren die standaard zijn ingesteld bij een taak
-maar vaak kan je de voorkeuren bij een taak nog voor het uitvoeren aanpassen.
-De instellingen voor je naam en de afbeelding zie je alleen terug in het hoofdscherm.
+Je kan de voorkeuren die standaard zijn ingesteld bij een taak wijzigen,
+enkele beheerinstellingen wijzigen en een update van het programma forceren.
+De optie om een update te forceren is alleen zichtbaar als er geen automatische controle is ingesteld.
 
-U krijgt extra informatie over een instelling als de muiscursor op een tekst staat.
 U kunt alle instellingen herstellen naar de standaardwaarde door op de knop 
 Herstel de standaardinstellingen te klikken.
-
 Als u de instellingen wilt bewaren klikt u op Bewaren.
 Als u terug wilt zonder de instellingen te bewaren klikt u op Terug.
+
+U krijgt extra informatie over een instelling als de muiscursor op een tekst staat.
 " 
 
 $Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie1, $keuzeoptie11, $keuzeoptie2, $keuzeoptie3, $keuzeoptie10, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie7, $keuzeoptie6, $keuzeoptie12, $keuzeoptie13,
@@ -4526,11 +4532,12 @@ if ((test-path -path $templicensebestand -pathtype leaf)) {
 # venster met uitleg over deze taak wordt gedeclareerd. 
 declareren_uitlegvenster "Uitleg over het venster Informatie over het programma." 680 250 500 600 "Bovenaan ziet u enkele gegevens over dit programma.
 
-In het grote vakje kunt u eventueel de readme- of de changelog-bestand bekijken.
-De README-bestand is een bestand die eerst gelezen moet worden, voorafgaand aan compilatie, installatie of eerste gebruik.
-De CHANGELOG-bestand is een bestand met de wijzigingen per versie.
+Daaronder ziet u drie tabbladen met informatie over het programma.
+De README is een bestand die eerst gelezen moet worden, voorafgaand aan compilatie, installatie of eerste gebruik.
+De CHANGELOG is een bestand met de wijzigingen per versie.
+De LICENSE is een bestand met de licentie waaronder dit programma is uitgebracht.
 
-Door op de blauwe knop onderaan te klikken wijzigt u de inhoud." 
+Door op de rode knop onderaan te klikken gaat u terug naar het hoofdvenster." 
 
 $Form2.Controls.AddRange(@($FormTabControl, $Description2, $Description3, $Buttenok, $objtekst1, $Global:vraagtekenicoon))
 
@@ -5617,7 +5624,7 @@ $Button13.add_MouseHover({
 
 # declareren venster met uitleg over programma. verschijnt als de muis over de vraagteken gaat.
 
-$Form_uitlegprog = declareren_standaardvenster "Uitleg over het programma" 690 480
+$Form_uitlegprog = declareren_standaardvenster "Uitleg over het programma" 690 540
 $Form_uitlegprog.ControlBox = $False
 
 # Bij Escape-toets het venster sluiten.
@@ -5626,30 +5633,32 @@ Add-EscapeClose -Form $Form_uitlegprog
 $uitlegprogtekst                     = New-Object system.Windows.Forms.Label
 $uitlegprogtekst.text                = "Met dit programma kunnen bestanden op meerdere pc's in een netwerk worden beheerd.
 De twee belangrijkste taken van dit programma worden met een groene icoontje weergegeven.
-
 Met het groene icoontje 
     - 'Bestanden klaarzetten' worden bestanden en volledige mappen overgezet naar 
        de geselecteerde homemappen van de kandidaten,
     - 'Back-up maken' wordt een back-up gemaakt van de geselecteerde homemappen 
        van de kandidaten.
 
-Met de vier icoontjes aan de linkerkant kunnen:
-    - de bestanden in de homemappen van de kandidaten bekijken,
-    - de logbestanden van de uitgevoerde taken bekeken worden,
-    - algemene informatie over het programma worden gelezen,
-    - het programma worden afgesloten.
+De overige taken worden met een zwartwit icoontje weergegeven.
+Met deze icoontjes kan je de volgende taken uitvoeren :
+    - de bestanden in de homemappen van de kandidaten bekijken of openen,
+    - de logbestanden van de uitgevoerde taken bekijken,
+    - algemene informatie over het programma lezen,
+    - het programma afsluiten,
+    - de bestanden van een homemap verplaatsten of kopiëren naar een andere homemap,
+    - de bestanden van de geselecteerde homemappen wissen,
+    - de persoonlijke keuzes voor het programma instellen,    
+    - oude back-ups verwijderen.
 
-Met de vier icoontjes aan de rechterkant kunnen:
-    - de bestanden van een homemap verplaatst of gekopieërd worden naar een andere homemap,
-    - de bestanden van de geselecteerde homemappen worden gewist,
-    - de persoonlijke keuzes voor het programma worden gewijzigd,    
-    - oude back-ups worden verwijderd.
+Als je gekozen hebt voor de nieuwe layout dan zijn de zwartwitte icoontjes niet meer zichtbaar in het
+hoofdvenster, maar worden deze zichtbaar als je op het icoontje met de drie streepjes klikt.
+Je gaat weer terug naar het hoofdvenster door op het huis-icoontje te klikken.
 
 Informatie over een taak kan verkregen worden door met de muiscursor over een object te gaan.
 "
 $uitlegprogtekst.AutoSize            = $false
 $uitlegprogtekst.width               = 680
-$uitlegprogtekst.height              = 390
+$uitlegprogtekst.height              = 430
 $uitlegprogtekst.location            = New-Object System.Drawing.Point(10,10)
 $uitlegprogtekst.Font                = 'Microsoft Sans Serif,11'
 $uitlegprogtekst.ForeColor = [System.Drawing.Color]::blue
@@ -5657,7 +5666,7 @@ $Form_uitlegprog.Controls.Add($uitlegprogtekst)
 
 $knopsluiten = New-object System.Windows.Forms.Button 
 $knopsluiten.text= 'Sluiten'
-$knopsluiten.location = "250,400" 
+$knopsluiten.location = "250,440" 
 $knopsluiten.size = "150,30"  
 $knopsluiten.BackColor = 'red'
 $knopsluiten.ForeColor = 'white'
