@@ -4,7 +4,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.8.0] - In ontwikeling
+## [4.8.0] - 2026-06-08
 ### Nieuwe functies
 - Met de functie **Verkenner** kan je nu ook bestanden, in de studentmappen, openen.
 - Nieuwe indeling en nieuwe knop in het hoofdvenster;
@@ -12,11 +12,13 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 - Na elke update verschijnt er eenmalig een venster met informatie over de nieuwe versie.
 - Script werkt nu ook met PowerShell vanaf versie 7.
   Je kan bij **Instellingen** dit aanzetten. PowerShell 7 wordt indien nodig geïnstalleerd.
-- Updateproces aangepast. Bij **Instellingen** kan je dit uitzetten of eenmalig controleren.
+- Updateproces aangepast. Bij **Instellingen** kan je updaten uitzetten of eenmalig controleren.
 
 ### Bugfix
 - Bij **Verkenner** werkt het 'op volgorde zetten' door te klikken op de kolommen 'Gewijzigd' 
   en 'Grootte' niet zoals het de bedoeling is. Dit is gewijzigd.
+- Bepaalde tekens in de tekst bij de moppenbot werden niet goed weergeven.
+  Opgelost door UTF-8 te gebruiken.
 
 ### Overige wijzigingen
 - README is aangepast. Een aantal verwijzingen naar bestanden stonden verkeerd, nieuwe functies

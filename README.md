@@ -42,10 +42,10 @@ Dit script werkt op **Windows 10 of nieuwer** en vereist **PowerShell 5.1 of hog
 
 > ⚠️ Microsoft Defender SmartScreen kan het bestand blokkeren, maar deze waarschuwing kan veilig genegeerd worden.
 
-Tijdens de installatie kun je kiezen voor:
-- Wijzig de installatiemap  
-- Maak een bureaubladsnelkoppeling  
-- Voer een schone installatie uit  
+Tijdens de installatie kun je kiezen om:
+- de installatiemap te wijzigen,
+- een bureaubladsnelkoppeling te maken,
+- een schone installatie uit te voeren.
 
 De standaardopties zijn aanbevolen. Klik op **"Installeren"** om verder te gaan.
 

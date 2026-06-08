@@ -10,18 +10,6 @@ Auteur: Benvindo Neves
 
 # Hier worden de programma variabelen gedeclareerd.
 
-<# bepalen naam van deze script. variabele scriptnaam wordt alleen hier gebruikt (en lokaal bij bepaalde functies, nl updaten en informatie over programma)
-   alleen de naam vh bestand, dus zonder bovenliggende mappen
-   extensie .ps1 wordt verwijderd 
-   de naam van het programma wordt ook gebruikt in de titelbalk van het hoofdvenster.
-   
--> Scriptnaam wordt ingesteld bij object $global:progamma.naam en heeft een vaste waarde. Voor Powershell 7 zou onderstaande niet overal werken. 
-   Hoe $scriptnaam wel te laten werken is niet uitvoerig getest. Daarom deze oplossing
-$scriptnaam = $MyInvocation.InvocationName
-$scriptnaam = Split-Path -leaf $scriptnaam
-$scriptnaam = $scriptnaam.Replace(".ps1","")
-#>
-
 <# $global:programma is een object met alle variabelen die het programma beschrijven. 
    versie wordt aangepast als er een nieuwe versie is.
    extralabel wordt aangepast als het programma naar een andere fase gaat of als er een nieuwe versie is.
@@ -45,7 +33,7 @@ $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
     versie = '4.8.0'
-    extralabel = 'rc.3.260528' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
+    extralabel = 'rc.4.260608' # (alpha, beta of prerelease + eventueel volgnummer) of buildnummer + datum
     mode = 'prerelease' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
@@ -1335,7 +1323,7 @@ if (($uitvoeren.taak -eq "kopiëren") -and ($uitvoeren.controlemappen)) {
             } 
         }
         catch {
-            $melding = -join ("Extra controle voor het uitvoeren van de taak Bestanden Klaarzetten : ", "`n", $_.exception.message )
+            $melding = -join ("Extra controle voor het uitvoeren van de taak Bestanden Klaarzetten : ", "`r`n", $_.exception.message )
             Meldingnaarlogbestand -meldtekst $melding
         }
         
@@ -3427,8 +3415,7 @@ if ($forceerupdate -eq "Nee") {
     }
 }  # einde if $forceerupdate -eq "Nee" 
 
-# controleren of het script al is opgestart. Als dit zo is kan het mis gaan bij het updaten. Dit werkt alleen voor Poweshell 5 omdat naar powershell.exe wordt gekeken. 
-# Bij powershell 7 moet er naar pwsh.exe worden gekeken.
+# controleren of het script al is opgestart. Als dit zo is kan het mis gaan bij het updaten.
 if ($PSVersionTable.PSVersion.Major -ge 6) {
     $programmanaamprocess = "pwsh.exe"
     } else {
@@ -3442,15 +3429,15 @@ catch {
         # melding loggen
         $melding = -join ($foutmeldingbegin, $_.exception.message )
         Meldingnaarlogbestand -meldtekst $melding
-        $melding2 = -join ($foutmeldingbegin, "Fout tijdens de controle of het script al is gestart. Zie logbestand voor details." )
+        $melding2 = -join ($foutmeldingbegin, "Fout tijdens de controle of het programma al is gestart. Zie logbestand voor details." )
         Write-Host $melding2 -ForegroundColor Yellow
         return
 }
  
  if ($gevonden) { 
-     # er moet altijd een proces gevonden worden omdat dit script in ieder geval draait. Probleem is er als er meerdere processen draaien.
+     # er moet altijd een proces gevonden worden omdat dit programma in ieder geval draait. Probleem is er als er meerdere processen draaien.
     if ($gevonden.processid.count -gt 1) { 
-        $melding = -join ($foutmeldingbegin, "Het updateproces is niet uitgevoerd omdat een andere proces van het script al is opgestart." )
+        $melding = -join ($foutmeldingbegin, "Het updateproces is niet uitgevoerd omdat een andere proces van het programma al is opgestart." )
         Write-Host $melding -ForegroundColor Yellow
         # Melding ook loggen
         Meldingnaarlogbestand -meldtekst $melding -type "MEDEDELING"
@@ -3551,7 +3538,7 @@ if (test-path -path "$backupzip") { Remove-Item "$backupzip" }
 Write-Host -f Yellow "Het programma heeft een update uitgevoerd en heeft nu de versie $updateto.
 Het programma wordt opnieuw opgestart  ..."
 
-Meldingnaarlogbestand -meldtekst "Het programma heeft een update uitgevoerd en heeft nu de versie $updateto." -type "INFORMATIE"
+Meldingnaarlogbestand -meldtekst "Het programma heeft een update uitgevoerd en heeft nu de versie $updateto." -type "MEDEDELING"
 
 Start-Sleep -Seconds 5
 
@@ -3567,11 +3554,22 @@ Bewareninstellingen
 # $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
 
 # opnieuw opstarten script met een andere procesnummer (sessie). De de oude kan worden afgesloten.
-start-process PowerShell.exe -argumentlist '-file',".\$programmanaam.ps1"
-# dit was de oude manier van starten:
-# powershell -file "$PSScriptRoot\$scriptnaam.ps1"
+if ($PSVersionTable.PSVersion.Major -ge 7){
+        try {
+            $pwsh7_locatie = (Get-Command pwsh -ErrorAction Stop).Source
+            Start-Pwsh7 $pwsh7_locatie
+             }
+        catch {
+            Write-Host "PowerShell 7 is niet gevonden op dit systeem. Het programma wordt met PowerShell 5 opgestart." -f Red
+            meldingnaarlogbestand -meldtekst "PowerShell 7 is niet gevonden op dit systeem na het updaten. `r`nHet programma wordt met PowerShell 5 opgestart."
+            Start-Pwsh5
+            }
+                
+        } else {
+            Start-Pwsh5
+        }
 
-# beëindigen van huidige proces. Script gaat verder in het nieuwe proces dat met start-process is gestart.
+# beëindigen van huidige proces. programma gaat verder in het nieuwe proces dat met start-process is gestart.
 exit;
 
 
@@ -3916,7 +3914,7 @@ $Description11.add_MouseHover({
 })
 
 $Description12                     = New-Object system.Windows.Forms.Label
-$Description12.text                = "Het script met powershell 7 starten en deze indien nodig installeren."
+$Description12.text                = "Het programma met powershell 7 starten en deze indien nodig installeren."
 $Description12.AutoSize            = $false
 $Description12.width               = 400
 $Description12.height              = 40
@@ -3924,7 +3922,7 @@ $Description12.location            = New-Object System.Drawing.Point(40,380)
 $Description12.Font                = 'Microsoft Sans Serif,11'
 $Description12.ForeColor = [System.Drawing.Color]::Blue
 $Description12.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bepaal of je het script wil opstarten met PowerShell 7 of hoger als deze met powershell 5 is opgestart. Als het nodig is wordt PowerShell 7 geïnstalleerd." )
+    $global:tooltip1.SetToolTip($this, "Bepaal of je het programma wil opstarten met PowerShell 7 of hoger als deze met powershell 5 is opgestart. Als het nodig is wordt PowerShell 7 geïnstalleerd." )
 })
 
 $Description13                     = New-Object system.Windows.Forms.Label
@@ -4087,7 +4085,7 @@ $result = $form2.ShowDialog()
 # bewaren van instellingen
 if ($result -eq [system.windows.forms.dialogResult]::yes) { 
     # variabele  die de huidige instellingen bevatten. Deze worden gebruikt om te bepalen of er een wijziging is in de keuze voor het starten van powershell 7.
-    # Als deze keuze is gewijzigd, wordt het script opnieuw opgestart. Zie verderop in deze functie.
+    # Als deze keuze is gewijzigd, wordt het programma opnieuw opgestart. Zie verderop in deze functie.
     $keuzepowershell7start = $global:init["uitvoerennaopstarten"]["powershell7start"]
 
     # keuzes worden opgehaald en in variabelen gezet. Deze worden vervolgens in het globale init object gezet. Daarna worden deze bewaard in het persoonlijke init bestand van de gebruiker.
@@ -4129,26 +4127,41 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
     # Eerst wordt de persoonlijke initialisatiebestand bepaald.
     Bewareninstellingen
 
-    # Als de keuze voor opstarten met Powershell 7 is gewijzigd, opnieuw opstarten
+    # Als de keuze voor opstarten met Powershell 7 is gewijzigd, eerst vragen en dan opnieuw opstarten
     if ($keuzepowershell7start -ne $keuzeoptie12.Selecteditem) {
-        # Eerst vragen of de gebruiker het script opnieuw wil opstarten met Powershell 7. Dit is nodig omdat deze wijziging pas van kracht wordt bij een nieuw proces.
-        $melding = "U heeft een wijziging aangebracht op de PowerShell versie waarop het script wordt uitgevoerd.`r`nOm deze wijziging door te voeren moet het script opnieuw worden opgestart. `r`nWilt u het script nu opnieuw starten?"
-        $result = venstermetvraag -titel "Script opnieuw opstarten?" -vraag $melding -knopok "Ja" -knopterug "Nee"
+        # Eerst vragen of de gebruiker het programma opnieuw wil opstarten met Powershell 7. Dit is nodig omdat deze wijziging pas van kracht wordt bij een nieuw proces.
+        $melding = "U heeft een wijziging aangebracht op de PowerShell versie waarop het programma wordt uitgevoerd.`r`nOm deze wijziging door te voeren moet het programma opnieuw worden opgestart. `r`nWilt u het programma nu opnieuw starten?"
+        $result = venstermetvraag -titel "Programma opnieuw opstarten?" -vraag $melding -knopok "Ja" -knopterug "Nee"
 
         if ($result -eq 'OK') {
-            # opnieuw opstarten script met een andere procesnummer (sessie). De de oude kan worden afgesloten.
-            # Eerst wordt het programma naam bepaald.
-            $scriptnaam = $global:programma.naam
-            $scriptnaam = -join ($startmap, "\", $scriptnaam, ".ps1")
-            start-process PowerShell.exe -argumentlist '-File', "`"$scriptnaam`"" 
-            # Sluiten van huidige vensters. Als je hier exit gebruikt krijg je een error maar het proces wordt wel afgesloten. 
-            # Daarom worden hier de vensters gesloten en daarna gaat het script verder in het nieuwe proces dat met start-process is gestart.
-            $form2.Close()
-            $form.Close()
-            # beëindigen van huidige proces. Script gaat verder in het nieuwe proces dat met start-process is gestart.
-            # exit;
-        }
-    }
+            # Controle of de huidige powershell versie en de gemaakte keuze niet in lijn zijn. Als dat het geval is, wordt het programma opnieuw opgestart met powershell 5 of 7. 
+            # Als dat niet het geval is, hoeft er niet opnieuw opgestart te worden en worden alleen de vensters gesloten.
+            if (( $keuzeoptie12.Selectedindex -eq 0) -and ($PSVersionTable.PSVersion.Major -lt 7)){
+                
+                try {
+                    $pwsh7_locatie = (Get-Command pwsh -ErrorAction Stop).Source
+                    Start-Pwsh7 $pwsh7_locatie
+                    $form2.Close()
+                    $form.Close()
+                }
+                catch {
+                    $null = venstermetvraag -titel "PowerShell 7 niet gevonden." -vraag "`r`nPowerShell 7 is niet gevonden op dit systeem. `r`nHet programma wordt niet opnieuw gestart."
+                    Meldingnaarlogbestand -meldtekst "Er is een fout opgetreden bij het starten van PowerShell 7 nadat de keuze is gemaakt voor een andere versie.`r`nOmschrijving: $($_.Exception.Message)"
+                }
+                
+            } elseif (( $keuzeoptie12.Selectedindex -eq 1) -and ($PSVersionTable.PSVersion.Major -ge 7)) {
+
+                Start-Pwsh5
+                $form2.Close()
+                $form.Close()
+            } else {
+                $null = venstermetvraag -titel "Het programma heeft al de gekozen PowerShell versie." -vraag "`r`nHet programma heeft al de gekozen PowerShell versie. `r`nHet programma wordt niet opnieuw gestart."
+            }
+            # Over sluiten van huidige vensters hierboven (gebruik van $form2.Close() en $form.Close() in plaats van exit):
+            # Als je hier exit gebruikt krijg je een error maar het proces wordt wel afgesloten. 
+            # Daarom worden hier de vensters gesloten en daarna gaat het programma verder in het nieuwe proces dat met start-process is gestart.
+        } # einde if $result -eq 'OK'
+    } # einde opnieuw opstarten bij wijziging keuze powershell versie
 
     # Nieuwe hoofdvenster tonen of niet
     if ($keuzeoptie11.Selectedindex -eq 0) {
@@ -4171,17 +4184,34 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
 
 } # einde bewaren van instellingen
 elseif ($result -eq [system.windows.forms.dialogResult]::OK) {
-    # instelling om bij het opstarten te controleren op updates en deze te installeren. Dit moet bewaard worden anders wordt het niet uitgevoerd.
+    # Er wordt een handmatige update uitgevoerd omdat de gebruiker op de update knop heeft geklikt in het instellingen venster. 
+    # Deze update wordt uitgevoerd bij het opstarten van het programma en er wordt een instelling aangepast die bij het opstarten wordt gecontroleerd.
+    # Dit moet bewaard worden anders wordt het niet uitgevoerd.
     $global:init.uitvoerennaopstarten.handmatigupdate = "Ja"
     Bewareninstellingen
 
-    $scriptnaam = $global:programma.naam
-    $scriptnaam = -join ($startmap, "\", $scriptnaam, ".ps1")
-    start-process PowerShell.exe -argumentlist '-File', "`"$scriptnaam`"" 
+    if ($PSVersionTable.PSVersion.Major -ge 7){
+        
+        try {
+                    $pwsh7_locatie = (Get-Command pwsh -ErrorAction Stop).Source
+                    Start-Pwsh7 $pwsh7_locatie
+                    $form2.Close()
+                    $form.Close()
+            }
+        catch {
+               $null = venstermetvraag -titel "PowerShell 7 niet gevonden." -vraag "`r`nPowerShell 7 is niet gevonden op dit systeem. `r`nHet programma wordt niet opnieuw gestart."
+               Meldingnaarlogbestand -meldtekst "Er is een fout opgetreden bij het starten van PowerShell 7 voor het uitvoeren van een handmatige update.`r`nOmschrijving: $($_.Exception.Message)"
+            }
+                
+        } else {
+
+            Start-Pwsh5
+            $form2.Close()
+            $form.Close()
+        } 
+    # Over sluiten van huidige vensters hierboven:
     # Sluiten van huidige vensters. Als je hier exit gebruikt krijg je een error maar het proces wordt wel afgesloten. 
-    # Daarom worden hier de vensters gesloten en daarna gaat het script verder in het nieuwe proces dat met start-process is gestart.
-    $form2.Close()
-    $form.Close()
+    # Daarom worden hier de vensters gesloten en daarna gaat het programma verder in het nieuwe proces dat met start-process is gestart.
 }
 
 # De hoofdmenu zichtbaar maken
@@ -4688,6 +4718,7 @@ try {
         # toevoegen van -ContentType "application/json; charset=utf-8bom" heeft geen zin.
         $quote = Invoke-RestMethod -Method Get -Uri 'http://api.apekool.nl/services/jokes/getjoke.php' -erroraction Stop
         $tekst = $quote.joke 
+        $tekst = [System.Web.HttpUtility]::HtmlDecode($tekst)
         $reload.Enabled = $true
           }
         'Appspot.com' {
@@ -5153,6 +5184,7 @@ $listView1.add_doubleClick( {
                 # melding geven
                 $melding = -join ("Het is niet gelukt het bestand $selectie_naam te openen.","`r`n","De volgende foutmelding is gegeven :","`r`n", $_.exception.message )
                 $null = venstermetvraag -titel "Bestand kan niet geopend worden" -vraag $melding -schuifbalk
+                meldingnaarlogbestand -meldtekst $melding
                 }
 
         } # einde if ((test-path -path $selectie -pathtype container) -eq $true) ... else ...
@@ -5208,8 +5240,26 @@ $form.show()
 
 } # einde functie vensterverkenner
 
+function Start-Pwsh7 {
+        param($path)
+        # $path wijst naar de locatie van pwsh.exe, deze is nodig om PowerShell 7 te starten.
+        # $scriptnaam wordt is de naam vh programma met .ps1 erachter, en het volledige pad naar dit script. 
+        $scriptnaam = $global:programma.naam
+        $scriptnaam = -join ($startmap, "\", $scriptnaam, ".ps1")
 
-<# ---------------------      Start script ---------------------------------------------------------------
+        Write-Host "Programma wordt nu met PowerShell 7 opgestart."
+        Start-Sleep -Seconds 2
+        Start-Process $path -ArgumentList '-File', "`"$scriptnaam`"" 
+        
+    }
+
+
+function Start-Pwsh5 {
+$scriptnaam = $global:programma.naam
+$scriptnaam = -join ($startmap, "\", $scriptnaam, ".ps1")
+start-process PowerShell.exe -argumentlist '-File', "`"$scriptnaam`"" 
+}
+<# ---------------------      Start programma ---------------------------------------------------------------
 
 
 #>
@@ -5242,26 +5292,14 @@ if (test-path -path $oudenaam -pathtype leaf) {
 Inlezengebruikersinstellingen;
 
 # Controleren of PowerShell 7 is geïnstalleerd en anders installeren en starten met PowerShell 7.
-# Eerst wordt de naam van het script in een maakbare vorm gezet, zodat deze gebruikt kan worden in de try-catch methodes. 
-# Deze naam is nodig voor het opnieuw starten van het script met PowerShell 7.
-# $scriptnaam wordt alleen hier gebruikt!
-$scriptnaam = $global:programma.naam
-$scriptnaam = -join ($startmap, "\", $scriptnaam, ".ps1")
+
 if (($PSVersionTable.PSVersion.Major -lt 7) -and ($global:init.uitvoerennaopstarten.powershell7start -eq "Ja")) {
-
-    function Start-Pwsh7 {
-        param($path)
-
-        Write-Host "Script wordt nu met PowerShell 7 opgestart."
-        Start-Sleep -Seconds 2
-        Start-Process $path -ArgumentList '-File', "`"$scriptnaam`"" 
-        Exit   # alleen hier exit!
-    }
 
     # Probeer bestaande pwsh
     try {
         $pwsh7_locatie = (Get-Command pwsh -ErrorAction Stop).Source
         Start-Pwsh7 $pwsh7_locatie
+        Exit   # alleen hier exit!
     }
     catch {
         Write-Host "PowerShell 7 niet gevonden." -ForegroundColor Yellow
@@ -5269,12 +5307,12 @@ if (($PSVersionTable.PSVersion.Major -lt 7) -and ($global:init.uitvoerennaopstar
 
     # Controleer winget
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        Write-Host "winget niet beschikbaar. Script gaat verder zonder PowerShell 7." -ForegroundColor Yellow
+        Write-Host "winget niet beschikbaar. Programma gaat verder zonder PowerShell 7." -ForegroundColor Yellow
          # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
         $Global:init.uitvoerennaopstarten.powershell7start='Nee'
         Meldingnaarlogbestand -meldtekst "PowerShell 7 check : winget niet beschikbaar. 
 PowerShell 7 kan niet automatisch worden geïnstalleerd. 
-Script gaat verder zonder PowerShell 7."
+Programma gaat verder zonder PowerShell 7."
         
     }
     else {
@@ -5284,12 +5322,12 @@ Script gaat verder zonder PowerShell 7."
             winget install Microsoft.PowerShell --accept-source-agreements --accept-package-agreements --scope user
         }
         catch {
-            Write-Host "Installatie mislukt, script gaat verder zonder PowerShell 7." -ForegroundColor Yellow
+            Write-Host "Installatie mislukt, programma gaat verder zonder PowerShell 7." -ForegroundColor Yellow
             Write-Host $_
             # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
             $Global:init.uitvoerennaopstarten.powershell7start='Nee'
             Meldingnaarlogbestand -meldtekst "PowerShell 7 check : Er is een fout opgetreden bij het installeren van PowerShell 7 met winget.
-Script gaat verder zonder PowerShell 7."
+Programma gaat verder zonder PowerShell 7."
         }
         Start-Sleep -Seconds 3
 
@@ -5307,15 +5345,16 @@ Script gaat verder zonder PowerShell 7."
 
         if (Test-Path $pwsh7_locatie) {
             Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 is succesvol geïnstalleerd. 
-Script is gestart met PowerShell 7." -type "INFORMATIE"
+Programma is gestart met PowerShell 7." -type "MEDEDELING"
             Start-Pwsh7 $pwsh7_locatie
+            Exit   # alleen hier exit!
         }
         else {
-            Write-Host "PowerShell 7 kon niet gestart worden. Script gaat verder in huidige versie." -ForegroundColor Yellow
+            Write-Host "PowerShell 7 kon niet gestart worden. Programma gaat verder in huidige versie." -ForegroundColor Yellow
             # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
             $Global:init.uitvoerennaopstarten.powershell7start='Nee'
             Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 kon niet gestart worden na installatie.
-Script gaat verder in huidige versie."
+Programma gaat verder in huidige versie."
         }
     }
     # Bewaren instellingen voor het geval "PowerShell 7 check" op nee is gezet, zodat deze niet meer wordt uitgevoerd. 
@@ -5337,7 +5376,7 @@ Lees de informatie in de console en druk op OK om verder te gaan."
 }
 
 #Overige controles en tijdelijke taken uitvoeren
-write-host "Oude bestanden opschonen of herstellen."
+write-host "Controleren of bestanden moeten worden opgeschoond of hersteld."
 
 # verwijderen beheer.ini vanaf versie 4.6.0
 if (test-path -path "$startmap\beheer.ini") { Remove-Item "$startmap\beheer.ini" }  
@@ -5753,7 +5792,7 @@ De belangrijkste wijzigingen zijn:
 - Na elke update wordt, eenmaal bij de start van het script, informatie getoond over de update.
 - Er is een nieuwe layout voor het hoofdvenster. 
   Als u de nieuwe layout wilt gebruiken dan kunt u dit bij instellingen wijzigen.
-- Script werkt nu ook met PowerShell vanaf versie 7.
+- Programma werkt nu ook met PowerShell vanaf versie 7.
   Je kan bij functie Instellingen dit aanzetten. PowerShell 7 wordt indien nodig geïnstalleerd.
 - Het controleren en installeren van updates kan je uitzetten bij functie Instellingen." -schuifbalk -bredevenster
 
