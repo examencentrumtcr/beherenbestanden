@@ -1,4 +1,4 @@
-﻿# Readme : Beherenbestanden.ps1
+﻿# Readme
 
 ## 1. Introductie
 
@@ -34,6 +34,7 @@ De belangrijkste update was de herschrijving in **PowerShell**.
 ## 2. Installatie
 
 Dit script werkt op **Windows 10 of nieuwer** en vereist **PowerShell 5.1 of hoger**.
+Als het script i.c.m. **PowerShell 7** moet werken dan is **windows 11** een vereiste. Zie ook sectie **bekende bugs**.
 
 ### Methode 1: Installer (aanbevolen)
 - Download: [setup-beherenbestanden.zip](https://github.com/examencentrumtcr/beherenbestanden/tree/main/setup)
@@ -119,6 +120,11 @@ Als dit gebeurt:
 ➡️ Wacht tot de taak is afgerond en controleer of het script nog werkt.  
 
 ✅ Dit probleem is opgelost vanaf **versie 4.2.2** (Zie changelog).
+
+- Het script kan sinds versie 4.8.0. ook i.c.m. **PowerShell 7** of hoger werken.
+  Echter dan is **Windows 11** wel een vereiste. 
+  Onder **Windows 10** krijg je een app-licentie foutmelding als deze wordt opgestart met **PowerShell 7**.
+  Aangeraden wordt, als het script met **Windows 10** moet werken, om dan **PowerShell 5.1** te gebruiken.
 
 ---
 

@@ -4145,8 +4145,11 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
                     $form.Close()
                 }
                 catch {
-                    $null = venstermetvraag -titel "PowerShell 7 niet gevonden." -vraag "`r`nPowerShell 7 is niet gevonden op dit systeem. `r`nHet programma wordt niet opnieuw gestart."
-                    Meldingnaarlogbestand -meldtekst "Er is een fout opgetreden bij het starten van PowerShell 7 nadat de keuze is gemaakt voor een andere versie.`r`nOmschrijving: $($_.Exception.Message)"
+                    # $null = venstermetvraag -titel "PowerShell 7 niet gevonden." -vraag "`r`nPowerShell 7 is niet gevonden op dit systeem. `r`nHet programma wordt niet opnieuw gestart."
+                    # Meldingnaarlogbestand -meldtekst "Er is een fout opgetreden bij het starten van PowerShell 7 nadat de keuze is gemaakt voor een andere versie.`r`nOmschrijving: $($_.Exception.Message)"
+                    Start-Pwsh5
+                    $form2.Close()
+                    $form.Close()
                 }
                 
             } elseif (( $keuzeoptie12.Selectedindex -eq 1) -and ($PSVersionTable.PSVersion.Major -ge 7)) {
@@ -5319,7 +5322,7 @@ Programma gaat verder zonder PowerShell 7."
         Write-Host "PowerShell 7 wordt geïnstalleerd..." -ForegroundColor Green
 
         try {
-            winget install Microsoft.PowerShell --accept-source-agreements --accept-package-agreements --scope user
+            winget install Microsoft.PowerShell --accept-source-agreements --accept-package-agreements --source winget --scope user
         }
         catch {
             Write-Host "Installatie mislukt, programma gaat verder zonder PowerShell 7." -ForegroundColor Yellow
@@ -5346,14 +5349,23 @@ Programma gaat verder zonder PowerShell 7."
         if (Test-Path $pwsh7_locatie) {
             Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 is succesvol geïnstalleerd. 
 Programma is gestart met PowerShell 7." -type "MEDEDELING"
+            Write-Host "PowerShell 7 check : PowerShell 7 is succesvol geïnstalleerd."
+            try {
             Start-Pwsh7 $pwsh7_locatie
             Exit   # alleen hier exit!
+            }
+            catch {
+                Write-Host "PowerShell 7 kon niet gestart worden. Programma gaat verder in huidige versie." -ForegroundColor Yellow
+                # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
+                $Global:init.uitvoerennaopstarten.powershell7start='Nee'
+                Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 is geïnstalleerd maar kon niet gestart worden."
+            } 
         }
         else {
             Write-Host "PowerShell 7 kon niet gestart worden. Programma gaat verder in huidige versie." -ForegroundColor Yellow
             # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
             $Global:init.uitvoerennaopstarten.powershell7start='Nee'
-            Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 kon niet gestart worden na installatie.
+            Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 kon niet geïnstalleerd worden.
 Programma gaat verder in huidige versie."
         }
     }
@@ -5399,7 +5411,7 @@ if (test-path -path "$startmap\beheren.ico") { Remove-Item "$startmap\beheren.ic
 $foutmeldingbegin = "Initialiseren van het programma : "
 # Als er een fout is dan hiermee onthouden.
 $netwerkmapfout = $false
-
+Write-host "Controleren of netwerkmappen aanwezig zijn. Dit kan even duren..."
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.digitalebestanden $false )) { 
     $tempmap = $global:beheer.examenmappen.digitalebestanden
     Meldingnaarlogbestand -meldtekst "$foutmeldingbegin

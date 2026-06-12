@@ -10,7 +10,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 - Nieuwe indeling en nieuwe knop in het hoofdvenster;
   Hoofdvenster heeft 2 knoppen voor de standaardtaken, een menuknop en een afsluitknop.
 - Na elke update verschijnt er eenmalig een venster met informatie over de nieuwe versie.
-- Script werkt nu ook met PowerShell vanaf versie 7.
+- Programma werkt nu ook met PowerShell vanaf versie 7.
   Je kan bij **Instellingen** dit aanzetten. PowerShell 7 wordt indien nodig geïnstalleerd.
 - Updateproces aangepast. Bij **Instellingen** kan je updaten uitzetten of eenmalig controleren.
 
@@ -42,9 +42,9 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 -  Van 2 functies, console openen en -sluiten, 1 gemaakt.
 - Bij de **Moppenbot** heb je de keuze uit moppen van 3 websites.
 - Het is mogelijk om het aantal dagen dat de logbestanden bewaard blijven op 0 te zetten.
-- Het script wordt nu geüpdatet vanuit een repository in Github.
+- Het programma wordt nu geüpdatet vanuit een repository in Github.
 - Code optimalisatie. Updateproces gewijzigd; 
-  Na een update start de script in een andere sessie en controleert niet opnieuw.
+  Na een update start het programma in een andere sessie en controleert niet opnieuw.
   Updateproces kan nu omgaan met getallen > 9 in de versienummer.
   Het updateproces wordt nu ook gelogd.
 - De manier waarop meldingen worden gelogd aangepast. Nu 3 typen meldingen.
