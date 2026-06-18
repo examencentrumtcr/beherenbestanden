@@ -14,7 +14,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
   Je kan bij **Instellingen** dit aanzetten. PowerShell 7 wordt indien nodig geïnstalleerd.
 - Updateproces aangepast. Bij **Instellingen** kan je updaten uitzetten of eenmalig controleren.
 
-### Bugfix
+### Bugfixes
 - Bij **Verkenner** werkt het 'op volgorde zetten' door te klikken op de kolommen 'Gewijzigd' 
   en 'Grootte' niet zoals het de bedoeling is. Dit is gewijzigd.
 - Bepaalde tekens in de tekst bij de moppenbot werden niet goed weergeven.

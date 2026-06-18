@@ -3,10 +3,10 @@
 ## 1. Introductie
 
 Dit project is gestart om te voorzien in de behoefte aan een hulpmiddel dat eenvoudig bestanden kan kopiëren naar meerdere computers.  
-Het kreeg de naam **"Beherenbestanden"** omdat het script niet alleen bestanden kopieert, maar ook kan verwijderen en back-uppen.
+Het kreeg de naam **"Beherenbestanden"** omdat het programma niet alleen bestanden kopieert, maar ook kan verwijderen en back-uppen.
 
 Later is de mogelijkheid toegevoegd om bestanden tussen mappen te verplaatsen.  
-Het project begon in 2013, oorspronkelijk geschreven in **DOS**. Sindsdien heeft het script veel wijzigingen ondergaan.  
+Het project begon in 2013, oorspronkelijk geschreven in **DOS**. Sindsdien heeft het programma veel wijzigingen ondergaan.  
 De belangrijkste update was de herschrijving in **PowerShell**.
 
 ### Hoofdfunctionaliteiten
@@ -24,7 +24,7 @@ De belangrijkste update was de herschrijving in **PowerShell**.
 - Gebeurtenissen (logs) verwijderen bij de start van het programma    
 - Programmainfo, readme, changelog en licentie, tonen 
 - Een grapje ophalen van een website (Er zijn 3 websites waaruit te kiezen is) 
-- Script updaten bij de start van het programma 
+- Handmatig of automatisch het programma updaten
 
 ### Functionaliteiten die automatisch worden uitgevoerd
 - Gebeurtenissen (logs) in een bestand bijhouden
@@ -33,8 +33,8 @@ De belangrijkste update was de herschrijving in **PowerShell**.
 
 ## 2. Installatie
 
-Dit script werkt op **Windows 10 of nieuwer** en vereist **PowerShell 5.1 of hoger**.
-Als het script i.c.m. **PowerShell 7** moet werken dan is **windows 11** een vereiste. Zie ook sectie **bekende bugs**.
+Dit programma werkt op **Windows 10 of nieuwer** en vereist **PowerShell 5.1 of hoger**.
+Als het programma i.c.m. **PowerShell 7** moet werken dan is **windows 11** een vereiste. Zie ook sectie **bekende bugs**.
 
 ### Methode 1: Installer (aanbevolen)
 - Download: [setup-beherenbestanden.zip](https://github.com/examencentrumtcr/beherenbestanden/tree/main/setup)
@@ -66,7 +66,7 @@ Configuratie is alleen nodig als:
 - PowerShell beperkt is in het uitvoeren van scripts.  
 
 ### Snelkoppeling maken
-Voer `snelkoppeling_maken.ps1` uit → klik met de rechtermuisknop op het script en kies  
+Voer `snelkoppeling_maken.ps1` uit → klik met de rechtermuisknop op het programma en kies  
   `Openen met > Windows PowerShell` of `Uitvoeren met PowerShell`.  
 Dit maakt een snelkoppeling en zet PowerShell in een onbeperkte modus.  
 
@@ -88,7 +88,7 @@ Zonder dit kan PowerShell een **Execution Policy-waarschuwing** tonen.
 
 ## 5. Bestandenoverzicht
 
-- `Beherenbestanden.ps1` – Hoofdscript  
+- `Beherenbestanden.ps1` – Hoofdprogramma 
 - `Beheren.ico` – Programma-icoon  
 - `Snelkoppeling_maken.ps1` – Hulpmiddel om een snelkoppeling te maken  
 - `Wijzig_Executionpolicy_bypass.bat` – Hulpmiddel om PowerShell Execution Policy te wijzigen  
@@ -113,18 +113,19 @@ Zie <https://www.gnu.org/licenses/> voor meer informatie.
 
 ## 7. Bekende bugs
 
-- Het script kan crashen tijdens het uitvoeren van taken.  
+- Het programma kan crashen tijdens het uitvoeren van taken.  
   De achtergrondtaak gaat echter door, en na enige tijd verschijnt een melding dat de taak is voltooid.  
 
 Als dit gebeurt:  
-➡️ Wacht tot de taak is afgerond en controleer of het script nog werkt.  
+➡️ Wacht tot de taak is afgerond en controleer of het programma nog werkt.  
 
 ✅ Dit probleem is opgelost vanaf **versie 4.2.2** (Zie changelog).
 
-- Het script kan sinds versie 4.8.0. ook i.c.m. **PowerShell 7** of hoger werken.
-  Echter dan is **Windows 11** wel een vereiste. 
-  Onder **Windows 10** krijg je een app-licentie foutmelding als deze wordt opgestart met **PowerShell 7**.
-  Aangeraden wordt, als het script met **Windows 10** moet werken, om dan **PowerShell 5.1** te gebruiken.
+- Het programma kan sinds versie 4.8.0. ook i.c.m. **PowerShell 7** of hoger werken.
+  Echter, onder **Windows 10** krijg je een app-licentie foutmelding na het automatisch installeren van **PowerShell 7**.
+  Aangeraden wordt om de console van **PowerShell 7** te starten en te controleren of scripts uitgevoerd kunnen worden.
+  Kunnen scripts uitgevoerd worden dan zal het programma daarna werken met **PowerShell 7**.
+  Krijg je nog steeds een foutmelding dan wordt aangeraden om het programma onder **PowerShell 5** te draaien.
 
 ---
 
