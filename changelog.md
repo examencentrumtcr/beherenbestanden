@@ -4,7 +4,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.8.0] - 2026-06-08
+## [4.8.0] - 2026-06-19
 ### Nieuwe functies
 - Met de functie **Verkenner** kan je nu ook bestanden, in de studentmappen, openen.
 - Nieuwe layout en nieuwe knop in het hoofdvenster;
