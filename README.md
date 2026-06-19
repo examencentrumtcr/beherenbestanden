@@ -1,12 +1,12 @@
-﻿# Beherenbestanden.ps1
+﻿# Readme
 
 ## 1. Introductie
 
 Dit project is gestart om te voorzien in de behoefte aan een hulpmiddel dat eenvoudig bestanden kan kopiëren naar meerdere computers.  
-Het kreeg de naam **"Beherenbestanden"** omdat het script niet alleen bestanden kopieert, maar ook kan verwijderen en back-uppen.
+Het kreeg de naam **"Beherenbestanden"** omdat het programma niet alleen bestanden kopieert, maar ook kan verwijderen en back-uppen.
 
 Later is de mogelijkheid toegevoegd om bestanden tussen mappen te verplaatsen.  
-Het project begon in 2013, oorspronkelijk geschreven in **DOS**. Sindsdien heeft het script veel wijzigingen ondergaan.  
+Het project begon in 2013, oorspronkelijk geschreven in **DOS**. Sindsdien heeft het programma veel wijzigingen ondergaan.  
 De belangrijkste update was de herschrijving in **PowerShell**.
 
 ### Hoofdfunctionaliteiten
@@ -16,23 +16,25 @@ De belangrijkste update was de herschrijving in **PowerShell**.
 ### Extra functionaliteiten
 - Bestanden in mappen verwijderen  
 - Bestanden tussen mappen verplaatsen of kopiëren  
-- Inhoud van mappen verkennen  
+- Inhoud van mappen verkennen
+- Bestanden in mappen openen.
 - Standaard persoonlijke instellingen aanpassen  
 - Oude back-ups opruimen  
 - Gebeurtenissen (logs) bekijken
 - Gebeurtenissen (logs) verwijderen bij de start van het programma    
-- Programmainfo, README en changelog tonen  
+- Programmainfo, readme, changelog en licentie, tonen 
 - Een grapje ophalen van een website (Er zijn 3 websites waaruit te kiezen is) 
+- Handmatig of automatisch het programma updaten
 
 ### Functionaliteiten die automatisch worden uitgevoerd
-- Script updaten bij de start van het programma 
 - Gebeurtenissen (logs) in een bestand bijhouden
 
 ---
 
 ## 2. Installatie
 
-Dit script werkt op **Windows 10 of nieuwer** en vereist **PowerShell 5.1 of hoger**.
+Dit programma werkt op **Windows 10 of nieuwer** en vereist **PowerShell 5.1 of hoger**.
+Als het programma i.c.m. **PowerShell 7** moet werken dan is **windows 11** een vereiste. Zie ook sectie **bekende bugs**.
 
 ### Methode 1: Installer (aanbevolen)
 - Download: [setup-beherenbestanden.zip](https://github.com/examencentrumtcr/beherenbestanden/tree/main/setup)
@@ -41,10 +43,10 @@ Dit script werkt op **Windows 10 of nieuwer** en vereist **PowerShell 5.1 of hog
 
 > ⚠️ Microsoft Defender SmartScreen kan het bestand blokkeren, maar deze waarschuwing kan veilig genegeerd worden.
 
-Tijdens de installatie kun je kiezen voor:
-- Wijzig de installatiemap  
-- Maak een bureaubladsnelkoppeling  
-- Voer een schone installatie uit  
+Tijdens de installatie kun je kiezen om:
+- de installatiemap te wijzigen,
+- een bureaubladsnelkoppeling te maken,
+- een schone installatie uit te voeren.
 
 De standaardopties zijn aanbevolen. Klik op **"Installeren"** om verder te gaan.
 
@@ -64,7 +66,7 @@ Configuratie is alleen nodig als:
 - PowerShell beperkt is in het uitvoeren van scripts.  
 
 ### Snelkoppeling maken
-Voer `snelkoppeling_maken.ps1` uit → klik met de rechtermuisknop op het script en kies  
+Voer `snelkoppeling_maken.ps1` uit → klik met de rechtermuisknop op het programma en kies  
   `Openen met > Windows PowerShell` of `Uitvoeren met PowerShell`.  
 Dit maakt een snelkoppeling en zet PowerShell in een onbeperkte modus.  
 
@@ -86,12 +88,13 @@ Zonder dit kan PowerShell een **Execution Policy-waarschuwing** tonen.
 
 ## 5. Bestandenoverzicht
 
-- `Beherenbestanden.ps1` – Hoofdscript  
+- `Beherenbestanden.ps1` – Hoofdprogramma 
 - `Beheren.ico` – Programma-icoon  
-- `Snelkoppeling_maken.exe` – Hulpmiddel om een snelkoppeling te maken  
+- `Snelkoppeling_maken.ps1` – Hulpmiddel om een snelkoppeling te maken  
 - `Wijzig_Executionpolicy_bypass.bat` – Hulpmiddel om PowerShell Execution Policy te wijzigen  
-- `Changelog.txt` – Overzicht van wijzigingen per versie  
-- `Readme.txt` – Dit bestand  
+- `Changelog.md` – Overzicht van wijzigingen per versie  
+- `Readme.md` – Dit bestand  
+- `License` - Licentieovereenkomst
 - `PNG/` – Map met iconen en afbeeldingen  
 
 ---
@@ -110,13 +113,19 @@ Zie <https://www.gnu.org/licenses/> voor meer informatie.
 
 ## 7. Bekende bugs
 
-- Het script kan crashen tijdens het uitvoeren van taken.  
+- Het programma kan crashen tijdens het uitvoeren van taken.  
   De achtergrondtaak gaat echter door, en na enige tijd verschijnt een melding dat de taak is voltooid.  
 
 Als dit gebeurt:  
-➡️ Wacht tot de taak is afgerond en controleer of het script nog werkt.  
+➡️ Wacht tot de taak is afgerond en controleer of het programma nog werkt.  
 
 ✅ Dit probleem is opgelost vanaf **versie 4.2.2** (Zie changelog).
+
+- Het programma kan sinds versie 4.8.0. ook i.c.m. **PowerShell 7** of hoger werken.
+  Echter, onder **Windows 10** krijg je een app-licentie foutmelding na het automatisch installeren van **PowerShell 7**.
+  Aangeraden wordt om de console van **PowerShell 7** te starten en te controleren of scripts uitgevoerd kunnen worden.
+  Kunnen scripts uitgevoerd worden dan zal het programma daarna werken met **PowerShell 7**.
+  Krijg je nog steeds een foutmelding dan wordt aangeraden om het programma onder **PowerShell 5** te draaien.
 
 ---
 

@@ -4,6 +4,35 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
+## [4.8.0] - 2026-06-08
+### Nieuwe functies
+- Met de functie **Verkenner** kan je nu ook bestanden, in de studentmappen, openen.
+- Nieuwe layout en nieuwe knop in het hoofdvenster;
+  Hoofdvenster heeft 2 knoppen voor de standaardtaken, een menuknop en een afsluitknop.
+  Bij **Instellingen** kan je kiezen of je de nieuwe of oude layout wilt zien.
+- Na elke update verschijnt er eenmalig een venster met informatie over de nieuwe versie.
+- Programma werkt nu ook met PowerShell vanaf versie 7.
+  Je kan bij **Instellingen** dit aanzetten. PowerShell 7 wordt indien nodig geïnstalleerd.
+- Updateproces aangepast. Bij **Instellingen** kan je updaten uitzetten of eenmalig controleren.
+
+### Bugfixes
+- Bij **Verkenner** werkt het 'op volgorde zetten' door te klikken op de kolommen 'Gewijzigd' 
+  en 'Grootte' niet zoals het de bedoeling is. Dit is gewijzigd.
+- Bepaalde tekens in de tekst bij de moppenbot werden niet goed weergeven.
+  Opgelost door UTF-8 te gebruiken.
+
+### Overige wijzigingen
+- README is aangepast. Een aantal verwijzingen naar bestanden stonden verkeerd, nieuwe functies
+  zijn toegevoegd en wijzigingen zijn doorgevoerd.
+- De naam van het programma-icoontje is gewijzigd.
+- Het venster **Informatie** heeft nu 3 tabbladen: Changelog, Readme en License;
+  De tabblad License met licentie-informatie is nieuw.
+- Logbestanden ouder dan 2025 worden niet meer getoond.
+- De manier waarop de escapetoets wordt gebruikt bij uitvoeren van taken gewijzigd.
+- Code gestructureerd en opgeschoond.
+
+---
+
 ## [4.7.1] - 2025-10-08
 ### Bugfixes
 - Tekstuele fouten bij functies **Moppenbot** en **Instellingen** opgelost.
@@ -11,12 +40,12 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ### Overige wijzigingen
 - In de programma code wijzigingen aangebracht in hoe met bepaalde fases wordt omgegaan.
-- Van 2 functies 1 gemaakt om de programma code te verbeteren.
-- Bij de moppenbot heb je de keuze uit moppen van 3 websites.
-- Het is mogelijk om logbestanden helemaal niet meer te bewaren door als invoer 0 te geven.
-- Het script wordt nu geüpdatet vanuit een repository in Github.
-- Een aantal verbeteringen aan het updateproces toegepast; 
-  Na een update start de script in een andere sessie en controleert niet opnieuw.
+-  Van 2 functies, console openen en -sluiten, 1 gemaakt.
+- Bij de **Moppenbot** heb je de keuze uit moppen van 3 websites.
+- Het is mogelijk om het aantal dagen dat de logbestanden bewaard blijven op 0 te zetten.
+- Het programma wordt nu geüpdatet vanuit een repository in Github.
+- Code optimalisatie. Updateproces gewijzigd; 
+  Na een update start het programma in een andere sessie en controleert niet opnieuw.
   Updateproces kan nu omgaan met getallen > 9 in de versienummer.
   Het updateproces wordt nu ook gelogd.
 - De manier waarop meldingen worden gelogd aangepast. Nu 3 typen meldingen.
