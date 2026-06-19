@@ -7,8 +7,9 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 ## [4.8.0] - 2026-06-08
 ### Nieuwe functies
 - Met de functie **Verkenner** kan je nu ook bestanden, in de studentmappen, openen.
-- Nieuwe indeling en nieuwe knop in het hoofdvenster;
+- Nieuwe layout en nieuwe knop in het hoofdvenster;
   Hoofdvenster heeft 2 knoppen voor de standaardtaken, een menuknop en een afsluitknop.
+  Bij **Instellingen** kan je kiezen of je de nieuwe of oude layout wilt zien.
 - Na elke update verschijnt er eenmalig een venster met informatie over de nieuwe versie.
 - Programma werkt nu ook met PowerShell vanaf versie 7.
   Je kan bij **Instellingen** dit aanzetten. PowerShell 7 wordt indien nodig geïnstalleerd.
