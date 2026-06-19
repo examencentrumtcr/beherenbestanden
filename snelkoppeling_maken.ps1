@@ -52,7 +52,7 @@ $WScriptObj = New-Object -ComObject ("WScript.Shell")
 $shortcut = $WscriptObj.CreateShortcut($ShortcutPath)
 $shortcut.TargetPath = $SourceFilePath
 $shortcut.Arguments = "-ExecutionPolicy Bypass -NoProfile -file " + '"' + "$hoofdprog" + '"' 
-$shortcut.IconLocation = "$startmap" + "\" + "beheren.ico"
+$shortcut.IconLocation = "$startmap" + "\" + "script_icoon.ico"
 $shortcut.WorkingDirectory = "$startmap"
 $shortcut.Save()
 
