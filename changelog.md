@@ -4,6 +4,15 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
+## [4.8.1] - In uitvoering
+### Bugfix
+- Snelkoppeling op het bureaublad verwees naar het verkeerde bestand. 
+  Opgelost door bij de start, eenmalig, opnieuw een snelkoppeling te maken.
+
+### Overige wijzigingen
+- Script om snelkoppeling te maken aangepast zodat dit zonder gebruikersinvoer
+  kan worden uitgevoerd en kan werken met PowerShell 7.
+
 ## [4.8.0] - 2026-06-19
 ### Nieuwe functies
 - Met de functie **Verkenner** kan je nu ook bestanden, in de studentmappen, openen.
