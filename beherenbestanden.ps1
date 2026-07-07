@@ -32,9 +32,9 @@ Auteur: Benvindo Neves
 $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
-    versie = '4.8.1'
-    extralabel = '184.260702' # buildnummer + datum
-    mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    versie = '4.8.1.rc.1'
+    extralabel = '185.260707' # buildnummer + datum
+    mode = 'prerelease' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
     icoon = -join ($startmap, "\", "script_icoon.ico")
@@ -5483,10 +5483,15 @@ if ($Global:init.uitvoerennaopstarten.snelkoppeling -eq 'Ja') {
         
         if ($PSVersionTable.PSVersion.Major -ge 6) {
             Meldingnaarlogbestand -meldtekst "Snelkoppeling op bureaublad is aangemaakt om met PowerShell 7 te starten." -type "MEDEDELING"
-            & "$PSScriptRoot\$snelkoppeling_script" -auto -pwsh7
+            & "$PSScriptRoot\$snelkoppeling_script" -auto -pwsh7 -startmap $startmap
         } else {
             Meldingnaarlogbestand -meldtekst "Snelkoppeling op bureaublad is aangemaakt om met PowerShell 5 te starten." -type "MEDEDELING"
-            & "$PSScriptRoot\$snelkoppeling_script" -auto
+            & "$PSScriptRoot\$snelkoppeling_script" -auto -startmap $startmap
+        }
+        if ($LASTEXITCODE -ne 0) {
+            Meldingnaarlogbestand -meldtekst "Fout opgetreden bij het aanmaken van de snelkoppeling.
+Startmap = $startmap
+Bureaubladlink = $ShortcutPath" -type "FOUT"
         }
     } # einde if (Test-Path $ShortcutPath) 
 

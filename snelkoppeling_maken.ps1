@@ -10,11 +10,22 @@ Je kan de volgende parameters meegeven aan het script:
 # Declareren variabelen ----------------------------------------------------------
 param (
     [switch]$auto,
-    [switch]$pwsh7
+    [switch]$pwsh7,
+    [string]$startmap="$env:USERPROFILE\beherenbestanden"
 )
 
-# startmap van het programma
-$startmap="$env:USERPROFILE\beherenbestanden"
+# controleren van startmap van het programma
+if (!(Test-Path $startmap)) {
+    Write-Host "De opgegeven startmap bestaat niet: $startmap" -ForegroundColor Red
+    if ($auto) {
+        start-sleep -Seconds 5
+    } else {
+        Write-Host "Druk op een toets om af te sluiten..." -NoNewline
+        $x = $host.ui.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        Write-Host $x.character
+    }
+    exit 1
+}
 
 # hoofd programma die uitgevoerd wordt
 [string] $hoofdprog = "beherenbestanden.ps1"

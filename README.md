@@ -89,7 +89,7 @@ Zonder dit kan PowerShell een **Execution Policy-waarschuwing** tonen.
 ## 5. Bestandenoverzicht
 
 - `Beherenbestanden.ps1` – Hoofdprogramma 
-- `Beheren.ico` – Programma-icoon  
+- `Script_icoon.ico` – Programma-icoon  
 - `Snelkoppeling_maken.ps1` – Hulpmiddel om een snelkoppeling te maken  
 - `Wijzig_Executionpolicy_bypass.bat` – Hulpmiddel om PowerShell Execution Policy te wijzigen  
 - `Changelog.md` – Overzicht van wijzigingen per versie  
@@ -123,9 +123,10 @@ Als dit gebeurt:
 
 - Het programma kan sinds versie 4.8.0. ook i.c.m. **PowerShell 7** of hoger werken.
   Echter, onder **Windows 10** krijg je een app-licentie foutmelding na het automatisch installeren van **PowerShell 7**.
-  Aangeraden wordt om de console van **PowerShell 7** te starten en te controleren of scripts uitgevoerd kunnen worden.
-  Kunnen scripts uitgevoerd worden dan zal het programma daarna werken met **PowerShell 7**.
-  Krijg je nog steeds een foutmelding dan wordt aangeraden om het programma onder **PowerShell 5** te draaien.
+
+➡️ Aangeraden wordt om de console van **PowerShell 7** te starten en te controleren of scripts uitgevoerd kunnen worden.
+   Kunnen scripts uitgevoerd worden dan zal het programma daarna werken met **PowerShell 7**.
+   Krijg je nog steeds een foutmelding dan wordt aangeraden om het programma onder **PowerShell 5** uit te voeren.
 
 ---
 

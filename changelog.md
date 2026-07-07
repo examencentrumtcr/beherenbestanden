@@ -6,12 +6,12 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ## [4.8.1] - In uitvoering
 ### Bugfix
-- Snelkoppeling op het bureaublad verwees naar het verkeerde bestand. 
+- Icoontje van snelkoppeling op het bureaublad verwees naar het verkeerde bestand. 
   Opgelost door bij de start, eenmalig, opnieuw een snelkoppeling te maken.
 
 ### Overige wijzigingen
 - Script om snelkoppeling te maken aangepast zodat dit zonder gebruikersinvoer
-  kan worden uitgevoerd en kan werken met PowerShell 7.
+  kan worden uitgevoerd, kan werken met PowerShell 7 en een startmap kan meegeven.
 
 ## [4.8.0] - 2026-06-19
 ### Nieuwe functies
@@ -26,7 +26,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ### Bugfixes
 - Bij **Verkenner** werkt het 'op volgorde zetten' door te klikken op de kolommen 'Gewijzigd' 
-  en 'Grootte' niet zoals het de bedoeling is. Dit is gewijzigd.
+  en 'Grootte' niet zoals het de bedoeling is. Dit is opgelost.
 - Bepaalde tekens in de tekst bij de moppenbot werden niet goed weergeven.
   Opgelost door UTF-8 te gebruiken.
 
