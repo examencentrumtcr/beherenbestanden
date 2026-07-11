@@ -32,8 +32,8 @@ Auteur: Benvindo Neves
 $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
-    versie = '4.8.1.rc.1'
-    extralabel = '185.260707' # buildnummer + datum
+    versie = '4.8.1.rc.2'
+    extralabel = '186.260711' # buildnummer + datum
     mode = 'prerelease' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
@@ -376,7 +376,8 @@ function ShowHide-ConsoleWindow($mode) {
     # (It would appear that Windows Terminal is the default terminal application)
 
     # Mark the current console window with a unique string.
-    $UniqueWindowTitle = New-Guid
+    # $UniqueWindowTitle = New-Guid
+    $UniqueWindowTitle = [guid]::NewGuid().ToString()
     $Host.UI.RawUI.WindowTitle = $UniqueWindowTitle
     # $StringBuilder = New-Object System.Text.StringBuilder 1024
 
@@ -4065,7 +4066,7 @@ $gifbox2.add_MouseHover({
 declareren_uitlegvenster "Uitleg over het venster Instellingen." 680 300 950 490 "Wijzig hier de standaard instellingen van het programma. 
 Je kan de voorkeuren die standaard zijn ingesteld bij een taak wijzigen,
 enkele beheerinstellingen wijzigen en een update van het programma forceren.
-De optie om een update te forceren is alleen zichtbaar als er geen automatische controle is ingesteld.
+De knop om te controleren op een update is alleen zichtbaar als de optie om automatische te controleren op updates op Nee is ingesteld.
 
 U kunt alle instellingen herstellen naar de standaardwaarde door op de knop 
 Herstel de standaardinstellingen te klikken.
@@ -4140,24 +4141,36 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
             # Als dat niet het geval is, hoeft er niet opnieuw opgestart te worden en worden alleen de vensters gesloten.
             if (( $keuzeoptie12.Selectedindex -eq 0) -and ($PSVersionTable.PSVersion.Major -lt 7)){
                 
-                try {
-                    $pwsh7_locatie = (Get-Command pwsh -ErrorAction Stop).Source
-                    
-                    # Optie om snelkoppeling te maken bij de start van het programma.
-                    $Global:init.uitvoerennaopstarten.snelkoppeling = "Ja"
-                    Bewareninstellingen
+                $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
+                if ($cmd) {
+                    $pwsh7_locatie = $cmd.Source
+                } else {
+                    $pwsh7_locatie = "$env:LOCALAPPDATA\Microsoft\WindowsApps\pwsh.exe"
+                }
 
-                    Start-Pwsh7 $pwsh7_locatie
+                # als pwsh7 al gevonden is, deze starten. Zo niet, dan verder met controleren en installeren.
+                if (Test-Path $pwsh7_locatie) {
+                    try {
+                        Start-Pwsh7 $pwsh7_locatie
+                        $form2.Close()
+                        $form.Close()
+                    }
+                    catch {
+                    Write-Host "PowerShell 7 kon niet gestart worden. Programma gaat verder in huidige versie.
+$_" -ForegroundColor Yellow
+                    $Global:init.uitvoerennaopstarten.powershell7start='Nee'
+                    Meldingnaarlogbestand -meldtekst "Instellingen : PowerShell 7 is gevonden maar kon niet gestart worden.
+$_"
+                    $null = venstermetvraag -titel "PowerShell 7 kon niet gestart worden." -vraag "`r`nPowerShell 7 kon niet gestart worden. `r`nProgramma gaat verder in huidige versie."
+                    }
+                } # einde if test-path $pwsh7_locatie
+
+                else {
+                    Start-Pwsh5
                     $form2.Close()
                     $form.Close()
-                }
-                catch {
-                    $null = venstermetvraag -titel "PowerShell 7 niet gevonden." -vraag "`r`nPowerShell 7 is niet gevonden op dit systeem. `r`nHet programma wordt niet opnieuw gestart."
-                    Meldingnaarlogbestand -meldtekst "Er is een fout opgetreden bij het starten van PowerShell 7 nadat de keuze is gemaakt voor een andere versie.`r`nOmschrijving: $($_.Exception.Message)"
-                    $global:init.uitvoerennaopstarten.powershell7start = "Nee"
-                    Bewareninstellingen
-                    
-                }
+
+                } # einde if test-path $pwsh7_locatie ... else
                 
             } elseif (( $keuzeoptie12.Selectedindex -eq 1) -and ($PSVersionTable.PSVersion.Major -ge 7)) {
                 # Optie om snelkoppeling te maken bij de start van het programma.

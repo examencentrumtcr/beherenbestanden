@@ -14,7 +14,8 @@ param (
     [string]$startmap="$env:USERPROFILE\beherenbestanden"
 )
 
-# controleren van startmap van het programma
+# controleren van startmap van het programma. Eerst de exitcode op 0 zetten zodat deze zeker 0 is!
+$global:LASTEXITCODE = 0
 if (!(Test-Path $startmap)) {
     Write-Host "De opgegeven startmap bestaat niet: $startmap" -ForegroundColor Red
     if ($auto) {
