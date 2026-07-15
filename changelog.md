@@ -4,6 +4,22 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
+## [4.8.1] - 2026-07-15
+### Bugfixes
+- Icoontje van snelkoppeling op het bureaublad verwees naar het verkeerde bestand. 
+  Opgelost door bij de start, eenmalig, opnieuw een snelkoppeling te maken.
+- Powershell 7 werd niet geïnstalleerd als je dit bij **Instellingen** wijzigt.
+  Nu wordt het programma opnieuw opgestart en PowerShell 7 geïnstalleerd.
+- Bij sommige Windows 11 pc's kreeg je een foutmelding als je de console wilde sluiten.
+  Opgelost door een bepaalde module niet meer te gebruiken.
+
+### Overige wijzigingen
+- Script om snelkoppeling te maken aangepast zodat dit zonder gebruikersinvoer
+  kan worden uitgevoerd, kan werken met PowerShell 7 en een startmap kan meegeven.
+- Readme is aangepast. Aantal teksten verduidelijkt.
+
+---
+
 ## [4.8.0] - 2026-06-19
 ### Nieuwe functies
 - Met de functie **Verkenner** kan je nu ook bestanden, in de studentmappen, openen.
@@ -17,7 +33,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ### Bugfixes
 - Bij **Verkenner** werkt het 'op volgorde zetten' door te klikken op de kolommen 'Gewijzigd' 
-  en 'Grootte' niet zoals het de bedoeling is. Dit is gewijzigd.
+  en 'Grootte' niet zoals het de bedoeling is. Dit is opgelost.
 - Bepaalde tekens in de tekst bij de moppenbot werden niet goed weergeven.
   Opgelost door UTF-8 te gebruiken.
 

@@ -32,8 +32,8 @@ Auteur: Benvindo Neves
 $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
-    versie = '4.8.0'
-    extralabel = '183.260619' # buildnummer + datum
+    versie = '4.8.1'
+    extralabel = '187.260715' # buildnummer + datum
     mode = 'release' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
@@ -44,6 +44,7 @@ $scriptnaam = $global:programma.naam
 write-host ""
 write-host "** Programma $scriptnaam " -f Green
 write-host "** Versie is "$global:programma.versie -f Green
+write-host "** PowerShell versie is "$PSVersionTable.PSVersion -f Green
 write-host ""
 write-host "Initialiseren van het programma."
 
@@ -375,7 +376,8 @@ function ShowHide-ConsoleWindow($mode) {
     # (It would appear that Windows Terminal is the default terminal application)
 
     # Mark the current console window with a unique string.
-    $UniqueWindowTitle = New-Guid
+    # $UniqueWindowTitle = New-Guid
+    $UniqueWindowTitle = [guid]::NewGuid().ToString()
     $Host.UI.RawUI.WindowTitle = $UniqueWindowTitle
     # $StringBuilder = New-Object System.Text.StringBuilder 1024
 
@@ -733,6 +735,7 @@ $uitvoerennaopstarten=@{
     powershell7start = 'Nee'
     controleopupdate = 'Ja'
     handmatigupdate = 'Nee'
+    snelkoppeling = 'Ja'
 }
 $Std_inst=@{
     algemeen  = $algemeen
@@ -4063,7 +4066,7 @@ $gifbox2.add_MouseHover({
 declareren_uitlegvenster "Uitleg over het venster Instellingen." 680 300 950 490 "Wijzig hier de standaard instellingen van het programma. 
 Je kan de voorkeuren die standaard zijn ingesteld bij een taak wijzigen,
 enkele beheerinstellingen wijzigen en een update van het programma forceren.
-De optie om een update te forceren is alleen zichtbaar als er geen automatische controle is ingesteld.
+De knop om te controleren op een update is alleen zichtbaar als de optie om automatische te controleren op updates op Nee is ingesteld.
 
 U kunt alle instellingen herstellen naar de standaardwaarde door op de knop 
 Herstel de standaardinstellingen te klikken.
@@ -4138,31 +4141,56 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
             # Als dat niet het geval is, hoeft er niet opnieuw opgestart te worden en worden alleen de vensters gesloten.
             if (( $keuzeoptie12.Selectedindex -eq 0) -and ($PSVersionTable.PSVersion.Major -lt 7)){
                 
-                try {
-                    $pwsh7_locatie = (Get-Command pwsh -ErrorAction Stop).Source
-                    Start-Pwsh7 $pwsh7_locatie
-                    $form2.Close()
-                    $form.Close()
+                $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
+                if ($cmd) {
+                    $pwsh7_locatie = $cmd.Source
+                } else {
+                    $pwsh7_locatie = "$env:LOCALAPPDATA\Microsoft\WindowsApps\pwsh.exe"
                 }
-                catch {
-                    # $null = venstermetvraag -titel "PowerShell 7 niet gevonden." -vraag "`r`nPowerShell 7 is niet gevonden op dit systeem. `r`nHet programma wordt niet opnieuw gestart."
-                    # Meldingnaarlogbestand -meldtekst "Er is een fout opgetreden bij het starten van PowerShell 7 nadat de keuze is gemaakt voor een andere versie.`r`nOmschrijving: $($_.Exception.Message)"
+
+                # als pwsh7 al gevonden is, deze starten. Zo niet, dan opnieuw opstarten met PowerShell 5 om powershell 7 te installeren.
+                # de instelling om een snelkoppeling te maken wordt op Ja gezet, en bewaard, zodat deze gemaakt wordt.
+                if (Test-Path $pwsh7_locatie) {
+                    try {
+                        Start-Pwsh7 $pwsh7_locatie
+                        $Global:init.uitvoerennaopstarten.snelkoppeling = "Ja"
+                        Bewareninstellingen
+                        $form2.Close()
+                        $form.Close()
+                    }
+                    catch {
+                    Write-Host "PowerShell 7 kon niet gestart worden. Programma gaat verder in huidige versie.
+$_" -ForegroundColor Yellow
+                    $Global:init.uitvoerennaopstarten.powershell7start='Nee'
+                    Meldingnaarlogbestand -meldtekst "Instellingen : PowerShell 7 is gevonden maar kon niet gestart worden.
+$_"
+                    $null = venstermetvraag -titel "PowerShell 7 kon niet gestart worden." -vraag "`r`nPowerShell 7 kon niet gestart worden. `r`nProgramma gaat verder in huidige versie."
+                    }
+                } else {
                     Start-Pwsh5
+                    $Global:init.uitvoerennaopstarten.snelkoppeling = "Ja"
+                    Bewareninstellingen
                     $form2.Close()
                     $form.Close()
-                }
+
+                } # einde if test-path $pwsh7_locatie ... else
                 
             } elseif (( $keuzeoptie12.Selectedindex -eq 1) -and ($PSVersionTable.PSVersion.Major -ge 7)) {
-
+                # Optie om snelkoppeling te maken bij de start van het programma.
+                $Global:init.uitvoerennaopstarten.snelkoppeling = "Ja"
+                Bewareninstellingen
+                
                 Start-Pwsh5
                 $form2.Close()
                 $form.Close()
             } else {
                 $null = venstermetvraag -titel "Het programma heeft al de gekozen PowerShell versie." -vraag "`r`nHet programma heeft al de gekozen PowerShell versie. `r`nHet programma wordt niet opnieuw gestart."
-            }
+            } # einde if (( $keuzeoptie12.Selectedindex -eq 0) -and ($PSVersionTable.PSVersion.Major -lt 7)) ... elseif... else
+
             # Over sluiten van huidige vensters hierboven (gebruik van $form2.Close() en $form.Close() in plaats van exit):
             # Als je hier exit gebruikt krijg je een error maar het proces wordt wel afgesloten. 
             # Daarom worden hier de vensters gesloten en daarna gaat het programma verder in het nieuwe proces dat met start-process is gestart.
+
         } # einde if $result -eq 'OK'
     } # einde opnieuw opstarten bij wijziging keuze powershell versie
 
@@ -5458,6 +5486,38 @@ $tempmap
 
 if ($netwerkmapfout) { Start-Sleep -Seconds 5}
 
+# Probleem van onjuiste programma icoon oplossen door opnieuw snelkoppeling te maken
+if ($Global:init.uitvoerennaopstarten.snelkoppeling -eq 'Ja') {
+
+    # Maken van snelkoppeling
+    # benodigde variabelen
+    $linkbureaublad = [Environment]::GetFolderPath("Desktop")
+    $ShortcutPath = "$linkbureaublad\Beheren bestanden.lnk"
+    $snelkoppeling_script = "snelkoppeling_maken.ps1"
+
+    # object aanmaken en bewaren. Alleen als er al een snelkoppeling is. 
+    if (Test-Path $ShortcutPath) {
+        # write-host "Snelkoppeling op bureaublad wordt opnieuw aangemaakt."
+        
+        if ($PSVersionTable.PSVersion.Major -ge 6) {
+            Meldingnaarlogbestand -meldtekst "Snelkoppeling op bureaublad is aangemaakt om met PowerShell 7 te starten." -type "MEDEDELING"
+            & "$PSScriptRoot\$snelkoppeling_script" -auto -pwsh7 -startmap $startmap
+        } else {
+            Meldingnaarlogbestand -meldtekst "Snelkoppeling op bureaublad is aangemaakt om met PowerShell 5 te starten." -type "MEDEDELING"
+            & "$PSScriptRoot\$snelkoppeling_script" -auto -startmap $startmap
+        }
+        if ($LASTEXITCODE -ne 0) {
+            Meldingnaarlogbestand -meldtekst "Fout opgetreden bij het aanmaken van de snelkoppeling.
+Startmap = $startmap
+Bureaubladlink = $ShortcutPath" -type "FOUT"
+        }
+    } # einde if (Test-Path $ShortcutPath) 
+
+    # De volgende keer niet uitvoeren.
+    $Global:init.uitvoerennaopstarten.snelkoppeling='Nee'
+    Bewareninstellingen
+} # einde if ($Global:init.uitvoerennaopstarten.updateinfo -eq 'Ja')
+
 # Einde controles en tijdelijke taken uitvoeren
 
 
@@ -5784,7 +5844,7 @@ $gifBox.add_MouseHover({
 
 $Form.Controls.Add($gifbox)
 
-# Kiezen tusen de standaard layout of de layout waarbij subtaken worden weergegeven. Standaard is dit laatste.
+# Kiezen tussen de standaard layout of de layout waarbij subtaken worden weergegeven. Standaard is dit laatste.
 if ($global:init.algemeen.nieuwelayout -eq 'Ja') {
     # subtakentonen
     Nieuwelayoutgebruiken
@@ -5815,24 +5875,19 @@ $form.add_Shown({
 
     # Als er een update is uitgevoerd of het programma is net geïnstalleerd, dan venster tonen met melding dat er een update is uitgevoerd of dat het programma net is geïnstalleerd.
     # Deze melding wordt alleen 1 keer getoond 
+    $versie = $global:programma.versie
     if ($Global:init.uitvoerennaopstarten.updateinfo -eq 'Ja') {
-        # Na elke update of bij nieuwe installatie is er een venster met informatie over de update. Deze wordt alleen 1 keer getoond.
-        $null = venstermetvraag -titel "Informatie over uitgevoerde update" -vraag "Het programma heeft een update uitgevoerd. `r`n
+        # Na elke update or bij nieuwe installatie is er een venster met informatie over de update. Deze wordt alleen 1 keer getoond.
+        $null = venstermetvraag -titel "Informatie over uitgevoerde update" -vraag "`r`nHet programma heeft een update uitgevoerd en heeft nu versie $versie.`r`n
 De belangrijkste wijzigingen zijn: 
-- De functie Verkenner kan gebruikt worden om bestanden in de kandidaatmappen te openen.
-- Na elke update wordt, eenmaal bij de start van het script, informatie getoond over de update.
-- Er is een nieuwe layout voor het hoofdvenster. 
-  Als u de nieuwe layout wilt gebruiken dan kunt u dit bij instellingen wijzigen.
-- Programma werkt nu ook met PowerShell vanaf versie 7.
-  Je kan bij functie Instellingen dit aanzetten. PowerShell 7 wordt indien nodig geïnstalleerd.
-- Het controleren en installeren van updates kan je uitzetten bij functie Instellingen." -schuifbalk -bredevenster
+- Het probleem van onjuiste programma icoon voor snelkoppeling is opgelost.
+- De snelkoppeling kan worden ingesteld om te werken met PowerShell 7.
+- Het probleem dat Powershell 7 niet werd geïnstalleerd als je dit bij Instellingen wijzigt is opgelost." -schuifbalk -bredevenster
 
         # Deze vraag niet meer stellen -> Waarde op nee zetten en bewaren
         $Global:init.uitvoerennaopstarten.updateinfo='Nee'
         Bewareninstellingen
-        # $gebruikersbestand = bepaalinitnaamgebruiker
-        # Tijdelijk uitgeschakeld. Moet weer ingeschakeld worden.
-        # $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
+
     }
  } )
 
