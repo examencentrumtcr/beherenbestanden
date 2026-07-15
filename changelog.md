@@ -4,7 +4,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [4.8.1] - In uitvoering
+## [4.8.1] - 2026-07-15
 ### Bugfixes
 - Icoontje van snelkoppeling op het bureaublad verwees naar het verkeerde bestand. 
   Opgelost door bij de start, eenmalig, opnieuw een snelkoppeling te maken.

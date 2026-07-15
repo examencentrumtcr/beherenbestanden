@@ -32,9 +32,9 @@ Auteur: Benvindo Neves
 $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
-    versie = '4.8.1.rc.2'
-    extralabel = '186.260711' # buildnummer + datum
-    mode = 'prerelease' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    versie = '4.8.1'
+    extralabel = '187.260715' # buildnummer + datum
+    mode = 'release' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
     icoon = -join ($startmap, "\", "script_icoon.ico")
@@ -4148,10 +4148,13 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
                     $pwsh7_locatie = "$env:LOCALAPPDATA\Microsoft\WindowsApps\pwsh.exe"
                 }
 
-                # als pwsh7 al gevonden is, deze starten. Zo niet, dan verder met controleren en installeren.
+                # als pwsh7 al gevonden is, deze starten. Zo niet, dan opnieuw opstarten met PowerShell 5 om powershell 7 te installeren.
+                # de instelling om een snelkoppeling te maken wordt op Ja gezet, en bewaard, zodat deze gemaakt wordt.
                 if (Test-Path $pwsh7_locatie) {
                     try {
                         Start-Pwsh7 $pwsh7_locatie
+                        $Global:init.uitvoerennaopstarten.snelkoppeling = "Ja"
+                        Bewareninstellingen
                         $form2.Close()
                         $form.Close()
                     }
@@ -4163,10 +4166,10 @@ $_" -ForegroundColor Yellow
 $_"
                     $null = venstermetvraag -titel "PowerShell 7 kon niet gestart worden." -vraag "`r`nPowerShell 7 kon niet gestart worden. `r`nProgramma gaat verder in huidige versie."
                     }
-                } # einde if test-path $pwsh7_locatie
-
-                else {
+                } else {
                     Start-Pwsh5
+                    $Global:init.uitvoerennaopstarten.snelkoppeling = "Ja"
+                    Bewareninstellingen
                     $form2.Close()
                     $form.Close()
 
@@ -4182,10 +4185,12 @@ $_"
                 $form.Close()
             } else {
                 $null = venstermetvraag -titel "Het programma heeft al de gekozen PowerShell versie." -vraag "`r`nHet programma heeft al de gekozen PowerShell versie. `r`nHet programma wordt niet opnieuw gestart."
-            }
+            } # einde if (( $keuzeoptie12.Selectedindex -eq 0) -and ($PSVersionTable.PSVersion.Major -lt 7)) ... elseif... else
+
             # Over sluiten van huidige vensters hierboven (gebruik van $form2.Close() en $form.Close() in plaats van exit):
             # Als je hier exit gebruikt krijg je een error maar het proces wordt wel afgesloten. 
             # Daarom worden hier de vensters gesloten en daarna gaat het programma verder in het nieuwe proces dat met start-process is gestart.
+
         } # einde if $result -eq 'OK'
     } # einde opnieuw opstarten bij wijziging keuze powershell versie
 
@@ -5839,7 +5844,7 @@ $gifBox.add_MouseHover({
 
 $Form.Controls.Add($gifbox)
 
-# Kiezen tusen de standaard layout of de layout waarbij subtaken worden weergegeven. Standaard is dit laatste.
+# Kiezen tussen de standaard layout of de layout waarbij subtaken worden weergegeven. Standaard is dit laatste.
 if ($global:init.algemeen.nieuwelayout -eq 'Ja') {
     # subtakentonen
     Nieuwelayoutgebruiken
@@ -5870,12 +5875,14 @@ $form.add_Shown({
 
     # Als er een update is uitgevoerd of het programma is net geïnstalleerd, dan venster tonen met melding dat er een update is uitgevoerd of dat het programma net is geïnstalleerd.
     # Deze melding wordt alleen 1 keer getoond 
+    $versie = $global:programma.versie
     if ($Global:init.uitvoerennaopstarten.updateinfo -eq 'Ja') {
-        # Na elke update of bij nieuwe installatie is er een venster met informatie over de update. Deze wordt alleen 1 keer getoond.
-        $null = venstermetvraag -titel "Informatie over uitgevoerde update" -vraag "`r`nHet programma heeft een update uitgevoerd. `r`n
+        # Na elke update or bij nieuwe installatie is er een venster met informatie over de update. Deze wordt alleen 1 keer getoond.
+        $null = venstermetvraag -titel "Informatie over uitgevoerde update" -vraag "`r`nHet programma heeft een update uitgevoerd en heeft nu versie $versie.`r`n
 De belangrijkste wijzigingen zijn: 
 - Het probleem van onjuiste programma icoon voor snelkoppeling is opgelost.
-- De snelkoppeling kan worden ingesteld om te werken met PowerShell 7." -schuifbalk -bredevenster
+- De snelkoppeling kan worden ingesteld om te werken met PowerShell 7.
+- Het probleem dat Powershell 7 niet werd geïnstalleerd als je dit bij Instellingen wijzigt is opgelost." -schuifbalk -bredevenster
 
         # Deze vraag niet meer stellen -> Waarde op nee zetten en bewaren
         $Global:init.uitvoerennaopstarten.updateinfo='Nee'
