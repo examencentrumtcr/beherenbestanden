@@ -32,9 +32,9 @@ Auteur: Benvindo Neves
 $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
-    versie = '4.8.1'
-    extralabel = '187.260715' # buildnummer + datum
-    mode = 'release' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    versie = '4.9.0'
+    extralabel = 'test.1.260922' # buildnummer + datum
+    mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
     icoon = -join ($startmap, "\", "script_icoon.ico")
@@ -241,9 +241,9 @@ $locaties = @{
     JLS = $JLS
     }
 $examenmappen = @{
-    digitalebestanden = 'B:\HR_TM_T2000\examendocumenten\digitale bijlagen'
+    digitalebestanden = '/gedeelde documenten/Examendocumenten'
     homemapstudenten  = 'Y:\RPC'
-    backupmap         = 'B:\HR_TM_T2000\backup kandidaten'
+    backupmap         = '/gedeelde documenten/Backup kandidaten'
 }
 $opschonen=@{
     dagenbewarenbackup = 730
@@ -256,13 +256,27 @@ $global:beheer = @{
 
 # lokale mappen worden gebruikt als programma.mode is alpha.
 $lokalemappen = @{
-    digitalebestanden = "C:\Users\$env:username\testwerking\digitale bijlagen"
+    digitalebestanden = "/gedeelde documenten/Examendocumenten"
     homemapstudenten  = "C:\Users\$env:username\testwerking\doel"
-    backupmap         = "C:\Users\$env:username\testwerking\backup kandidaten"
+    backupmap         = "/gedeelde documenten/Backup kandidaten"
 }
 if ($global:programma.mode -eq "alpha") {
         $global:beheer.examenmappen = $lokalemappen
         }
+# Mappen in Sharepoint van team RPCPAL_55-TestRPC. Deze worden gebruikt bij het inlezen van bestanden uit Sharepoint.
+$global:Sharepoint = @{
+    Organisatie = "https://o365zadkine.sharepoint.com"
+    Team        = "/teams/RPCtestsiteexaminering"
+}
+# Url kan pas worden gedefinieerd nadat de andere variabelen zijn gedefinieerd. Anders krijg je een foutmelding dat $global:Sharepoint.Team nog niet bestaat.
+$global:Sharepoint.Url = -join(
+    $global:Sharepoint.Organisatie,
+    $global:Sharepoint.Team
+)
+
+# variabelen voor Sharepoint client id en app id. Deze zijn nodig voor het inlezen van bestanden uit Sharepoint. 
+$env:ENTRAID_CLIENT_ID = "db02e749-4ffc-4ba4-aa01-3691640f308b"
+$env:ENTRAID_APP_ID = "db02e749-4ffc-4ba4-aa01-3691640f308b"
 
 # Lijst met bestandsformaten die worden herkend als afbeelding. Deze worden gebruikt bij functies Bestanden kopieren en Verkenner.
 $global:bestandsformaten = @(
@@ -5433,6 +5447,39 @@ if ($global:init.uitvoerennaopstarten.handmatigupdate -eq "Ja") {
     $null = venstermetvraag -titel "Updatecontrole" -vraag "De handmatige controle op een update is uitgevoerd. 
 Lees de informatie in de console en druk op OK om verder te gaan."
 }
+
+# Einde controleren op update
+
+# verbinden met Sharepoint ...........
+
+# Eerst powershell module importeren als deze niet aanwezig is
+if (!(Get-Module -name pnp.powershell -ListAvailable)) {
+    # zorgen dat modules uit deze repository worden vertrouwd
+    Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
+    
+    write-host "SharePoint module wordt geïnstalleerd."
+
+    Install-Module -Name pnp.powershell -Scope CurrentUser
+
+    # voor de veiligheid dit weer terugzetten!
+    Set-PSRepository -Name 'PSGallery' -InstallationPolicy untrusted
+    }
+
+# dan verbinden ......
+try {
+    Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive
+    }
+
+catch {
+
+$null = venstermetvraag -titel "Geen verbinding met SharePoint." -vraag "Geen verbinding kunnen maken met SharePoint.
+De volgende foutmelding is geretourneerd:
+- $_
+
+Een aantal taken kunnen nu niet uitgevoerd worden." "OK"
+      } # einde catch 
+
+# einde verbinden met SharePoint
 
 #Overige controles en tijdelijke taken uitvoeren
 write-host "Controleren of bestanden moeten worden opgeschoond of hersteld."
