@@ -890,21 +890,11 @@ $global:bestandsformaten | ForEach-Object {
 return $std_imageList
 }
 
+Function Bepaalextensienr ($bestand) {
 
-Function Bepaalicoontjenr ($controlemap, $bestand) {
-
-# Bepaal welke icoontje moet worden weergeven afhankelijk van type, map of bestand. 
-# Wordt gebruikt bij functies Bestanden kopieren en Verkenner.
-# De nummering is afhankelijk van de volgorde van aanmaken bij functie Declareericoontjes. 
-# een map heeft als nummer 0. Deze is als eerst gedeclareerd. zie hierboven.
-
-if (( test-path -path "$controlemap\$bestand" -pathtype container) -eq $true)  {
-
-    $gevondennr = 0
-    } else {
-    # regel hieronder werkt niet als er meerdere punten in een bestandsnaam zijn. Daarom volgt daaronder een verbetering.
-    # $extensie = (Split-Path -Path $bestand -Leaf).Split(".")[1]
-    $positiepunt = $bestand.LastIndexOf(".")
+# Bepaal welke extensie moet worden weergeven afhankelijk van type, map of bestand.
+# De nummering is afhankelijk van de volgorde van aanmaken bij functie Declareericoont
+$positiepunt = $bestand.LastIndexOf(".")
     $positiepunt += 1
     $extensie = $bestand.Substring($positiepunt)
 
@@ -915,11 +905,28 @@ if (( test-path -path "$controlemap\$bestand" -pathtype container) -eq $true)  {
     $global:bestandsformaten | ForEach-Object {
         $formats = $_.typen
         if ($formats.Contains($extensie) ) { 
-            $gevondennr  = $teller 
+            $gevondennr = $teller 
             return 
         }
         $teller += 1
     } # einde ForEach-Object - loop
+return $gevondennr
+}
+
+Function Bepaalicoontjenr ($controlemap, $bestand) {
+
+# Bepaal welke icoontje moet worden weergeven afhankelijk van type, map of bestand. 
+# Wordt gebruikt bij functies Bestanden kopieren en Verkenner. Straks alleen bij Verkenner dus kan de functie verplaatst worden.....
+# De nummering is afhankelijk van de volgorde van aanmaken bij functie Declareericoontjes. 
+# een map heeft als nummer 0. Deze is als eerst gedeclareerd. zie functie Declareericoontjes.
+# Deze functie bestaat alleen omdat bij Verkenner nog wel naar een netwerkmap wordt gekeken en dus test-path wordt gebruikt. 
+# Als dit niet meer nodig is kan deze functie verwijderd worden en de functie Bepaalextensienr gebruikt worden.
+# Bij Bestanden kopieren wordt naar een sharepointmap gekeken en kan de functie Bepaalextensienr worden gebruikt.
+
+if (( test-path -path "$controlemap\$bestand" -pathtype container) -eq $true)  {
+    $gevondennr = 0
+    } else {
+    $gevondennr = Bepaalextensienr $bestand
     }
 
 return $gevondennr
@@ -1840,8 +1847,21 @@ function toevoegen_lijst1 ($controlemap, $toevoegitem) {
   [void] $listView1.Items.Add($toevoegitem, $extensienr)
 }
 
+function toevoegen_geselecteerd ($toevoegitem, $type) {
+
+if ($type -eq "Folder"){
+        $extensienr = 0
+    } elseif ($type -eq "File") {
+        $extensienr = Bepaalextensienr $toevoegitem.name
+    } else {
+        $extensienr = 1
+    }
+  [void] $listView1.Items.Add($toevoegitem.Name, $extensienr)
+}
+
 function inlezengekozenmap ($invoer) {
 # inlezen gekozen map en in variabele plaatsen
+# Deze functie kan verwijderd worden als de 3 dropdownmenu's (voor crebo, kerntaak en examen) zijn verwijderd.
 
   try { 
   $ingelezen = Get-ChildItem -Path "$invoer" -Name -ErrorAction Stop | Sort-object 
@@ -1864,7 +1884,7 @@ $digitalebestanden = $global:beheer.examenmappen.digitalebestanden
 # lijst met geselecteerde examenmappen
 $global:geselecteerdebronmap = [System.Collections.ArrayList]@()
 
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.digitalebestanden $true )) { return; } 
+# if (!(Netwerkmapaanwezig $global:beheer.examenmappen.digitalebestanden $true )) { return; } 
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { return; } 
 
 
@@ -1956,15 +1976,20 @@ $BtnOpnieuw.Add_Click({
 
       # selectie krijgt waarde van gekozen crebonummer
       $selectie = $digitalebestanden
-
       # inlezen gekozen map en in variabele plaatsen
-      $folders = inlezengekozenmap $selectie
+      $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie   
 
       # toevoegen aan venster
       $listView1.items.clear()
-      foreach($folder in $folders){
-           toevoegen_lijst1 $selectie $folder 
-      }
+      foreach($folder in $folders){ 
+            # toevoegen_geselecteerd $folder of File
+            if ($folder.GetType().Name -eq "Folder") {
+                toevoegen_geselecteerd $folder "Folder"
+            } elseif ($folder.GetType().Name -eq "File") {
+                toevoegen_geselecteerd $folder "File"
+            }
+        }  
+
       $listview1.SelectedItems.Clear()
       $listView1.AutoResizeColumns(1)
 
@@ -1975,7 +2000,7 @@ $BtnOpnieuw.Add_Click({
       # dropdownmenu's leegmaken
       $lijstkerntaken.items.clear()
       $lijstexamens.items.clear()
-      # selecties leegmaken
+      # selecties leegmaken. Verwijderen als de dropdownmenu's zijn verwijderd.
       $lijstcrebonrs.selectedindex = -1
       $lijstkerntaken.selectedindex = -1
       $lijstexamens.selectedindex = -1
@@ -1991,62 +2016,39 @@ $BtnTerug.height                  = 40
 $BtnTerug.location                = New-Object System.Drawing.Point(150,245)
 $BtnTerug.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-terug.png")
 $BtnTerug.Add_Click({ 
+
+    # verwijderen laatste item uit array met geselecteerde bronmap. als de array leeg is, gebeurt er niets.
+    if ($geselecteerdebronmap.count -gt 0) {
+        $verwijdernr=$geselecteerdebronmap.Count-1
+        $geselecteerdebronmap.RemoveAt($verwijdernr)
+        }
+        
     # selectie krijgt waarde van startmap
     $selectie = $digitalebestanden
-    
-    switch ($geselecteerdebronmap.count) {
-           "0" { # niets doen 
-               }
-           "1" { 
-           #verwijder alles
-           $geselecteerdebronmap.Clear()
-           # dropdownmenu's leegmaken
-           $lijstkerntaken.items.clear()
-           $lijstexamens.items.clear()
-           # selecties leegmaken
-           $lijstcrebonrs.selectedindex = -1
-           $lijstkerntaken.selectedindex = -1
-           $lijstexamens.selectedindex = -1
-               }
-           "2" { 
-           #verwijder de laatste
-           $geselecteerdebronmap.RemoveAt(1)
-           # dropdownmenu's leegmaken
-           $lijstexamens.items.clear()
-           # selecties leegmaken
-           $lijstkerntaken.selectedindex = -1
-           $lijstexamens.selectedindex = -1
-               }
-           "3" { 
-           #verwijder de laatste
-           $geselecteerdebronmap.RemoveAt(2)
-           # selecties leegmaken
-           $lijstexamens.selectedindex = -1
-               }
-           default { 
-           $verwijdernr=$geselecteerdebronmap.Count-1
-           $geselecteerdebronmap.RemoveAt($verwijdernr)
-           }
-    } # einde switch
 
-    # Standaard map
+    # De huidige map weergeven bij venster geselecteerde examenmap.
     $objtekst2.Text = $Startexamenmap
     # toevoegen aan array en geselecteerde examenmap
     foreach ($item in $geselecteerdebronmap) {
-            $selectie = -join ($selectie, '\', $item)
-            # Toevoegen aan geselecteerde examenmap
+            $selectie = -join ($selectie, '/', $item)
+            # Toevoegen aan venster geselecteerde examenmap
            $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $Item)
     } # einde foreach
-
+    
     # inlezen gekozen map en in variabele plaatsen
-    $folders = inlezengekozenmap $selectie
+    $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie   
 
-    # toevoegen aan venster 
-    $listView1.items.clear()
-    foreach($folder in $folders){
-           toevoegen_lijst1 $selectie $folder 
-           
-    }
+      # toevoegen aan venster
+      $listView1.items.clear()
+      foreach($folder in $folders){ 
+            # toevoegen_geselecteerd $folder of File
+            if ($folder.GetType().Name -eq "Folder") {
+                toevoegen_geselecteerd $folder "Folder"
+            } elseif ($folder.GetType().Name -eq "File") {
+                toevoegen_geselecteerd $folder "File"
+            }
+        }  
+
     $listview1.SelectedItems.Clear()
     $listView1.AutoResizeColumns(1)
 
@@ -2076,8 +2078,10 @@ $listbox.add_SelectedIndexChanged(
      { startknopklikbaar;
      } )
 
+# Aanmaken van een imageList voor de icoontjes in de listview 
 $imageList = Declareericoontjes
 
+# Inhoud van de gekozen map in een listview weergeven.
 $global:listView1 = New-Object System.Windows.Forms.ListView
 $listView1.View = 'Details'
 $listView1.Height = 278
@@ -2085,8 +2089,6 @@ $listView1.Width = 330
 $listView1.Font = New-Object System.Drawing.Font("MS Sans Serif",12)
 # zorgen dat selectie zichtbaar blijft.
 $listview1.HideSelection = $false
-
-# $listView1.AutoResizeColumns(1) 
  
 $System_Drawing_Point = New-Object System.Drawing.Point
 $System_Drawing_Point.X = 200
@@ -2095,10 +2097,7 @@ $System_Drawing_Point.Y = 245
 $listView1.Location = $System_Drawing_Point
 $listView1.Name = "listView1"
 $listView1.Sorting = 'Ascending'
-#$listView1.Columns.Add('Inhoud examenmap',600)| Out-Null
 $listView1.Columns.Add('Geselecteerde mappen en bestanden',600)| Out-Null
-# hieronder toch niet nodig. geeft geen effect.
-# $listView1.AutoResizeColumns(1)
 $listView1.SmallImageList = $imageList
 $listView1.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Selecteer eventueel alleen de bestanden en mappen die je wilt overzetten. 
@@ -2112,62 +2111,57 @@ $listView1.add_SelectedIndexChanged(
      # selectie krijgt waarde van volledige pad naar gekozen map
      $selectie = $digitalebestanden
      foreach ($item in $geselecteerdebronmap) {
-                $selectie = -join ($selectie, '\', $item)
+                $selectie = -join ($selectie, '/', $item)
           }
-     $selectie = -join ($selectie, '\', $listView1.SelectedItems.text)
+     $selectie = -join ($selectie, '/', $listView1.SelectedItems.text)
 
+$folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie   
      # alleen als 1 item is geselecteerd en de item moet een map zijn.
-     if (( $listView1.selecteditems.count -eq 1) -and ((test-path -path $selectie -pathtype container) -eq $true) ) {
+
+     if (( $listView1.selecteditems.count -eq 1) -and ($folders.count -gt 0) ) {
+          # if ($folders.count -gt 0) {
 
           # tekstbox legen
           $listView2.items.clear()
 
           # weergeven inhoud in rechter venster, inhoud geselecteerde map
-          $folders = inlezengekozenmap $selectie
-
           # dan netjes in rijen plaatsen.
           foreach ($item in $folders) {
-            $extensienr = Bepaalicoontjenr $selectie $item
-            [void] $listView2.Items.Add($item, $extensienr)
+            if ($item.GetType().Name -eq "Folder") {
+                $extensienr = 0
+                [void] $listView2.Items.Add($item.name, $extensienr)
+                
+                } elseif ($item.GetType().Name -eq "File") {
+                $extensienr = Bepaalextensienr $item.name
+                [void] $listView2.Items.Add($item.name, $extensienr)
+                } 
             }
-          # aanpassen vesnter aan inhoud
+          # aanpassen venster aan inhoud
           $listView2.AutoResizeColumns(1) 
           startknopklikbaar;
 
-          } else {
+        } else {
           # venster met inhoud map legen
           $listView2.items.clear()
-          }
+        } # einde if (( $listView1.selecteditems.count -eq 1) .. else ...
     }
     )
 
 
 # bij dubbelklikken van een map, map selecteren en openen
-# hier wordt echter alleen 1 van de dropdownmenu's geactiveerd die dit gaat uitvoeren.
 $listView1.add_doubleClick(
      {
      # selectie krijgt waarde van volledige pad naar gekozen map
      $selectie = $digitalebestanden
      foreach ($item in $geselecteerdebronmap) {
-                $selectie = -join ($selectie, '\', $item)
+                $selectie = -join ($selectie, '/', $item)
                 }
-     $selectie = -join ($selectie, '\', $listView1.SelectedItems.text)
-      
-     # Er moet een item geselecteerd zijn (je kan namelijk ook dubbelklikken op een lege plek) en de item moet een map zijn.
-     # if (($listView1.SelectedIndex -ge 0) -and ((test-path -path $selectie -pathtype container) -eq $true) ) {
-     if ((test-path -path $selectie -pathtype container) -eq $true) {
+     $selectie = -join ($selectie, '/', $listView1.SelectedItems.text)
+     
+     $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie   
 
-        # als geselecteerde aanwijzen aan een van de dropdownmenu's
-        switch ($geselecteerdebronmap.count) {
-           "0" { $lijstcrebonrs.selectedindex = $listView1.SelectedIndices[0] }
-           "1" { $lijstkerntaken.selectedindex = $listView1.SelectedIndices[0] }
-           "2" { $lijstexamens.selectedindex = $listView1.SelectedIndices[0] }
-           Default {
-                
-                # inlezen gekozen map en in variabele plaatsen
-                $folders = Get-ChildItem -Path "$selectie"  -Name | Sort-object 
-
-                if ($folders.count -gt 0) {
+     # alleen als de geselecteerde item een map is en inhoud heeft, wordt deze map geopend en weergegeven in het venster.
+     if ($folders.count -gt 0) {
                     # venster met inhoud map legen
                     $listView2.items.clear()
                     # standaard tekst in venster met geselecteerd examenmap
@@ -2182,15 +2176,18 @@ $listView1.add_doubleClick(
                         }
 
                     # toevoegen aan venster
-                    foreach($folder in $folders){ toevoegen_lijst1 $selectie $folder  }
+                    foreach($folder in $folders){ 
+                        # toevoegen_geselecteerd $folder of File
+                        if ($folder.GetType().Name -eq "Folder") {
+                            toevoegen_geselecteerd $folder "Folder"
+                            } elseif ($folder.GetType().Name -eq "File") {
+                            toevoegen_geselecteerd $folder "File"
+                            }
+                    }  
                     # breedte listview1 aanpassen aan de inhoud
                     $listView1.AutoResizeColumns(1) 
                     startknopklikbaar;
-                } # if ($folders.count -gt 0)
-           } # einde default switch keuze
-        }  #einde switch
-
-      }   # einde if (test-path -path $selectie -pathtype container)
+     } # if ($folders.count -gt 0)
      } )
 
 $listView2 = New-Object System.Windows.Forms.ListView
@@ -2282,13 +2279,18 @@ $lijstcrebonrs.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Selecteer de crebonummer." )
 })
 
-
-# crebonummers in de dropdownlijst zetten. Deze lijst verandert niet.
-# en weergeven in venster listview1. Deze lijst verandert wel.
-Get-ChildItem -Path $digitalebestanden -Name | Sort-object | ForEach-Object {
-    [void] $lijstcrebonrs.Items.Add($_)
-    toevoegen_lijst1 $digitalebestanden $_ 
+# inhoud map in de lijst met geselecteerde mappen zetten 
+# in het begin zijn het alleen maar folders, daarom de toevoeging -ItemType Folder 
+$folders = Get-PnPFolderItem -FolderSiteRelativeUrl $global:beheer.examenmappen.digitalebestanden
+foreach($folder in $folders){ 
+    # toevoegen_geselecteerd $folder of File
+    if ($folder.GetType().Name -eq "Folder") {
+        toevoegen_geselecteerd $folder "Folder"
+    } elseif ($folder.GetType().Name -eq "File") {
+        toevoegen_geselecteerd $folder "File"
     }
+}  
+
 # breedte listview1 aanpassen aan de inhoud
 $listView1.AutoResizeColumns(1) 
 
@@ -5467,6 +5469,7 @@ if (!(Get-Module -name pnp.powershell -ListAvailable)) {
 
 # dan verbinden ......
 try {
+    write-host "Verbinding maken met SharePoint. Log via de default browser in op SharePoint."
     Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive
     }
 
@@ -5500,6 +5503,8 @@ if (test-path -path "$startmap\changelog.txt") { Remove-Item "$startmap\changelo
 # verwijderen beheren.ico vanaf versie 4.8.0
 if (test-path -path "$startmap\beheren.ico") { Remove-Item "$startmap\beheren.ico" }
 
+<# Tijdelijk controle netwerkmappen uitgeschakeld ivm Sharepoint testen!!!
+
 # Controleren of netwerkschijven aanwezig zijn en eventueel herstellen.
 # Eerste regel van elke foutmelding tijdens deze controle.
 $foutmeldingbegin = "Initialiseren van het programma : "
@@ -5532,6 +5537,7 @@ $tempmap
     } 
 
 if ($netwerkmapfout) { Start-Sleep -Seconds 5}
+#>
 
 # Probleem van onjuiste programma icoon oplossen door opnieuw snelkoppeling te maken
 if ($Global:init.uitvoerennaopstarten.snelkoppeling -eq 'Ja') {
