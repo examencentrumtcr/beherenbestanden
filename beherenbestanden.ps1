@@ -32,8 +32,9 @@ Auteur: Benvindo Neves
 $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
-    versie = '4.9.0'
-    extralabel = 'test.1.260922' # buildnummer + datum
+    versie = '5.0.0'
+    extralabel = 'optie.1.260924' # buildnummer + datum. Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
+                                  # Als dit wel het geval is, dan wordt dit aangepast naar "alpha.1".
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
@@ -2017,12 +2018,49 @@ $BtnTerug.location                = New-Object System.Drawing.Point(150,245)
 $BtnTerug.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-terug.png")
 $BtnTerug.Add_Click({ 
 
-    # verwijderen laatste item uit array met geselecteerde bronmap. als de array leeg is, gebeurt er niets.
-    if ($geselecteerdebronmap.count -gt 0) {
+    <# Deze if-statement werkt als er geen gebruik gemnaakt wordt van de dropdownmenu's. Als deze wel gebruikt worden, is de switch-statement voldoende.
+     # verwijderen laatste item uit array met geselecteerde bronmap. als de array leeg is, gebeurt er niets.
+    
+     if ($geselecteerdebronmap.count -gt 0) {
         $verwijdernr=$geselecteerdebronmap.Count-1
         $geselecteerdebronmap.RemoveAt($verwijdernr)
         }
-        
+    #>
+    switch ($geselecteerdebronmap.count) {
+           "0" { # niets doen 
+               }
+           "1" { 
+           #verwijder alles
+           $geselecteerdebronmap.Clear()
+           # dropdownmenu's leegmaken
+           $lijstkerntaken.items.clear()
+           $lijstexamens.items.clear()
+           # selecties leegmaken
+           $lijstcrebonrs.selectedindex = -1
+           $lijstkerntaken.selectedindex = -1
+           $lijstexamens.selectedindex = -1
+               }
+           "2" { 
+           #verwijder de laatste
+           $geselecteerdebronmap.RemoveAt(1)
+           # dropdownmenu's leegmaken
+           $lijstexamens.items.clear()
+           # selecties leegmaken
+           $lijstkerntaken.selectedindex = -1
+           $lijstexamens.selectedindex = -1
+               }
+           "3" { 
+           #verwijder de laatste
+           $geselecteerdebronmap.RemoveAt(2)
+           # selecties leegmaken
+           $lijstexamens.selectedindex = -1
+               }
+           default { 
+           $verwijdernr=$geselecteerdebronmap.Count-1
+           $geselecteerdebronmap.RemoveAt($verwijdernr)
+           }
+    } # einde switch    
+    
     # selectie krijgt waarde van startmap
     $selectie = $digitalebestanden
 
@@ -2115,7 +2153,7 @@ $listView1.add_SelectedIndexChanged(
           }
      $selectie = -join ($selectie, '/', $listView1.SelectedItems.text)
 
-$folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie   
+    $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie   
      # alleen als 1 item is geselecteerd en de item moet een map zijn.
 
      if (( $listView1.selecteditems.count -eq 1) -and ($folders.count -gt 0) ) {
@@ -2158,16 +2196,24 @@ $listView1.add_doubleClick(
                 }
      $selectie = -join ($selectie, '/', $listView1.SelectedItems.text)
      
-     $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie   
+     $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie
 
      # alleen als de geselecteerde item een map is en inhoud heeft, wordt deze map geopend en weergegeven in het venster.
      if ($folders.count -gt 0) {
+            # Toevoegen aan 1 vd dropdownmenu's.
+            switch ($geselecteerdebronmap.count) {
+                "0" { $lijstcrebonrs.selectedindex = $listView1.SelectedIndices[0] }
+                "1" { $lijstkerntaken.selectedindex = $listView1.SelectedIndices[0] }
+                "2" { $lijstexamens.selectedindex = $listView1.SelectedIndices[0] }
+                default {
                     # venster met inhoud map legen
                     $listView2.items.clear()
                     # standaard tekst in venster met geselecteerd examenmap
                     $objtekst2.Text = $Startexamenmap
                     # toevoegen aan lijst geselecteerde mappen
                     $geselecteerdebronmap.Add($listView1.SelectedItems.text)
+                    
+
                     # leegmaken huidige venster 
                     $listView1.items.clear()
                     # toevoegen aan geselecteerde examenmap
@@ -2183,12 +2229,15 @@ $listView1.add_doubleClick(
                             } elseif ($folder.GetType().Name -eq "File") {
                             toevoegen_geselecteerd $folder "File"
                             }
-                    }  
+                    } # einde foreach($folder in $folders) 
                     # breedte listview1 aanpassen aan de inhoud
                     $listView1.AutoResizeColumns(1) 
                     startknopklikbaar;
-     } # if ($folders.count -gt 0)
-     } )
+                }
+            } # einde switch ($geselecteerdebronmap.count)
+                    
+     }   # einde if ($folders.count -gt 0)
+     } ) # einde listView1.add_doubleClick
 
 $listView2 = New-Object System.Windows.Forms.ListView
 $listView2.View = 'Details'
@@ -2283,9 +2332,10 @@ $lijstcrebonrs.add_MouseHover({
 # in het begin zijn het alleen maar folders, daarom de toevoeging -ItemType Folder 
 $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $global:beheer.examenmappen.digitalebestanden
 foreach($folder in $folders){ 
-    # toevoegen_geselecteerd $folder of File
+    # toevoegen_geselecteerd $folder of File aan de lijst met geselecteerde mappen en de dropdownmenu voor crebonummers
     if ($folder.GetType().Name -eq "Folder") {
         toevoegen_geselecteerd $folder "Folder"
+        $lijstcrebonrs.Items.Add($folder.name)
     } elseif ($folder.GetType().Name -eq "File") {
         toevoegen_geselecteerd $folder "File"
     }
@@ -2298,8 +2348,8 @@ $listView1.AutoResizeColumns(1)
 $lijstcrebonrs.add_SelectedIndexChanged(
      { 
       
-      # alleen als er geselecteerd is 
-      if ($lijstcrebonrs.SelectedIndex -ge 0) {
+    # alleen als er geselecteerd is 
+    if ($lijstcrebonrs.SelectedIndex -ge 0) {
         # venster met inhoud map legen
         $listView2.items.clear()
 
@@ -2315,47 +2365,32 @@ $lijstcrebonrs.add_SelectedIndexChanged(
         $objtekst2.Text = $Startexamenmap
 
         # selectie krijgt waarde van gekozen crebonummer
-        $selectie = -join ($digitalebestanden, '\', $lijstcrebonrs.SelectedItem)
+        $selectie = -join ($digitalebestanden, '/', $lijstcrebonrs.SelectedItem)
+        
+        # toevoegen aan lijst geselecteerde mappen 
+        $geselecteerdebronmap.Add($lijstcrebonrs.SelectedItem)
+        # Toevoegen aan geselecteerde examenmap
+        $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $lijstcrebonrs.SelectedItem)
 
-        # als gekozen item een map is dan toevoegen aan lijst en weergeven in venster en in dropdownmenu
-        # anders selecteren van hoofdmap en deze weergeven in venster
-        if ((test-path -path $selectie -pathtype container) -eq $true) {
-            # toevoegen aan lijst geselecteerde mappen 
-            $geselecteerdebronmap.Add($lijstcrebonrs.SelectedItem)
-
-            # Toevoegen aan geselecteerde examenmap
-            $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $lijstcrebonrs.SelectedItem)
-
-            # inlezen gekozen map en in variabele plaatsen
-            $folders = inlezengekozenmap $selectie
-
-            # toevoegen aan betreffende dropdown lijst en aan venster in het midden.
-            foreach($folder in $folders) {
-                $lijstkerntaken.Items.Add($folder)
-                toevoegen_lijst1 $selectie $folder
-                # $listView1.AutoResizeColumns(1)
-                }
-            } else {
-            # selectie leeg maken
-            $lijstcrebonrs.selectedindex = -1
-            # hoofdmap selecteren om weer te geven
-            $selectie = $digitalebestanden
-
-            # inlezen gekozen map en in variabele plaatsen
-            $folders = inlezengekozenmap $selectie
-
-            # toevoegen aan venster in het midden.
-            foreach($folder in $folders) {
-                toevoegen_lijst1 $selectie $folder
+        # inlezen gekozen map en in variabele plaatsen
+        $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie 
+        foreach($folder in $folders){ 
+            # toevoegen_geselecteerd $folder of File aan de lijst met geselecteerde mappen en de dropdownmenu voor crebonummers
+                if ($folder.GetType().Name -eq "Folder") {
+                    toevoegen_geselecteerd $folder "Folder"
+                    $lijstkerntaken.Items.Add($folder.name)
+                } elseif ($folder.GetType().Name -eq "File") {
+                    toevoegen_geselecteerd $folder "File"
                 }
             }
-     # breedte listview1 aanpassen aan de inhoud
-     $listView1.AutoResizeColumns(1)
+            
+        # breedte listview1 aanpassen aan de inhoud
+        $listView1.AutoResizeColumns(1)
 
-     startknopklikbaar;
-     } else { 
+    startknopklikbaar;
+    } else { 
        $lijstcrebonrs.selectedindex = -1
-     } 
+    } 
      # einde ($lijstkerntaken.SelectedIndex -ge 0) .. else
      } )
 
@@ -2401,34 +2436,23 @@ $lijstkerntaken.add_MouseHover({
         $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $geselecteerdebronmap[0])
 
         # inlezen gekozen map en in variabele plaatsen
-        $folders = inlezengekozenmap $selectie
-
-        # controle of geselecteerde een map is of een bestand
-        if ((test-path -path $selectie -pathtype container) -eq $true) {
-            # en dan nu pas toevoegen
-            $geselecteerdebronmap.Add($lijstkerntaken.SelectedItem)
-        
-            # Toevoegen aan geselecteerde examenmap
-            $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $lijstkerntaken.SelectedItem)
-
-            # toevoegen aan betreffende dropdown lijst
-            foreach($folder in $folders){
-                $lijstexamens.Items.Add($folder)
+        $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie 
+        foreach($folder in $folders){ 
+            # toevoegen_geselecteerd $folder of File aan de lijst met geselecteerde mappen en de dropdownmenu voor examennummers
+                if ($folder.GetType().Name -eq "Folder") {
+                    toevoegen_geselecteerd $folder "Folder"
+                    $lijstexamens.Items.Add($folder.name)
+                } elseif ($folder.GetType().Name -eq "File") {
+                    toevoegen_geselecteerd $folder "File"
                 }
-        } else {
-            # selectie leeg maken
-            $lijstkerntaken.selectedindex = -1
+            }
 
-            # selectie krijgt waarde van eerder gekozen crebonr
-            $selectie = -join ($digitalebestanden, '\', $geselecteerdebronmap[0])
-            # opnieuw inlezen gekozen map en in variabele plaatsen
-            $folders = inlezengekozenmap $selectie
-        }
+        # en dan nu pas toevoegen
+        $geselecteerdebronmap.Add($lijstkerntaken.SelectedItem)
         
-        # toevoegen aan venster in het midden. 
-        foreach($folder in $folders){
-           toevoegen_lijst1 $selectie $folder
-           }
+        # Toevoegen aan geselecteerde examenmap
+        $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $lijstkerntaken.SelectedItem)
+
         # breedte listview1 aanpassen aan de inhoud
         $listView1.AutoResizeColumns(1)
         startknopklikbaar;
@@ -2475,29 +2499,23 @@ $lijstexamens.add_SelectedIndexChanged(
 
         # inlezen gekozen map en in variabele plaatsen
         $folders = inlezengekozenmap $selectie
+        # inlezen gekozen map en in variabele plaatsen
+        $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie 
+        foreach($folder in $folders){ 
+            # toevoegen_geselecteerd $folder of File aan de lijst met geselecteerde mappen
+                if ($folder.GetType().Name -eq "Folder") {
+                    toevoegen_geselecteerd $folder "Folder"
+                } elseif ($folder.GetType().Name -eq "File") {
+                    toevoegen_geselecteerd $folder "File"
+                }
+            }
 
-        # controle of geselecteerde een map is of een bestand
-        if ((test-path -path $selectie -pathtype container) -eq $true) {
-            # en dan nu pas toevoegen
-            $geselecteerdebronmap.Add($lijstexamens.SelectedItem)
+        # en dan nu pas toevoegen
+        $geselecteerdebronmap.Add($lijstexamens.SelectedItem)
 
-            # Toevoegen aan geselecteerde examenmap
-            $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $lijstexamens.SelectedItem)
-        } else {
-            # selectie leeg maken
-            $lijstexamens.selectedindex = -1
+        # Toevoegen aan geselecteerde examenmap
+        $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $lijstexamens.SelectedItem)
 
-            # selectie krijgt waarde van eerder gekozen kerntaak
-            $selectie = -join ($digitalebestanden, '\', $geselecteerdebronmap[0], '\', $geselecteerdebronmap[1])
-
-            # inlezen gekozen map en in variabele plaatsen
-            $folders = inlezengekozenmap $selectie
-        }
-
-        # toevoegen aan venster
-        foreach($folder in $folders){
-           toevoegen_lijst1 $selectie $folder
-           }
         # breedte listview1 aanpassen aan de inhoud
         $listView1.AutoResizeColumns(1)
         startknopklikbaar;
