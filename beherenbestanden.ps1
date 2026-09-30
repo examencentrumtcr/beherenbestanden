@@ -33,7 +33,7 @@ $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
     versie = '5.0.0'
-    extralabel = 'optie.1.260924' # buildnummer + datum. Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
+    extralabel = 'optie.1.260929' # buildnummer + datum. Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
                                   # Als dit wel het geval is, dan wordt dit aangepast naar "alpha.1".
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
@@ -1021,6 +1021,71 @@ $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
 
 function scriptRun {
 
+function DownloadSharepoint {
+    param (
+        [string]$FolderUrl,
+        [string]$LocalFolder,
+        [string]$Teamsname
+    )
+
+    try {
+        # Lokale map maken
+        if (!(Test-Path $LocalFolder)) {
+            New-Item -ItemType Directory -Path $LocalFolder -ErrorAction Stop | Out-Null
+            # write-host "Map aangemaakt: $LocalFolder"
+        }
+    }
+    catch {
+        throw "Fout bij maken map $LocalFolder : $($_.Exception.Message)"
+        return
+    }
+
+    # Bestanden ophalen
+    try {
+        $files = Get-PnPFolderItem -FolderSiteRelativeUrl $FolderUrl -ItemType File -ErrorAction Stop
+    }
+    catch {
+        throw "Fout bij ophalen bestanden in $FolderUrl : $($_.Exception.Message)"
+        return
+    }
+
+    foreach ($file in $files) {
+        try {
+            $fileUrl = $file.ServerRelativeUrl
+            $fileName = $file.Name
+
+            # write-host "Download bestand: $fileUrl"
+            Get-PnPFile -Url $fileUrl -Path $LocalFolder -FileName $fileName -AsFile -Force -ErrorAction Stop
+        }
+        catch {
+            throw "Fout bij downloaden bestand $($file.Name) : $($_.Exception.Message)"
+        }
+    }
+
+    # Submappen ophalen
+    try {
+        $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $FolderUrl -ItemType Folder -ErrorAction Stop
+    }
+    catch {
+        throw "Fout bij ophalen submappen in $FolderUrl : $($_.Exception.Message)"
+        return
+    }
+
+    foreach ($folder in $folders) {
+        try {
+            $subFolderUrl = $folder.ServerRelativeUrl.Replace($teamsname, "")
+            $subLocalPath = Join-Path $LocalFolder $folder.Name
+
+            # write-host "Verwerk map: $subFolderUrl"
+            DownloadSharepoint -FolderUrl $subFolderUrl -LocalFolder $subLocalPath -Teamsname $teamsname
+        }
+        catch {
+            throw "Fout bij verwerken map $($folder.Name) : $($_.Exception.Message)"
+        }
+    }
+} # einde DownloadSharepoint
+
+########## Function Scriptrun begint hieronder ##################################################
 
 # nodig voor afhandelen foutmeldingen
 $uitvoeren.foutmelding = $false
@@ -1086,19 +1151,72 @@ switch ($uitvoeren.taak) {
     # Deze items worden vervolgens gekopiëerd.
     $geselecteerdeitems = [System.Collections.ArrayList]@()
 
-    <# Als er geen items zijn geselecteerd in de examenmap dan moet de gehele map worden gekopiëerd.
-   hiervoor wordt dan de pad naar de examenmap toegevoegd aan de array $geselecteerdeitems.
-   anders worden de geselecteerde items toegevoegd aan de array.
-    #>
-    if ($uitvoeren.listview1.selecteditems.count -eq 0) {
-        $bronmap = -join ($uitvoeren.bronmap,'\*')
-        $geselecteerdeitems.Add("$bronmap")
-        } else {
-        foreach ($item in $uitvoeren.listview1.selecteditems) {
-            $bronmap = -join ($uitvoeren.bronmap,'\',$item[0].text)
-            $geselecteerdeitems.Add("$bronmap")
-        }
+     # Tijdelijke map om bestanden uit te delen. Deze map wordt na het kopiëren verwijderd.
+    $localPath = $env:USERPROFILE + "\Temp_BeherenBestanden"
+    # onderstaande is nodig omdat bij DownloadSharepoint alleen de tijdelijke map automatisch wordt aangemaakt 
+    # en niet wordt gewist als deze al bestaat.
+    if (!(Test-Path $localPath)) {
+        New-Item -ItemType Directory -Path $localPath -ErrorAction Stop | Out-Null
+        # write-host "Tijdelijke map aangemaakt: $localPath"
+    } else {
+        # als de map al bestaat, deze eerst leeg maken. Anders kunnen er problemen ontstaan bij het kopiëren van bestanden als er al bestanden in staan.
+        Remove-Item "$localPath\*" -Recurse -Force -ErrorAction Stop
     }
+    
+    # Teamsname wordt gebruikt bij dowloadsharepoint om de juiste url te bepalen. Deze is nodig omdat de url van een map in sharepoint afhankelijk is van de teamsnaam.
+    $teamsname = $uitvoeren.team 
+
+    # bronmap bepalen en in makkeljike variabele plaatsen. dit is de examenmap in sharepoint. 
+    $bronmap =$uitvoeren.bronmap
+
+    # progressie laten zien op balk
+    $uitvoeren.progressbar.PerformStep()
+    <# Als er geen items zijn geselecteerd in de examenmap dan moet de gehele map worden gekopiërd naar $lo
+     anders worden de geselecteerde items een voor een gekopieerd.
+    #>
+    # foutmelding van PowerShell naar logbestand
+    $foutmelding_log = "[ Downloaden SharePoint FOUT ] : "
+
+    if ($uitvoeren.listview1.selecteditems.count -eq 0) {
+        
+        # $geselecteerdeitems.Add("$bronmap")
+        try { 
+        DownloadSharepoint -FolderUrl $bronmap -LocalFolder $localPath -Teamsname $teamsname
+        }
+        catch {
+            
+            "$foutmelding_log" + $_.exception.message | out-file "$logbestand" -Append
+            $uitvoeren.foutmelding = $true
+        } # einde = try catch DownloadSharepoint
+
+        } else {
+        # loop door alle items in de examenmap en controleren of deze geselecteerd zijn. 
+        # Als dit het geval is, worden deze toegevoegd aan de array $geselecteerdeitems.
+        $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $bronmap
+
+        foreach ($item in $uitvoeren.listview1.selecteditems) {
+            $bronmap = -join ($uitvoeren.bronmap,'/',$item[0].text)
+           
+            foreach ($folder in $folders) {
+                if ($folder.Name -eq $item[0].text) {
+                    try {
+                    if ($folder.GetType().Name -eq "Folder") {
+                        $sublocalpath = Join-Path $localPath $folder.Name
+                        DownloadSharepoint -FolderUrl $bronmap -LocalFolder $sublocalpath -Teamsname $teamsname
+                        } elseif ($folder.GetType().Name -eq "File") {
+                        Get-PnPFile -Url $bronmap -Path $localPath -FileName $folder.Name -AsFile -Force
+                    } # einde if $folder.GetType().Name .. elseif... 
+                    }
+                    catch {
+                        "$foutmelding_log" + $_.exception.message | out-file "$logbestand" -Append
+                        $uitvoeren.foutmelding = $true
+                    } # einde try catch DownloadSharepoint binnen if $folder.Name -eq $item[0].text
+
+                } # einde if $folder.Name -eq $item[0].text
+            } # einde foreach $folder
+        }
+        # write-host "Geselecteerde items toegevoegd aan lijst met te kopiëren items."
+    } # einde if $uitvoeren.listview1.selecteditems.count -eq 0
 
     #kopiëren bestanden naar homemappen van de kandidaten
 
@@ -1112,31 +1230,21 @@ switch ($uitvoeren.taak) {
         # doelmap bepalen. dit is een lokale variabele
         $doelmap = -join ($uitvoeren.homemap,'\',$rpcitem,'\Mijn Documenten')
     
-        # kopieren geselecteerde mappen of bestanden
-            
-        foreach ($item in $geselecteerdeitems) {
-        $error.clear()
-        try {
-            # extra test of de specifieke rpc-map wel bestaat. Dit is niet nodig bij kopieren blijkt na test.
-            # if (!(Test-Path $doelmap)) { throw "Map $doelmap niet gevonden."}
-
-            Copy-Item -path "$item" -destination "$doelmap" -recurse -Force -ErrorAction Stop
-             
-            }
-
-        catch {
-            # foutmelding van PowerShell naar logbestand
-            "$foutmelding_log" + $_.exception.message | out-file "$logbestand" -Append
-            $uitvoeren.foutmelding = $true
-              } # einde catch
-            } # einde foreach $item
+        # kopieren geselecteerde mappen of bestanden  
+        Copy-Item -path "$localPath\*" -destination "$doelmap" -recurse -Force -ErrorAction Stop
         
     } # einde foreach $rpcitem
 
+    # progressie laten zien op balk
+    $uitvoeren.progressbar.PerformStep()
     # array legen. mss is dit niet nodig!
     $geselecteerdeitems.Clear()
     # geselecteerde rpc-nummers wissen. je moet dan opnieuw selecteren en kan niet meteen op bevestigen klikken.
     $uitvoeren.listbox.selecteditems.clear()
+    # tijdelijke map verwijderen.
+    Remove-Item "$localPath" -Recurse -Force
+    # eventueel in try catch zetten als er problemen ontstaan bij het verwijderen van de tijdelijke map en dan onderstaand gebruiken:
+    # Remove-Item "$localPath" -Recurse -Force -ErrorAction Stop  
 
                } # einde taak kopiëren
 
@@ -1285,6 +1393,7 @@ $tempmap
     "
     return; 
 } 
+<# Deze controles zijn niet meer nodig als met SharePoint wordt gewerkt.
 
 if ($uitvoeren.taak -eq "kopiëren") {
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.digitalebestanden $true )) { 
@@ -1307,6 +1416,7 @@ $tempmap
     return; 
     } 
 } 
+#>
 
 # einde controleren of mappen bestaan
 
@@ -1591,8 +1701,9 @@ $StartButton.Add_click( {
         $uitvoeren.ListView1 = $global:ListView1
         $uitvoeren.controlemappen = $controlemappen.checked
         $uitvoeren.bronmap = $digitalebestanden
+        $uitvoeren.team = $global:Sharepoint.team
         foreach ($item in $global:geselecteerdebronmap) {
-                    $uitvoeren.bronmap  = -join ($uitvoeren.bronmap, '\', $item)
+                    $uitvoeren.bronmap  = -join ($uitvoeren.bronmap, '/', $item)
                 }
         }
 
@@ -1840,15 +1951,76 @@ if (($global:listbox.selecteditems.count -gt 0) -and ($global:geselecteerdebronm
 
 } # einde startknopklikbaar
 
-function vensterkopieren { 
+function HaalSharepointInhoudOp {
+    
+param(
+    [string]$sharepointmap = $global:beheer.examenmappen.digitalebestanden
+    )
 
-function toevoegen_lijst1 ($controlemap, $toevoegitem) {
+    $foutmelding_log = "Fout bij inlezen SharePointmap."
 
-  $extensienr = Bepaalicoontjenr $controlemap $toevoegitem
-  [void] $listView1.Items.Add($toevoegitem, $extensienr)
+    <# 1. Controleer verbinding met SharePoint
+    try {
+        $web = Get-PnPWeb -ErrorAction Stop
+    }
+    catch {
+        Meldingnaarlogbestand -meldtekst "$foutmelding_log
+Geen verbinding met SharePoint.`r`nFoutmelding: $($_.Exception.Message)"
+        return
+    }
+    
+    # 2. Controleer of $Sharepointmap een bestand is (en geen map)
+    $bestand = Get-PnPFile -Url $Sharepointmap -ErrorAction SilentlyContinue
+    if ($bestand) {
+        # Dit niet loggen want kan vaak voorkomen
+        # Meldingnaarlogbestand -meldtekst "$Sharepointmap is een bestand, geen map."
+        return
+    }
+    
+    # 3. Controleer of de map bestaat
+    $map = Get-PnPFolder -Url $Sharepointmap -ErrorAction SilentlyContinue
+    if (-not $map) {
+        Meldingnaarlogbestand -meldtekst "$foutmelding_log `r`nMap bestaat niet: $Sharepointmap"
+        return
+    }
+    #>
+
+    # Alle controles geslaagd, haal inhoud op
+    try {
+        $Sharepointinhoud = Get-PnPFolderItem -FolderSiteRelativeUrl $Sharepointmap -ErrorAction Stop
+        return $Sharepointinhoud
+    }
+    catch {
+        Meldingnaarlogbestand -meldtekst "$foutmelding_log`r`nOphalen van inhoud $Sharepointmap is niet gelukt.`r`nFoutmelding: $($_.Exception.Message)"
+        return
+    }
 }
 
-function toevoegen_geselecteerd ($toevoegitem, $type) {
+# Inlezen van SharePointmap . 
+# Wordt gebruikt bij Vensterkopieren. 
+function InlezenSharePointMap {
+# inlezen gekozen map en in variabele plaatsen
+# param $sharepointmap krijgt een waarde voor het geval het leeg wordt meegegeven
+# Bij een fout wordt er alleen melding gemaakt in logboek.
+
+param(
+    [string]$sharepointmap = $global:beheer.examenmappen.digitalebestanden
+    )
+
+  try { 
+  $Sharepointinhoud = Get-PnPFolderItem -FolderSiteRelativeUrl $sharepointmap  
+  }
+  catch {
+  # melding loggen
+  $melding = -join ("Inlezen SharePoint map : ", $sharepointmap, "`n", $_.exception.message )
+  Meldingnaarlogbestand -meldtekst $melding
+  }
+  return $Sharepointinhoud
+}
+
+function vensterkopieren { 
+
+function toevoegen_listview1 ($toevoegitem, $type) {
 
 if ($type -eq "Folder"){
         $extensienr = 0
@@ -1857,23 +2029,7 @@ if ($type -eq "Folder"){
     } else {
         $extensienr = 1
     }
-  [void] $listView1.Items.Add($toevoegitem.Name, $extensienr)
-}
-
-function inlezengekozenmap ($invoer) {
-# inlezen gekozen map en in variabele plaatsen
-# Deze functie kan verwijderd worden als de 3 dropdownmenu's (voor crebo, kerntaak en examen) zijn verwijderd.
-
-  try { 
-  $ingelezen = Get-ChildItem -Path "$invoer" -Name -ErrorAction Stop | Sort-object 
-  }
-  catch {
-  $ingelezen = ""
-  # melding loggen en weergeven
-  $melding = -join ("Venster bestanden klaarzetten is geopend : ", "`n", $_.exception.message )
-  Meldingnaarlogbestand -meldtekst $melding
-  }
-  return $ingelezen
+[void] $listView1.Items.Add($toevoegitem.Name, $extensienr)
 }
 
 # function vensterkopieren begint hier
@@ -1978,16 +2134,16 @@ $BtnOpnieuw.Add_Click({
       # selectie krijgt waarde van gekozen crebonummer
       $selectie = $digitalebestanden
       # inlezen gekozen map en in variabele plaatsen
-      $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie   
+      $folders = InlezenSharePointMap -sharepointmap $selectie
 
       # toevoegen aan venster
       $listView1.items.clear()
       foreach($folder in $folders){ 
-            # toevoegen_geselecteerd $folder of File
+            # toevoegen_listview1 $folder of File
             if ($folder.GetType().Name -eq "Folder") {
-                toevoegen_geselecteerd $folder "Folder"
+                toevoegen_listview1 $folder "Folder"
             } elseif ($folder.GetType().Name -eq "File") {
-                toevoegen_geselecteerd $folder "File"
+                toevoegen_listview1 $folder "File"
             }
         }  
 
@@ -2074,16 +2230,16 @@ $BtnTerug.Add_Click({
     } # einde foreach
     
     # inlezen gekozen map en in variabele plaatsen
-    $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie   
+    $folders = InlezenSharePointMap -sharepointmap $selectie
 
       # toevoegen aan venster
       $listView1.items.clear()
       foreach($folder in $folders){ 
-            # toevoegen_geselecteerd $folder of File
+            # toevoegen_listview1 $folder of File
             if ($folder.GetType().Name -eq "Folder") {
-                toevoegen_geselecteerd $folder "Folder"
+                toevoegen_listview1 $folder "Folder"
             } elseif ($folder.GetType().Name -eq "File") {
-                toevoegen_geselecteerd $folder "File"
+                toevoegen_listview1 $folder "File"
             }
         }  
 
@@ -2146,6 +2302,9 @@ Klik op een map om de inhoud rechts weer te geven." )
 # bij aanklikken van een map, inhoud weergeven in venster ernaast
 $listView1.add_SelectedIndexChanged(
      { 
+    # Controle of een item gevonden is. Anders wordt de muisklik en dus de code hieronder 2x uitgevoerd!
+    if ($listView1.SelectedItems.Count -gt 0) {
+
      # selectie krijgt waarde van volledige pad naar gekozen map
      $selectie = $digitalebestanden
      foreach ($item in $geselecteerdebronmap) {
@@ -2153,7 +2312,8 @@ $listView1.add_SelectedIndexChanged(
           }
      $selectie = -join ($selectie, '/', $listView1.SelectedItems.text)
 
-    $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie   
+    # $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie
+    $folders = InlezenSharePointMap -sharepointmap $selectie
      # alleen als 1 item is geselecteerd en de item moet een map zijn.
 
      if (( $listView1.selecteditems.count -eq 1) -and ($folders.count -gt 0) ) {
@@ -2183,6 +2343,7 @@ $listView1.add_SelectedIndexChanged(
           $listView2.items.clear()
         } # einde if (( $listView1.selecteditems.count -eq 1) .. else ...
     }
+    }
     )
 
 
@@ -2196,7 +2357,7 @@ $listView1.add_doubleClick(
                 }
      $selectie = -join ($selectie, '/', $listView1.SelectedItems.text)
      
-     $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie
+     $folders = InlezenSharePointMap -sharepointmap $selectie
 
      # alleen als de geselecteerde item een map is en inhoud heeft, wordt deze map geopend en weergegeven in het venster.
      if ($folders.count -gt 0) {
@@ -2223,11 +2384,11 @@ $listView1.add_doubleClick(
 
                     # toevoegen aan venster
                     foreach($folder in $folders){ 
-                        # toevoegen_geselecteerd $folder of File
+                        # toevoegen_listview1 $folder of File
                         if ($folder.GetType().Name -eq "Folder") {
-                            toevoegen_geselecteerd $folder "Folder"
+                            toevoegen_listview1 $folder "Folder"
                             } elseif ($folder.GetType().Name -eq "File") {
-                            toevoegen_geselecteerd $folder "File"
+                            toevoegen_listview1 $folder "File"
                             }
                     } # einde foreach($folder in $folders) 
                     # breedte listview1 aanpassen aan de inhoud
@@ -2330,14 +2491,16 @@ $lijstcrebonrs.add_MouseHover({
 
 # inhoud map in de lijst met geselecteerde mappen zetten 
 # in het begin zijn het alleen maar folders, daarom de toevoeging -ItemType Folder 
-$folders = Get-PnPFolderItem -FolderSiteRelativeUrl $global:beheer.examenmappen.digitalebestanden
+$selectie = $digitalebestanden
+$folders = InlezenSharePointMap -sharepointmap $selectie
+
 foreach($folder in $folders){ 
-    # toevoegen_geselecteerd $folder of File aan de lijst met geselecteerde mappen en de dropdownmenu voor crebonummers
+    # toevoegen_listview1 $folder of File aan de lijst met geselecteerde mappen en de dropdownmenu voor crebonummers
     if ($folder.GetType().Name -eq "Folder") {
-        toevoegen_geselecteerd $folder "Folder"
+        toevoegen_listview1 $folder "Folder"
         $lijstcrebonrs.Items.Add($folder.name)
     } elseif ($folder.GetType().Name -eq "File") {
-        toevoegen_geselecteerd $folder "File"
+        toevoegen_listview1 $folder "File"
     }
 }  
 
@@ -2373,14 +2536,14 @@ $lijstcrebonrs.add_SelectedIndexChanged(
         $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $lijstcrebonrs.SelectedItem)
 
         # inlezen gekozen map en in variabele plaatsen
-        $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie 
+        $folders = InlezenSharePointMap -sharepointmap $selectie
         foreach($folder in $folders){ 
-            # toevoegen_geselecteerd $folder of File aan de lijst met geselecteerde mappen en de dropdownmenu voor crebonummers
+            # toevoegen_listview1 $folder of File aan de lijst met geselecteerde mappen en de dropdownmenu voor crebonummers
                 if ($folder.GetType().Name -eq "Folder") {
-                    toevoegen_geselecteerd $folder "Folder"
+                    toevoegen_listview1 $folder "Folder"
                     $lijstkerntaken.Items.Add($folder.name)
                 } elseif ($folder.GetType().Name -eq "File") {
-                    toevoegen_geselecteerd $folder "File"
+                    toevoegen_listview1 $folder "File"
                 }
             }
             
@@ -2436,14 +2599,14 @@ $lijstkerntaken.add_MouseHover({
         $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $geselecteerdebronmap[0])
 
         # inlezen gekozen map en in variabele plaatsen
-        $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie 
+        $folders = InlezenSharePointMap -sharepointmap $selectie
         foreach($folder in $folders){ 
-            # toevoegen_geselecteerd $folder of File aan de lijst met geselecteerde mappen en de dropdownmenu voor examennummers
+            # toevoegen_listview1 $folder of File aan de lijst met geselecteerde mappen en de dropdownmenu voor examennummers
                 if ($folder.GetType().Name -eq "Folder") {
-                    toevoegen_geselecteerd $folder "Folder"
+                    toevoegen_listview1 $folder "Folder"
                     $lijstexamens.Items.Add($folder.name)
                 } elseif ($folder.GetType().Name -eq "File") {
-                    toevoegen_geselecteerd $folder "File"
+                    toevoegen_listview1 $folder "File"
                 }
             }
 
@@ -2498,15 +2661,13 @@ $lijstexamens.add_SelectedIndexChanged(
         $objtekst2.Text = -join ($objtekst2.Text, $Scheidingstekst, $geselecteerdebronmap[0], $Scheidingstekst, $geselecteerdebronmap[1])
 
         # inlezen gekozen map en in variabele plaatsen
-        $folders = inlezengekozenmap $selectie
-        # inlezen gekozen map en in variabele plaatsen
-        $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $selectie 
+        $folders = InlezenSharePointMap -sharepointmap $selectie
         foreach($folder in $folders){ 
-            # toevoegen_geselecteerd $folder of File aan de lijst met geselecteerde mappen
+            # toevoegen_listview1 $folder of File aan de lijst met geselecteerde mappen
                 if ($folder.GetType().Name -eq "Folder") {
-                    toevoegen_geselecteerd $folder "Folder"
+                    toevoegen_listview1 $folder "Folder"
                 } elseif ($folder.GetType().Name -eq "File") {
-                    toevoegen_geselecteerd $folder "File"
+                    toevoegen_listview1 $folder "File"
                 }
             }
 
