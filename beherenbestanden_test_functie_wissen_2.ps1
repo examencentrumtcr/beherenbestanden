@@ -36,7 +36,7 @@ $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
     versie = '5.0.0'
-    extralabel = 'test.1.260930' # buildnummer + datum. Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
+    extralabel = 'test.2.260930' # buildnummer + datum. Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
                                   # Als dit wel het geval is, dan wordt dit aangepast naar "alpha.1".
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
@@ -2916,6 +2916,15 @@ $Description6.location            = New-Object System.Drawing.Point(400,160)
 $Description6.Font                = 'Microsoft Sans Serif,11'
 $Description6.ForeColor = [System.Drawing.Color]::Red
 
+$Description7                     = New-Object system.Windows.Forms.Label
+$Description7.text                = "Geselecteerd"
+$Description7.AutoSize            = $false
+$Description7.width               = 200
+$Description7.height              = 40
+$Description7.location            = New-Object System.Drawing.Point(400,75)
+$Description7.Font                = 'Microsoft Sans Serif,11'
+$Description7.ForeColor = [System.Drawing.Color]::blue
+
 $Btnbron = New-object System.Windows.Forms.Button 
 $Btnbron.text= "Bron"
 $Btnbron.location = "250,105" 
@@ -2942,7 +2951,7 @@ $Btndoel.add_MouseHover({
 
 $Btnwissen = New-object System.Windows.Forms.Button 
 $Btnwissen.text= "Wissen"
-$Btnwissen.location = "250,205" 
+$Btnwissen.location = "250,490" 
 $Btnwissen.size = "150,30"  
 $Btnwissen.BackColor = 'green'
 $Btnwissen.ForeColor = 'white'
@@ -3022,8 +3031,8 @@ $lijstlocaties.add_SelectedIndexChanged(
      } ) 
 
 $doelmaplegen = New-Object System.Windows.Forms.Checkbox 
-$doelmaplegen.Location = New-Object System.Drawing.Point(20,520)
-$doelmaplegen.Size = New-Object System.Drawing.Size(500,30)
+$doelmaplegen.Location = New-Object System.Drawing.Point(250,350)
+$doelmaplegen.Size = New-Object System.Drawing.Size(250,60)
 $doelmaplegen.Text = "Doelmap wissen alvorens het verplaatsen of kopiëren."
 $doelmaplegen.Font = 'Microsoft Sans Serif,12'
 $doelmaplegen.ForeColor = [System.Drawing.Color]::Green

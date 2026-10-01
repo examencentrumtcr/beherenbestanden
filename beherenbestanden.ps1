@@ -33,7 +33,8 @@ $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
     versie = '5.0.0'
-    extralabel = 'optie.1.260929' # buildnummer + datum. Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
+    extralabel = 'optie.1.261001' # buildnummer of branch + eventuele volgnr + datum. 
+                                  # Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
                                   # Als dit wel het geval is, dan wordt dit aangepast naar "alpha.1".
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
@@ -1085,6 +1086,83 @@ function DownloadSharepoint {
     }
 } # einde DownloadSharepoint
 
+function UploadSharePointFolder {
+    param(
+        [Parameter(Mandatory)]
+        [string]$LocalFolderPath,
+
+        [Parameter(Mandatory)]
+        [string]$SharePointFolder
+    )
+
+    $errors = New-Object System.Collections.Generic.List[string]
+
+    if (-not (Test-Path -LiteralPath $LocalFolderPath -PathType Container)) {
+        $errors.Add("Lokale map niet gevonden: $LocalFolderPath")
+        return $errors
+    }
+
+    $SharePointFolder = $SharePointFolder.Replace('\','/').Trim('/')
+    $RootFolderName = Split-Path -Path $LocalFolderPath -Leaf
+    $RootSharePointPath = "$SharePointFolder/$RootFolderName"
+
+    try {
+        # Add-PnPFolder -Name $LocalFolderPath -Folder $SharePointFolder # | Out-Null
+        Add-PnPFolder -Name $RootFolderName -Folder $SharePointFolder | Out-Null
+    }
+    catch {
+        $errors.Add("Map $LocalFolderPath niet geüpload naar SharePoint: $SharePointFolder `n$($_.Exception.Message)")
+        return $errors
+    }
+
+    UploadFolderContentsRecursive `
+        -LocalPath $LocalFolderPath `
+        -SharePointPath $RootSharePointPath `
+        -ErrorList $errors
+
+    return $errors
+} # einde functie UploadSharePointFolder
+
+function UploadFolderContentsRecursive {
+    param(
+        [Parameter(Mandatory)]
+        [string]$LocalPath,
+
+        [Parameter(Mandatory)]
+        [string]$SharePointPath,
+
+        [System.Collections.Generic.List[string]]$ErrorList
+    )
+
+    $files = Get-ChildItem -LiteralPath $LocalPath -File
+    foreach ($file in $files) {
+        try {
+            Add-PnPFile -Path $file.FullName -Folder $SharePointPath | Out-Null
+        }
+        catch {
+            $ErrorList.Add("Bestand niet geüpload naar SharePoint: $($file.FullName) `n$($_.Exception.Message)")
+        }
+    }
+
+    $subFolders = Get-ChildItem -LiteralPath $LocalPath -Directory
+    foreach ($subFolder in $subFolders) {
+        $childSharePointPath = "$SharePointPath/$($subFolder.Name)"
+        try {
+            Add-PnPFolder -Name $subFolder.Name -Folder $SharePointPath | Out-Null
+        }
+        catch {
+            $ErrorList.Add(("Map niet geüpload naar SharePoint: {0}{1}{2}" -f $childSharePointPath, [Environment]::NewLine, $_.Exception.Message))
+            continue
+        }
+
+        UploadFolderContentsRecursive `
+            -LocalPath $subFolder.FullName `
+            -SharePointPath $childSharePointPath `
+            -ErrorList $ErrorList
+    }
+} # einde functie UploadFolderContentsRecursive
+
+
 ########## Function Scriptrun begint hieronder ##################################################
 
 # nodig voor afhandelen foutmeldingen
@@ -1101,6 +1179,29 @@ switch ($uitvoeren.taak) {
     # datum en tijdstip van vandaag in variabele plaatsen. nodig om de backup-mapnaam te bepalen.
     $datumvandaag = get-date -Format "yyyy-MM-dd__HH-mm-ss"
 
+# variabele voor test met sharepoint.
+    [string]$Sharepointmap = $uitvoeren.doelmap
+
+    # test of sharepoint map bestaat en aanmaken
+    try {
+        
+        # controleren of de map bestaat. Als dit niet het geval is, wordt de map aangemaakt.
+        # eerst de Sahrepointmap de sitegedeelte toevoegen
+        $web = Get-PnPWeb
+        $Sharepointmap = $Sharepointmap.TrimStart("/")
+        $Sharepointteammap = "$($web.ServerRelativeUrl)/$Sharepointmap"
+
+        Add-PnPFolder `
+            -Name $datumvandaag `
+            -Folder $Sharepointteammap | Out-Null
+        
+    }
+    catch {
+        ("Controleren SharePointmap: " + $Sharepointteammap + "`n" + $_.Exception.Message) | Out-File -FilePath $logbestand -Append
+        $uitvoeren.foutmelding = $true
+        break
+    } # einde catch
+
     #kopiëren bestanden naar homemappen van de kandidaten
     foreach ($rpcitem in $uitvoeren.listbox.selecteditems) {
         # progressie laten zien op balk
@@ -1113,7 +1214,7 @@ switch ($uitvoeren.taak) {
         $bronmap = -join ($uitvoeren.homemap,'\',$rpcitem)
 
         # bepalen doelmap. dit is de map waar de backup in komt.
-        $doelmap = -join ($uitvoeren.doelmap,'\',$datumvandaag,'\',$rpcitem)
+        [string]$doelmap = -join ($Sharepointmap,'/',$datumvandaag)
 
         # errors leeg maken
         $error.clear()
@@ -1121,17 +1222,27 @@ switch ($uitvoeren.taak) {
                 # extra test of de specifieke rpc-map wel bestaat. Anders wordt de catch getriggerd en heb je een foutmelding.
                 if (!(Test-Path $bronmap)) { throw "Map $bronmap niet gevonden."}
 
-                #backup maken
-                # de toevoeging \\? voor de bronmap en doelmap zorgt ervoor dat lange namen - meer dan maximaal 256 tekens, geen foutmelding geven en dus het kopieren en verwijderen ook dan lukt.
-                Copy-Item -path "$bronmap" -destination "$doelmap" -recurse -Force -container -ErrorAction Stop
+                # backup maken gegint hier.
+                # Aanroepen en het resultaat opvangen
+                $errors = UploadSharePointFolder `
+                    -LocalFolderPath $bronmap `
+                    -SharePointFolder $doelmap
+                
+                # Kijken of er iets is misgegaan en daarna wissen als "wissen na backup" is geselecteerd 
+                if ($errors.Count -gt 0) {
+                    
+                    # erros loggen naar logbestand
+                    "$foutmelding_log Er zijn $($errors.Count) fout(en) opgetreden tijdens de upload." | Out-File -FilePath $logbestand -Append
+                    $errors | ForEach-Object { "$_" | Out-File -FilePath $logbestand -Append }
+                    $uitvoeren.foutmelding = $true
 
-                # en daarna wissen als dit geselecteerd is
-                if ($uitvoeren.wissennabackup -eq $true) { 
-                    # verwijderen van bestanden. Eerst de inhoud van mijn documenten
+                    } elseif ($uitvoeren.wissennabackup -eq $true) { 
+                    # en daarna wissen als dit geselecteerd is
+                    # Eerst de inhoud van mijn documenten
                     Remove-Item "$bronmap\mijn documenten\*" -Recurse -Force -ErrorAction Stop
                     # dan de root van rpc-map exclusief map mijn documenten
                     Remove-Item "$bronmap\*" -Recurse -Force -Exclude "mijn documenten" -ErrorAction Stop
-                    }
+                    } # einde elseif $uitvoeren.wissennabackup -eq $true
                 } # einde try
 
             catch {
@@ -1489,9 +1600,12 @@ $uitvoeren.progressbar.Location = New-Object System.Drawing.Point(20, 40)
 $uitvoeren.progressbar.Size = New-Object System.Drawing.Size(560, 30)
 $uitvoeren.progressbar.Style = "continuous"
 
-# de maximumwaarde van de progressbar. Deze is bij taak opschonen anders.
+# de maximumwaarde van de progressbar. Deze is bij taak opschonen en kopieren anders.
 if ($uitvoeren.taak -eq "opschonen") {
     $uitvoeren.progressbar.maximum = $listbox.items.count
+    } elseif ($uitvoeren.taak -eq "kopiëren") {
+    # plus 2 omdat er eerst een stap is voor het downloaden van de bestanden en, na het kopiëren van de bestanden, het leegmaken van tijdelijke map.
+    $uitvoeren.progressbar.maximum = $listbox.selecteditems.count +2
     } else {
     $uitvoeren.progressbar.maximum = $listbox.selecteditems.count
     }
@@ -1951,60 +2065,16 @@ if (($global:listbox.selecteditems.count -gt 0) -and ($global:geselecteerdebronm
 
 } # einde startknopklikbaar
 
-function HaalSharepointInhoudOp {
-    
-param(
-    [string]$sharepointmap = $global:beheer.examenmappen.digitalebestanden
-    )
-
-    $foutmelding_log = "Fout bij inlezen SharePointmap."
-
-    <# 1. Controleer verbinding met SharePoint
-    try {
-        $web = Get-PnPWeb -ErrorAction Stop
-    }
-    catch {
-        Meldingnaarlogbestand -meldtekst "$foutmelding_log
-Geen verbinding met SharePoint.`r`nFoutmelding: $($_.Exception.Message)"
-        return
-    }
-    
-    # 2. Controleer of $Sharepointmap een bestand is (en geen map)
-    $bestand = Get-PnPFile -Url $Sharepointmap -ErrorAction SilentlyContinue
-    if ($bestand) {
-        # Dit niet loggen want kan vaak voorkomen
-        # Meldingnaarlogbestand -meldtekst "$Sharepointmap is een bestand, geen map."
-        return
-    }
-    
-    # 3. Controleer of de map bestaat
-    $map = Get-PnPFolder -Url $Sharepointmap -ErrorAction SilentlyContinue
-    if (-not $map) {
-        Meldingnaarlogbestand -meldtekst "$foutmelding_log `r`nMap bestaat niet: $Sharepointmap"
-        return
-    }
-    #>
-
-    # Alle controles geslaagd, haal inhoud op
-    try {
-        $Sharepointinhoud = Get-PnPFolderItem -FolderSiteRelativeUrl $Sharepointmap -ErrorAction Stop
-        return $Sharepointinhoud
-    }
-    catch {
-        Meldingnaarlogbestand -meldtekst "$foutmelding_log`r`nOphalen van inhoud $Sharepointmap is niet gelukt.`r`nFoutmelding: $($_.Exception.Message)"
-        return
-    }
-}
-
-# Inlezen van SharePointmap . 
-# Wordt gebruikt bij Vensterkopieren. 
 function InlezenSharePointMap {
-# inlezen gekozen map en in variabele plaatsen
-# param $sharepointmap krijgt een waarde voor het geval het leeg wordt meegegeven
-# Bij een fout wordt er alleen melding gemaakt in logboek.
+<# inlezen gekozen map en in variabele plaatsen
+ param $sharepointmap krijgt een waarde voor het geval het leeg wordt meegegeven
+ Bij een fout wordt er alleen melding gemaakt in logboek.
+ Wordt gebruikt bij Vensterkopieren. 
+#>
 
 param(
     [string]$sharepointmap = $global:beheer.examenmappen.digitalebestanden
+    
     )
 
   try { 
@@ -2012,7 +2082,7 @@ param(
   }
   catch {
   # melding loggen
-  $melding = -join ("Inlezen SharePoint map : ", $sharepointmap, "`n", $_.exception.message )
+  $melding = -join ("Inlezen SharePoint map ", $sharepointmap, "`n", $_.exception.message )
   Meldingnaarlogbestand -meldtekst $melding
   }
   return $Sharepointinhoud
@@ -2727,10 +2797,11 @@ function vensterbackup {
 # variabelen
 $keuzelocatie=$global:init["algemeen"]["locatiekeuze"]
 
-# controleren of de mappen beschikbaar zijn
+<# controleren of de mappen beschikbaar zijn
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { return; } 
 
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.backupmap $true )) { return; } 
+#>
 
 # De hoofdmenu onzichtbaar maken
 $form.Hide()
