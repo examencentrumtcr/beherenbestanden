@@ -1,6 +1,8 @@
 ﻿<# 
-Functie Wissen en Verplaatsen/kopieren zijn geïntegreerd.
-Zie functie Wissen
+
+Hier wordt een nieuwe functie getest die in de release versie van het programma terecht kan komen.
+Tijdens het uitvoeren van een taak wordt de voortgang getoond in een venster.
+De functie Scriptrun wordt aangepast hiervoor.
 
 Beherenbestanden.ps1
 Programma om bestanden op pc's in een netwerk te beheren, dus bestanden klaarzetten, back-uppen, verplaatsen of wissen
@@ -36,7 +38,8 @@ $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
     versie = '5.0.0'
-    extralabel = 'test.1.260930' # buildnummer + datum. Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
+    extralabel = 'test_scriptrun.1.261001' # buildnummer of branch + eventuele volgnr + datum. 
+                                  # Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
                                   # Als dit wel het geval is, dan wordt dit aangepast naar "alpha.1".
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
@@ -1088,6 +1091,83 @@ function DownloadSharepoint {
     }
 } # einde DownloadSharepoint
 
+function UploadSharePointFolder {
+    param(
+        [Parameter(Mandatory)]
+        [string]$LocalFolderPath,
+
+        [Parameter(Mandatory)]
+        [string]$SharePointFolder
+    )
+
+    $errors = New-Object System.Collections.Generic.List[string]
+
+    if (-not (Test-Path -LiteralPath $LocalFolderPath -PathType Container)) {
+        $errors.Add("Lokale map niet gevonden: $LocalFolderPath")
+        return $errors
+    }
+
+    $SharePointFolder = $SharePointFolder.Replace('\','/').Trim('/')
+    $RootFolderName = Split-Path -Path $LocalFolderPath -Leaf
+    $RootSharePointPath = "$SharePointFolder/$RootFolderName"
+
+    try {
+        # Add-PnPFolder -Name $LocalFolderPath -Folder $SharePointFolder # | Out-Null
+        Add-PnPFolder -Name $RootFolderName -Folder $SharePointFolder | Out-Null
+    }
+    catch {
+        $errors.Add("Map $LocalFolderPath niet geüpload naar SharePoint: $SharePointFolder `n$($_.Exception.Message)")
+        return $errors
+    }
+
+    UploadFolderContentsRecursive `
+        -LocalPath $LocalFolderPath `
+        -SharePointPath $RootSharePointPath `
+        -ErrorList $errors
+
+    return $errors
+} # einde functie UploadSharePointFolder
+
+function UploadFolderContentsRecursive {
+    param(
+        [Parameter(Mandatory)]
+        [string]$LocalPath,
+
+        [Parameter(Mandatory)]
+        [string]$SharePointPath,
+
+        [System.Collections.Generic.List[string]]$ErrorList
+    )
+
+    $files = Get-ChildItem -LiteralPath $LocalPath -File
+    foreach ($file in $files) {
+        try {
+            Add-PnPFile -Path $file.FullName -Folder $SharePointPath | Out-Null
+        }
+        catch {
+            $ErrorList.Add("Bestand niet geüpload naar SharePoint: $($file.FullName) `n$($_.Exception.Message)")
+        }
+    }
+
+    $subFolders = Get-ChildItem -LiteralPath $LocalPath -Directory
+    foreach ($subFolder in $subFolders) {
+        $childSharePointPath = "$SharePointPath/$($subFolder.Name)"
+        try {
+            Add-PnPFolder -Name $subFolder.Name -Folder $SharePointPath | Out-Null
+        }
+        catch {
+            $ErrorList.Add(("Map niet geüpload naar SharePoint: {0}{1}{2}" -f $childSharePointPath, [Environment]::NewLine, $_.Exception.Message))
+            continue
+        }
+
+        UploadFolderContentsRecursive `
+            -LocalPath $subFolder.FullName `
+            -SharePointPath $childSharePointPath `
+            -ErrorList $ErrorList
+    }
+} # einde functie UploadFolderContentsRecursive
+
+
 ########## Function Scriptrun begint hieronder ##################################################
 
 # nodig voor afhandelen foutmeldingen
@@ -1104,6 +1184,29 @@ switch ($uitvoeren.taak) {
     # datum en tijdstip van vandaag in variabele plaatsen. nodig om de backup-mapnaam te bepalen.
     $datumvandaag = get-date -Format "yyyy-MM-dd__HH-mm-ss"
 
+# variabele voor test met sharepoint.
+    [string]$Sharepointmap = $uitvoeren.doelmap
+
+    # test of sharepoint map bestaat en aanmaken
+    try {
+        
+        # controleren of de map bestaat. Als dit niet het geval is, wordt de map aangemaakt.
+        # eerst de Sahrepointmap de sitegedeelte toevoegen
+        $web = Get-PnPWeb
+        $Sharepointmap = $Sharepointmap.TrimStart("/")
+        $Sharepointteammap = "$($web.ServerRelativeUrl)/$Sharepointmap"
+
+        Add-PnPFolder `
+            -Name $datumvandaag `
+            -Folder $Sharepointteammap | Out-Null
+        
+    }
+    catch {
+        ("Controleren SharePointmap: " + $Sharepointteammap + "`n" + $_.Exception.Message) | Out-File -FilePath $logbestand -Append
+        $uitvoeren.foutmelding = $true
+        break
+    } # einde catch
+
     #kopiëren bestanden naar homemappen van de kandidaten
     foreach ($rpcitem in $uitvoeren.listbox.selecteditems) {
         # progressie laten zien op balk
@@ -1116,7 +1219,7 @@ switch ($uitvoeren.taak) {
         $bronmap = -join ($uitvoeren.homemap,'\',$rpcitem)
 
         # bepalen doelmap. dit is de map waar de backup in komt.
-        $doelmap = -join ($uitvoeren.doelmap,'\',$datumvandaag,'\',$rpcitem)
+        [string]$doelmap = -join ($Sharepointmap,'/',$datumvandaag)
 
         # errors leeg maken
         $error.clear()
@@ -1124,17 +1227,27 @@ switch ($uitvoeren.taak) {
                 # extra test of de specifieke rpc-map wel bestaat. Anders wordt de catch getriggerd en heb je een foutmelding.
                 if (!(Test-Path $bronmap)) { throw "Map $bronmap niet gevonden."}
 
-                #backup maken
-                # de toevoeging \\? voor de bronmap en doelmap zorgt ervoor dat lange namen - meer dan maximaal 256 tekens, geen foutmelding geven en dus het kopieren en verwijderen ook dan lukt.
-                Copy-Item -path "$bronmap" -destination "$doelmap" -recurse -Force -container -ErrorAction Stop
+                # backup maken gegint hier.
+                # Aanroepen en het resultaat opvangen
+                $errors = UploadSharePointFolder `
+                    -LocalFolderPath $bronmap `
+                    -SharePointFolder $doelmap
+                
+                # Kijken of er iets is misgegaan en daarna wissen als "wissen na backup" is geselecteerd 
+                if ($errors.Count -gt 0) {
+                    
+                    # erros loggen naar logbestand
+                    "$foutmelding_log Er zijn $($errors.Count) fout(en) opgetreden tijdens de upload." | Out-File -FilePath $logbestand -Append
+                    $errors | ForEach-Object { "$_" | Out-File -FilePath $logbestand -Append }
+                    $uitvoeren.foutmelding = $true
 
-                # en daarna wissen als dit geselecteerd is
-                if ($uitvoeren.wissennabackup -eq $true) { 
-                    # verwijderen van bestanden. Eerst de inhoud van mijn documenten
+                    } elseif ($uitvoeren.wissennabackup -eq $true) { 
+                    # en daarna wissen als dit geselecteerd is
+                    # Eerst de inhoud van mijn documenten
                     Remove-Item "$bronmap\mijn documenten\*" -Recurse -Force -ErrorAction Stop
                     # dan de root van rpc-map exclusief map mijn documenten
                     Remove-Item "$bronmap\*" -Recurse -Force -Exclude "mijn documenten" -ErrorAction Stop
-                    }
+                    } # einde elseif $uitvoeren.wissennabackup -eq $true
                 } # einde try
 
             catch {
@@ -1492,9 +1605,12 @@ $uitvoeren.progressbar.Location = New-Object System.Drawing.Point(20, 40)
 $uitvoeren.progressbar.Size = New-Object System.Drawing.Size(560, 30)
 $uitvoeren.progressbar.Style = "continuous"
 
-# de maximumwaarde van de progressbar. Deze is bij taak opschonen anders.
+# de maximumwaarde van de progressbar. Deze is bij taak opschonen en kopieren anders.
 if ($uitvoeren.taak -eq "opschonen") {
     $uitvoeren.progressbar.maximum = $listbox.items.count
+    } elseif ($uitvoeren.taak -eq "kopiëren") {
+    # plus 2 omdat er eerst een stap is voor het downloaden van de bestanden en, na het kopiëren van de bestanden, het leegmaken van tijdelijke map.
+    $uitvoeren.progressbar.maximum = $listbox.selecteditems.count +2
     } else {
     $uitvoeren.progressbar.maximum = $listbox.selecteditems.count
     }
@@ -1954,59 +2070,16 @@ if (($global:listbox.selecteditems.count -gt 0) -and ($global:geselecteerdebronm
 
 } # einde startknopklikbaar
 
-function HaalSharepointInhoudOp {
-    
-param(
-    [string]$sharepointmap = $global:beheer.examenmappen.digitalebestanden
-    )
-
-    $foutmelding_log = "Fout bij inlezen SharePointmap."
-
-    <# 1. Controleer verbinding met SharePoint
-    try {
-        $web = Get-PnPWeb -ErrorAction Stop
-    }
-    catch {
-        Meldingnaarlogbestand -meldtekst "$foutmelding_log
-Geen verbinding met SharePoint.`r`nFoutmelding: $($_.Exception.Message)"
-        return
-    }
-    
-    # 2. Controleer of $Sharepointmap een bestand is (en geen map)
-    $bestand = Get-PnPFile -Url $Sharepointmap -ErrorAction SilentlyContinue
-    if ($bestand) {
-        # Dit niet loggen want kan vaak voorkomen
-        # Meldingnaarlogbestand -meldtekst "$Sharepointmap is een bestand, geen map."
-        return
-    }
-    
-    # 3. Controleer of de map bestaat
-    $map = Get-PnPFolder -Url $Sharepointmap -ErrorAction SilentlyContinue
-    if (-not $map) {
-        Meldingnaarlogbestand -meldtekst "$foutmelding_log `r`nMap bestaat niet: $Sharepointmap"
-        return
-    }
-    #>
-
-    # Alle controles geslaagd, haal inhoud op
-    try {
-        $Sharepointinhoud = Get-PnPFolderItem -FolderSiteRelativeUrl $Sharepointmap -ErrorAction Stop
-        return $Sharepointinhoud
-    }
-    catch {
-        Meldingnaarlogbestand -meldtekst "$foutmelding_log`r`nOphalen van inhoud $Sharepointmap is niet gelukt.`r`nFoutmelding: $($_.Exception.Message)"
-        return
-    }
-}
-
-# Inlezen van SharePointmap . 
-# Wordt gebruikt bij Vensterkopieren. 
 function InlezenSharePointMap {
-# inlezen gekozen map en in variabele plaatsen
-# param $sharepointmap krijgt een waarde voor het geval het leeg wordt meegegeven
+<# inlezen gekozen map en in variabele plaatsen
+ param $sharepointmap krijgt een waarde voor het geval het leeg wordt meegegeven
+ Bij een fout wordt er alleen melding gemaakt in logboek.
+ Wordt gebruikt bij Vensterkopieren. 
+#>
 
 param(
     [string]$sharepointmap = $global:beheer.examenmappen.digitalebestanden
+    
     )
 
   try { 
@@ -2014,7 +2087,7 @@ param(
   }
   catch {
   # melding loggen
-  $melding = -join ("Inlezen SharePoint map : ", $sharepointmap, "`n", $_.exception.message )
+  $melding = -join ("Inlezen SharePoint map ", $sharepointmap, "`n", $_.exception.message )
   Meldingnaarlogbestand -meldtekst $melding
   }
   return $Sharepointinhoud
@@ -2729,10 +2802,11 @@ function vensterbackup {
 # variabelen
 $keuzelocatie=$global:init["algemeen"]["locatiekeuze"]
 
-# controleren of de mappen beschikbaar zijn
+<# controleren of de mappen beschikbaar zijn
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { return; } 
 
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.backupmap $true )) { return; } 
+#>
 
 # De hoofdmenu onzichtbaar maken
 $form.Hide()
@@ -2878,104 +2952,42 @@ $global:listBox = declareren_rpcnrs;
 $global:listBox = lijstrpcnrsaanmaken $keuzelocatie $global:listBox 
 
 # venster declareren
-$Form2 = declareren_standaardvenster "Wissen, verplaatsen en kopiëren van homemappen van de kandidaten" 600 640;
+$Form2 = declareren_standaardvenster "Wissen van homemappen van de kandidaten" 480 640;
 
 $Description3                     = New-Object system.Windows.Forms.Label
 $Description3.text                = "Locatie"
 $Description3.AutoSize            = $false
-$Description3.width               = 200
+$Description3.width               = 800
 $Description3.height              = 40
-$Description3.location            = New-Object System.Drawing.Point(10,10)
+$Description3.location            = New-Object System.Drawing.Point(290,15)
 $Description3.Font                = 'Microsoft Sans Serif,11'
 $Description3.ForeColor = [System.Drawing.Color]::Blue
 
 $Description4                     = New-Object system.Windows.Forms.Label
 $Description4.text                = "RPC-nummers"
 $Description4.AutoSize            = $false
-$Description4.width               = 300
+$Description4.width               = 800
 $Description4.height              = 40
-$Description4.location            = New-Object System.Drawing.Point(10,80)
+$Description4.location            = New-Object System.Drawing.Point(290,55)
 $Description4.Font                = 'Microsoft Sans Serif,11'
-$Description4.ForeColor = [System.Drawing.Color]::blue
+$Description4.ForeColor = [System.Drawing.Color]::Blue
 
-$Description5                     = New-Object system.Windows.Forms.Label
-$Description5.text                = ": Nog niet geselecteerd"
-$Description5.AutoSize            = $false
-$Description5.width               = 200
-$Description5.height              = 40
-$Description5.location            = New-Object System.Drawing.Point(400,110)
-$Description5.Font                = 'Microsoft Sans Serif,11'
-$Description5.ForeColor = [System.Drawing.Color]::Red
 
-$Description6                     = New-Object system.Windows.Forms.Label
-$Description6.text                = ": Nog niet geselecteerd"
-$Description6.AutoSize            = $false
-$Description6.width               = 200
-$Description6.height              = 40
-$Description6.location            = New-Object System.Drawing.Point(400,160)
-$Description6.Font                = 'Microsoft Sans Serif,11'
-$Description6.ForeColor = [System.Drawing.Color]::Red
-
-$Btnbron = New-object System.Windows.Forms.Button 
-$Btnbron.text= "Bron"
-$Btnbron.location = "250,105" 
-$Btnbron.size = "150,30"  
-$Btnbron.BackColor = 'blue'
-$Btnbron.ForeColor = 'white'
-$Btnbron.Add_Click({ overzichttaken "wissen" }) 
-$Btnbron.Enabled= $false
-$Btnbron.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bevestig je keuze en ga door naar het overzicht." )
-})
-
-$Btndoel = New-object System.Windows.Forms.Button 
-$Btndoel.text= "Doel"
-$Btndoel.location = "250,155" 
-$Btndoel.size = "150,30"  
-$Btndoel.BackColor = 'blue'
-$Btndoel.ForeColor = 'white'
-$Btndoel.Add_Click({ overzichttaken "wissen" }) 
-$Btndoel.Enabled= $false
-$Btndoel.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bevestig je keuze en ga door naar het overzicht." )
-})
-
-$Btnwissen = New-object System.Windows.Forms.Button 
-$Btnwissen.text= "Wissen"
-$Btnwissen.location = "250,205" 
-$Btnwissen.size = "150,30"  
-$Btnwissen.BackColor = 'green'
-$Btnwissen.ForeColor = 'white'
-$Btnwissen.Add_Click({ overzichttaken "wissen" }) 
-$Btnwissen.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bevestig je keuze en ga door naar het overzicht." )
-})
-
-$Btnverplaatsen = New-object System.Windows.Forms.Button 
-$Btnverplaatsen.text= "Verplaatsen"
-$Btnverplaatsen.location = "250,255" 
-$Btnverplaatsen.size = "150,30"  
-$Btnverplaatsen.BackColor = 'green'
-$Btnverplaatsen.ForeColor = 'white'
-$Btnverplaatsen.Add_Click({ overzichttaken "wissen" }) 
-$Btnverplaatsen.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bevestig je keuze en ga door naar het overzicht." )
-})
-
-$Btnkopieren = New-object System.Windows.Forms.Button 
-$Btnkopieren.text= "Kopiëren"
-$Btnkopieren.location = "250,305" 
-$Btnkopieren.size = "150,30"  
-$Btnkopieren.BackColor = 'green'
-$Btnkopieren.ForeColor = 'white'
-$Btnkopieren.Add_Click({ overzichttaken "wissen" }) 
-$Btnkopieren.add_MouseHover({
+$Btnstart = New-object System.Windows.Forms.Button 
+$Btnstart.text= "Bevestigen"
+$Btnstart.location = "50,540" 
+$Btnstart.size = "150,30"  
+$BtnStart.BackColor = 'green'
+$BtnStart.ForeColor = 'white'
+$Btnstart.Add_Click({ overzichttaken "wissen" }) 
+$Btnstart.Enabled= $false
+$Btnstart.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Bevestig je keuze en ga door naar het overzicht." )
 })
 
 $Btnescape = New-object System.Windows.Forms.Button 
 $Btnescape.text= "Terug"
-$Btnescape.location = "50,560" 
+$Btnescape.location = "250,540" 
 $Btnescape.size = "150,30"  
 $Btnescape.BackColor = 'red'
 $Btnescape.ForeColor = 'white'
@@ -2987,11 +2999,11 @@ $Btnescape.add_MouseHover({
 
 
 # listbox is in het begin al gedeclareerd.
-$listBox.Location = New-Object System.Drawing.Point(10,105)
-$listBox.Size = New-Object System.Drawing.Size(220,20)
+$listBox.Location = New-Object System.Drawing.Point(10,55)
+$listBox.Size = New-Object System.Drawing.Size(260,20)
 $listBox.font = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
 $listBox.SelectionMode = 'MultiExtended'
-$listBox.Height = 415
+$listBox.Height = 475
 $listBox.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Selecteer de RPC-nummers waarvan de back-up wordt gemaakt." )
 })
@@ -3000,14 +3012,14 @@ $listBox.add_MouseHover({
 $listbox.add_SelectedIndexChanged(
      { 
      if ($listbox.selecteditems.count -gt 0) {
-        $Btnbron.Enabled= $true
+        $Btnstart.Enabled= $true
         } else {
-        $Btnbron.Enabled= $false
+        $Btnstart.Enabled= $false
         }
     } )
 
 # Standaard lijst met alle locaties maken, met standaardwaarden
-$lijstlocaties = declarerenlijstlocaties $keuzelocatie 220 10 35
+$lijstlocaties = declarerenlijstlocaties $keuzelocatie 260 10 15
 
 # bij wijzigen van selectie lijstlocaties
 $lijstlocaties.add_SelectedIndexChanged(
@@ -3018,23 +3030,8 @@ $lijstlocaties.add_SelectedIndexChanged(
      # nieuwe rpcnrs declareren
      $global:listBox = lijstrpcnrsaanmaken $keuzelocatie $global:listBox 
      # startknop niet klikbaar maken
-     $Btnbron.Enabled= $false
+     $Btnstart.Enabled= $false
      } ) 
-
-$doelmaplegen = New-Object System.Windows.Forms.Checkbox 
-$doelmaplegen.Location = New-Object System.Drawing.Point(20,520)
-$doelmaplegen.Size = New-Object System.Drawing.Size(500,30)
-$doelmaplegen.Text = "Doelmap wissen alvorens het verplaatsen of kopiëren."
-$doelmaplegen.Font = 'Microsoft Sans Serif,12'
-$doelmaplegen.ForeColor = [System.Drawing.Color]::Green
-if ($keuzedoelmaplegen -eq "Ja") {
-    $doelmaplegen.Checked = $true
-    } else {
-    $doelmaplegen.Checked = $false
-    }
-$doelmaplegen.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Geef aan of de doelmap geleegd moet worden voor het uitvoeren van de taak." )
-})
 
 # venster met uitleg over deze taak wordt gedeclareerd. hieronder worden enkele variabelen aangepast aan deze taakvenster
 declareren_uitlegvenster "Uitleg over de taak Wissen." 690 180 430 550 "Hier kunt u bestanden van de geselecteerde RPC-nummers verwijderen.
@@ -3043,8 +3040,7 @@ Bovenaan kunt u de locatie en daaronder de RPC-nummers die verwijderd moet worde
 Om naar het overzicht te gaan waar u het verwijderen kan starten moet u op Bevestigen klikken.
 "
 
-$form2.controls.AddRange(@($lijstlocaties, $listBox, $Btnbron, $Btndoel, $Btnwissen, $Btnverplaatsen, $Btnkopieren, $doelmaplegen, $Btnescape, $Description3, $Description4, 
-                           $Description5, $Description6, $Global:vraagtekenicoon))
+$form2.controls.AddRange(@($lijstlocaties, $listBox, $Btnstart, $Btnescape, $Description3, $Description4, $Global:vraagtekenicoon))
 
 Add-EscapeClose -Form $form2
 

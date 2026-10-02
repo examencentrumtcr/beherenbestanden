@@ -1329,7 +1329,7 @@ switch ($uitvoeren.taak) {
         # write-host "Geselecteerde items toegevoegd aan lijst met te kopiëren items."
     } # einde if $uitvoeren.listview1.selecteditems.count -eq 0
 
-    #kopiëren bestanden naar homemappen van de kandidaten
+     #kopiëren bestanden naar homemappen van de kandidaten
 
     foreach ($rpcitem in $uitvoeren.listbox.selecteditems) {
         # progressie laten zien op balk
@@ -5540,7 +5540,7 @@ $form.show()
 function Start-Pwsh7 {
         param($path)
         # $path wijst naar de locatie van pwsh.exe, deze is nodig om PowerShell 7 te starten.
-        # $scriptnaam wordt is de naam vh programma met .ps1 erachter, en het volledige pad naar dit script. 
+        # $scriptnaam is de naam van het programma met .ps1 erachter, en het volledige pad naar dit script. 
         $scriptnaam = $global:programma.naam
         $scriptnaam = -join ($startmap, "\", $scriptnaam, ".ps1")
 
@@ -5561,6 +5561,66 @@ start-process PowerShell.exe -argumentlist '-File', "`"$scriptnaam`""
 
 #>
 
+
+# Controleren of PowerShell 7 is geïnstalleerd en anders installeren en starten met PowerShell 7.
+
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+
+    write-host "Programma is opgestart met een PowerShell versie die lager is dan 7." -ForegroundColor Yellow
+
+    # eerst controleren of pwsh al ergens anders staat, bijvoorbeeld in de map van Microsoft Store apps.
+    $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
+    if ($cmd) {
+            $pwsh7_locatie = $cmd.Source
+    } else {
+            $pwsh7_locatie = "$env:LOCALAPPDATA\Microsoft\WindowsApps\pwsh.exe"
+    }
+
+    # als pwsh7 al gevonden is, deze starten. Zo niet, dan verder met controleren en installeren.
+    if (Test-Path $pwsh7_locatie) {
+        try {
+            Start-Pwsh7 $pwsh7_locatie
+            Exit # Exit hier zodat het programma niet verder gaat in PS5
+        }
+        catch {
+        $melding = -join ("PowerShell 7 is aanwezig maar kan niet gestart worden.","`r`n","De volgende foutmelding is gegeven :","`r`n", $_)
+        Write-Host $melding -ForegroundColor Red
+        }
+
+    } else {
+
+    # Controleer winget
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        $melding = "Winget is niet beschikbaar. PowerShell 7 kan niet automatisch worden geïnstalleerd."
+        Write-Host $melding -ForegroundColor Red
+
+    }
+    else {
+        Write-Host "PowerShell 7 wordt geïnstalleerd." -ForegroundColor Green
+
+        try {
+            # winget install Microsoft.PowerShell --accept-source-agreements --accept-package-agreements --source winget --scope user
+            winget install --id Microsoft.PowerShell --exact --source winget --accept-source-agreements --accept-package-agreements 
+
+            # Opnieuw opstaren en controleren of pwsh7 nu aanwezig is
+            Start-Pwsh5
+            Exit # Exit hier zodat het programma niet verder gaat in PS5
+        }
+        catch {
+            $melding = -join ("Er is een fout opgetreden bij het installeren van PowerShell 7 met Winget.","`r`n","De volgende foutmelding is gegeven :","`r`n", $_)
+            Write-Host $melding -ForegroundColor Red
+        }
+
+    } # einde else van if (-not (get-command winget ....
+
+    } # einde else van if test-path pwsh7_locatie
+
+    write-host "Programma kan niet verder gaan zonder PowerShell 7 en wordt gestopt. `nInstalleer PowerShell 7 handmatig via de Microsoft Store of via de website." -ForegroundColor Yellow
+    $melding = -join ($melding,"`r`n","Programma kan niet verder gaan zonder PowerShell 7 en is gestopt.")
+    Meldingnaarlogbestand -meldtekst $melding
+    start-sleep -Seconds 8
+    Exit # Exit hier zodat het programma niet verder gaat in PS5 
+}
 
 # Bepalen van de persoonlijke initialisatiebestand.
 $gebruikersbestand = bepaalinitnaamgebruiker
@@ -5587,106 +5647,6 @@ if (test-path -path $oudenaam -pathtype leaf) {
 
 # inlezen van gebruikers instellingen
 Inlezengebruikersinstellingen;
-
-# Controleren of PowerShell 7 is geïnstalleerd en anders installeren en starten met PowerShell 7.
-
-if (($PSVersionTable.PSVersion.Major -lt 7) -and ($global:init.uitvoerennaopstarten.powershell7start -eq "Ja")) {
-
-    # eerst controleren of pwsh al ergens anders staat, bijvoorbeeld in de map van Microsoft Store apps.
-    $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
-    if ($cmd) {
-            $pwsh7_locatie = $cmd.Source
-    } else {
-            $pwsh7_locatie = "$env:LOCALAPPDATA\Microsoft\WindowsApps\pwsh.exe"
-    }
-
-    # als pwsh7 al gevonden is, deze starten. Zo niet, dan verder met controleren en installeren.
-    if (Test-Path $pwsh7_locatie) {
-        try {
-            Start-Pwsh7 $pwsh7_locatie
-            Exit   # alleen hier exit!
-        }
-        catch {
-        Write-Host "PowerShell 7 kon niet gestart worden. Programma gaat verder in huidige versie.
-$_" -ForegroundColor Yellow
-        $Global:init.uitvoerennaopstarten.powershell7start='Nee'
-        Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 is gevonden maar kon niet gestart worden.
-$_"
-        }
-    } else {
-
-    # Controleer winget
-    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        Write-Host "winget niet beschikbaar. Programma gaat verder zonder PowerShell 7." -ForegroundColor Yellow
-         # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
-        $Global:init.uitvoerennaopstarten.powershell7start='Nee'
-        Meldingnaarlogbestand -meldtekst "PowerShell 7 check : winget niet beschikbaar. 
-PowerShell 7 kan niet automatisch worden geïnstalleerd. 
-Programma gaat verder zonder PowerShell 7."
-        
-    }
-    else {
-        Write-Host "PowerShell 7 wordt geïnstalleerd..." -ForegroundColor Green
-
-        try {
-            # winget install Microsoft.PowerShell --accept-source-agreements --accept-package-agreements --source winget --scope user
-            winget install --id Microsoft.PowerShell --exact --source winget --accept-source-agreements --accept-package-agreements 
-        }
-        catch {
-            Write-Host "Installatie mislukt, programma gaat verder zonder PowerShell 7." -ForegroundColor Yellow
-            Write-Host $_.exception.message 
-            # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
-            $Global:init.uitvoerennaopstarten.powershell7start='Nee'
-            Meldingnaarlogbestand -meldtekst "PowerShell 7 check : Er is een fout opgetreden bij het installeren van PowerShell 7 met winget.
-Programma gaat verder zonder PowerShell 7."
-        }
-        Start-Sleep -Seconds 3
-
-        # opnieuw proberen pwsh te vinden
-        $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
-        if ($cmd) {
-            $pwsh7_locatie = $cmd.Source
-        } else {
-            $pwsh7_locatie = $null
-        }
-
-        if (-not $pwsh7_locatie) {
-            $pwsh7_locatie = "$env:LOCALAPPDATA\Microsoft\WindowsApps\pwsh.exe"
-        }
-
-        if (Test-Path $pwsh7_locatie) {
-            Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 is succesvol geïnstalleerd. 
-Programma is gestart met PowerShell 7." -type "MEDEDELING"
-            Write-Host "PowerShell 7 check : PowerShell 7 is succesvol geïnstalleerd."
-            try {
-            Start-Pwsh7 $pwsh7_locatie
-            Exit   # alleen hier exit!
-            }
-            catch {
-                Write-Host "PowerShell 7 kon niet gestart worden. Programma gaat verder in huidige versie.
-$_" -ForegroundColor Yellow
-                # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
-                $Global:init.uitvoerennaopstarten.powershell7start='Nee'
-                Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 is geïnstalleerd maar kon niet gestart worden.
-$_"
-            } 
-        }
-        else {
-            Write-Host "PowerShell 7 kon niet gestart worden. Programma gaat verder in huidige versie." -ForegroundColor Yellow
-            # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
-            $Global:init.uitvoerennaopstarten.powershell7start='Nee'
-            Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 kon niet geïnstalleerd worden.
-Programma gaat verder in huidige versie."
-        }
-    } # einde else van if (-not (get-command winget ....
-
-    } # einde else van if test-path pwsh7_locatie
-
-    # Bewaren instellingen voor het geval "PowerShell 7 check" op nee is gezet, zodat deze niet meer wordt uitgevoerd. 
-    # Dit kan bij een eerdere catch gewijzigd zijn.
-    Bewareninstellingen
-    # GEEN EXIT → script loopt gewoon door in PS5
-}
 
 # controleren op een update. 
 updateuitvoeren;
