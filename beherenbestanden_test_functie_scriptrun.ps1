@@ -38,7 +38,7 @@ $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
     versie = '5.0.0'
-    extralabel = 'test_scriptrun.1.261001' # buildnummer of branch + eventuele volgnr + datum. 
+    extralabel = 'test_scriptrun.1.261005' # buildnummer of branch + eventuele volgnr + datum. 
                                   # Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
                                   # Als dit wel het geval is, dan wordt dit aangepast naar "alpha.1".
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
@@ -1167,9 +1167,19 @@ function UploadFolderContentsRecursive {
     }
 } # einde functie UploadFolderContentsRecursive
 
+function toevoegentekstvenster ($tekst) {
+    # deze functie voegt tekst toe aan venster "Objtekst2". 
+    # de tekst wordt altijd onderaan toegevoegd en het venster wordt automatisch naar beneden gescrold.
+    $uitvoeren.objtekst2.Invoke([Action]{
+        $uitvoeren.objtekst2.AppendText($tekst + "`r`n")
+    })
+
+}
 
 ########## Function Scriptrun begint hieronder ##################################################
 
+toevoegentekstvenster "*******************"
+toevoegentekstvenster "De taak is gestart"
 # nodig voor afhandelen foutmeldingen
 $uitvoeren.foutmelding = $false
 
@@ -1191,7 +1201,7 @@ switch ($uitvoeren.taak) {
     try {
         
         # controleren of de map bestaat. Als dit niet het geval is, wordt de map aangemaakt.
-        # eerst de Sahrepointmap de sitegedeelte toevoegen
+        # eerst de Sharepointmap de sitegedeelte toevoegen
         $web = Get-PnPWeb
         $Sharepointmap = $Sharepointmap.TrimStart("/")
         $Sharepointteammap = "$($web.ServerRelativeUrl)/$Sharepointmap"
@@ -1264,9 +1274,10 @@ switch ($uitvoeren.taak) {
     "kopiëren" { 
 
     # array aanmaken en vullen met geselecteerde items. 
-    # Deze items worden vervolgens gekopiëerd.
+    # Deze items worden vervolgens gekopiërd.
     $geselecteerdeitems = [System.Collections.ArrayList]@()
 
+    toevoegentekstvenster "Tijdelijke map aanmaken."
      # Tijdelijke map om bestanden uit te delen. Deze map wordt na het kopiëren verwijderd.
     $localPath = $env:USERPROFILE + "\Temp_BeherenBestanden"
     # onderstaande is nodig omdat bij DownloadSharepoint alleen de tijdelijke map automatisch wordt aangemaakt 
@@ -1293,6 +1304,9 @@ switch ($uitvoeren.taak) {
     # foutmelding van PowerShell naar logbestand
     $foutmelding_log = "[ Downloaden SharePoint FOUT ] : "
 
+    # Tekst toevoegen aan venster
+    toevoegentekstvenster "Downloaden bestanden."
+    # $uitvoeren.form3.objtekst2.Text = $uitvoeren.form3.objtekst2.Text + "`r`n" + "Downloaden bestanden van SharePoint" + "`r`n"
     if ($uitvoeren.listview1.selecteditems.count -eq 0) {
         
         # $geselecteerdeitems.Add("$bronmap")
@@ -1335,10 +1349,14 @@ switch ($uitvoeren.taak) {
     } # einde if $uitvoeren.listview1.selecteditems.count -eq 0
 
     #kopiëren bestanden naar homemappen van de kandidaten
+    # $uitvoeren.objtekst2.Text = $uitvoeren.objtekst2.Text + "`r`n" + "Kopiëren van bestanden naar de homemappen van de kandidaten" + "`r`n"
 
     foreach ($rpcitem in $uitvoeren.listbox.selecteditems) {
         # progressie laten zien op balk
         $uitvoeren.progressbar.PerformStep()
+
+        # Weergeven in venster dat bestanden worden gekopieerd naar de homemap van de kandidaat.
+        toevoegentekstvenster "Kopiëren bestanden naar $rpcitem"
 
         # teksten met meldingen voor het logbestand
         $foutmelding_log = "[ $rpcitem - FOUT ] : "
@@ -1346,6 +1364,7 @@ switch ($uitvoeren.taak) {
         # doelmap bepalen. dit is een lokale variabele
         $doelmap = -join ($uitvoeren.homemap,'\',$rpcitem,'\Mijn Documenten')
     
+        # $uitvoeren.objtekst2.Text = $uitvoeren.objtekst2.Text + "Bezig met kandidaarmap " + $rpcitem + "`r`n"
         # kopieren geselecteerde mappen of bestanden  
         Copy-Item -path "$localPath\*" -destination "$doelmap" -recurse -Force -ErrorAction Stop
         
@@ -1490,6 +1509,9 @@ switch ($uitvoeren.taak) {
                } # einde taak wissen
 
 } # einde switch commando $uitvoeren.taak
+
+toevoegentekstvenster "De taak is afgerond."
+toevoegentekstvenster "*******************"
 
 } # einde scriptRun
 
@@ -1810,6 +1832,9 @@ $StartButton.Add_click( {
     $uitvoeren.listbox = New-Object System.Windows.Forms.Listbox
     $uitvoeren.listbox = $listbox
 
+    # doorgeven objtekst. dit is de venster waarin de voortgang wordt bijgehouden.
+    $uitvoeren.objtekst2 = New-Object System.Windows.Forms.textbox
+    $uitvoeren.objtekst2 = $objtekst2
     <# specifieke variabelen voor de gegeven taak.
        o.a. toevoegen tekst aan variabele uitvoeren.logbestandtekst om in logbestand te plaatsen
     #>
@@ -1821,6 +1846,7 @@ $StartButton.Add_click( {
         $uitvoeren.controlemappen = $controlemappen.checked
         $uitvoeren.bronmap = $digitalebestanden
         $uitvoeren.team = $global:Sharepoint.team
+        
         foreach ($item in $global:geselecteerdebronmap) {
                     $uitvoeren.bronmap  = -join ($uitvoeren.bronmap, '/', $item)
                 }

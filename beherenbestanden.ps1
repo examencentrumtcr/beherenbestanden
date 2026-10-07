@@ -33,7 +33,7 @@ $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
     versie = '5.0.0'
-    extralabel = 'optie.1.261001' # buildnummer of branch + eventuele volgnr + datum. 
+    extralabel = 'optie.1.261004' # buildnummer of branch + eventuele volgnr + datum. 
                                   # Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
                                   # Als dit wel het geval is, dan wordt dit aangepast naar "alpha.1".
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
@@ -49,6 +49,9 @@ write-host "** Versie is "$global:programma.versie -f Green
 write-host "** PowerShell versie is "$PSVersionTable.PSVersion -f Green
 write-host ""
 write-host "Initialiseren van het programma."
+
+# test! kan verwijderd worden
+# write-host "waarde van pnppowershell-updatecheck is $pnppowershell_updatecheck"
 
 <# Manier om console af te sluiten en weer te openen.
    Het sluiten wordt uitgevoerd voor het starten van de hoofdscherm.
@@ -5548,7 +5551,7 @@ function Start-Pwsh7 {
         Start-Sleep -Seconds 2
         Start-Process $path -ArgumentList '-File', "`"$scriptnaam`"" 
         
-    }
+}
 
 
 function Start-Pwsh5 {
@@ -5584,7 +5587,6 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
         }
         catch {
         $melding = -join ("PowerShell 7 is aanwezig maar kan niet gestart worden.","`r`n","De volgende foutmelding is gegeven :","`r`n", $_)
-        Write-Host $melding -ForegroundColor Red
         }
 
     } else {
@@ -5592,35 +5594,47 @@ if ($PSVersionTable.PSVersion.Major -lt 7) {
     # Controleer winget
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
         $melding = "Winget is niet beschikbaar. PowerShell 7 kan niet automatisch worden geïnstalleerd."
-        Write-Host $melding -ForegroundColor Red
 
-    }
-    else {
+    } else {
         Write-Host "PowerShell 7 wordt geïnstalleerd." -ForegroundColor Green
 
         try {
             # winget install Microsoft.PowerShell --accept-source-agreements --accept-package-agreements --source winget --scope user
             winget install --id Microsoft.PowerShell --exact --source winget --accept-source-agreements --accept-package-agreements 
 
-            # Opnieuw opstaren en controleren of pwsh7 nu aanwezig is
-            Start-Pwsh5
-            Exit # Exit hier zodat het programma niet verder gaat in PS5
+            # Opnieuw controleren of pwsh al ergens anders staat, bijvoorbeeld in de map van Microsoft Store apps.
+            $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
+            if ($cmd) {
+                $pwsh7_locatie = $cmd.Source
+                } else {
+                $pwsh7_locatie = "$env:LOCALAPPDATA\Microsoft\WindowsApps\pwsh.exe"
+            }
+
+            # als pwsh7 gevonden is, deze starten. Zo niet, dan foutmelding geven dat PowerShell 7 niet is gevonden na installatie.
+            if (Test-Path $pwsh7_locatie) {
+                Start-Pwsh7 $pwsh7_locatie
+                Exit # Exit hier zodat het programma niet verder gaat in PS5
+            } else {
+                $melding = "PowerShell 7 is niet gevonden na installatie in de map $pwsh7_locatie. Controleer of PowerShell 7 handmatig kan worden gestart."
+            }
+
         }
         catch {
             $melding = -join ("Er is een fout opgetreden bij het installeren van PowerShell 7 met Winget.","`r`n","De volgende foutmelding is gegeven :","`r`n", $_)
-            Write-Host $melding -ForegroundColor Red
         }
 
     } # einde else van if (-not (get-command winget ....
 
     } # einde else van if test-path pwsh7_locatie
 
-    write-host "Programma kan niet verder gaan zonder PowerShell 7 en wordt gestopt. `nInstalleer PowerShell 7 handmatig via de Microsoft Store of via de website." -ForegroundColor Yellow
-    $melding = -join ($melding,"`r`n","Programma kan niet verder gaan zonder PowerShell 7 en is gestopt.")
+    $melding = -join ($melding,"`n","Het programma kan niet werken zonder PowerShell 7.0 of hoger.")
     Meldingnaarlogbestand -meldtekst $melding
-    start-sleep -Seconds 8
+    write-host $melding -ForegroundColor Red
+    write-host "Installeer PowerShell 7.0 (of hoger) handmatig via de Microsoft Store of via de website.`nHet programma wordt afgesloten in 10 seconden." -ForegroundColor Red
+    start-sleep -Seconds 10
     Exit # Exit hier zodat het programma niet verder gaat in PS5 
-}
+
+} # einde if ($PSVersionTable.PSVersion.Major -lt 7)
 
 # Bepalen van de persoonlijke initialisatiebestand.
 $gebruikersbestand = bepaalinitnaamgebruiker
@@ -6128,8 +6142,16 @@ if ($global:init.algemeen.nieuwelayout -eq 'Ja') {
 
 # Einde hoofdvenster declareren
 
-# Bij het tonen van het hoofdvenster, een aantal controles uitvoeren. Bijvoorbeeld een melding tonen als het programma nog in testfase is.
+# Bij het tonen van het hoofdvenster, een aantal controles uitvoeren (Bijvoorbeeld een melding tonen als het programma nog in testfase is)
+# En zorgen dat het venster op de voorgrond komt. Dit is nodig omdat het venster anders achter andere vensters kan komen te staan.
 $form.add_Shown({ 
+    # zorgen dat het venster op de voorgrond komt. Topmost = $true en dan weer terugzetten naar false. Anders blijft het venster altijd op de voorgrond.
+    $form.Topmost = $true 
+    $form.Activate()
+    $form.Focus()
+    start-sleep -Milliseconds 100
+    $form.Topmost = $false
+
     # Als het programma in testfase is, dan venster tonen met melding
     $mode=$global:programma.mode
     if ($global:programma.mode -ne 'release') {
