@@ -1740,6 +1740,12 @@ if ($uitvoeren.taak -eq "kopiëren") {
     $Btnescape.BackColor = 'green'
     $Btnescape.show()
     
+} elseif ($uitvoeren.taak -in @("wissen", "verplaatsen")) {
+    $Btnescape.size = New-Object System.Drawing.Size(200,40)
+    # escape knop wordt nu opnieuw knop
+    $Btnescape.text= "Terug naar Verkenner"
+    $Btnescape.BackColor = 'green'
+    $Btnescape.show()
 } else {
 # knop logbestand bekijken wordt nu naar links verplaatst om aan te sluiten met knop Terug.
 $LogButton.Location = New-Object System.Drawing.Size(160, 400)
@@ -1793,7 +1799,7 @@ function StartTaak {
 
         "verplaatsen" {
         # bepalen doel-, bronmap en doelmaplegen
-        $uitvoeren.bronmap = -join ($homemapstudenten,"\",$bronselectie.selecteditem,"\Mijn Documenten\*")
+        $uitvoeren.bronmap = -join ($homemapstudenten,"\",$listbox.selecteditem,"\Mijn Documenten\*")
         $uitvoeren.doelmap = -join ($homemapstudenten,"\",$doelselectie.selecteditem,"\Mijn Documenten")
         $uitvoeren.doelmaplegen=$doelmaplegen.checked
         # keuze tussen kopieren of verplaatsen doorgeven
@@ -1813,6 +1819,10 @@ function StartTaak {
     # $form2.hide()
 
     uitvoerentaken;
+
+    # wissen selecties in listbox zodat je niet per ongeluk nogmaals op start kan klikken.
+    $listBox.selecteditems.clear()
+    
 } # einde StartTaak
 
 # beheer-variabelen krijgen hier een verkorte naam tbv leesbaarheid en gebruik in andere functies
@@ -5553,7 +5563,8 @@ $Btwissen.Add_Click({
     # alleen als minimaal 1 item is geselecteerd in de listbox
     if ($listBox.selecteditems.count -gt 0) {
         # naar overzichttaken gaan met de taak wissen en directe uitvoering
-        overzichttaken -taak "wissen" -directeuitvoering
+        # overzichttaken -taak "wissen" -directeuitvoering
+        overzichttaken -taak "wissen"
     }
 }) # einde Btnverplaatsen.add_click
 
