@@ -4,6 +4,26 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
+## [5.0.0] - Development
+### Nieuwe functies
+- Gebruiker moet inloggen bij de RPC Sharepointmap om bestanden klaar te zetten en
+  een backup te maken.
+
+### Verwijderde functies
+- De functie **Kopiëren** is verwijderd van het hoofdscherm.
+
+### Bugfix
+- Probleem opgelost waarbij de map Mijn Documenten niet werd gevonden tijdens het klaarzetten van bestanden.
+- Bij het controleren van netwerkmappen worden fouten opgevangen.
+
+### Overige wijzigingen
+- De functies **Verkenner**, **Wissen** en **Verplaatsen** zijn geïntegreerd en onder één nieuwe icoon geplaatst.
+- De functie **Updaten** is nu op te starten via het hoofdscherm.
+- Tijdens het uitvoeren van een taak wordt de voortgang weergegeven. Dit kan je uitzetten.
+- Script werkt nu alleen met PowerShell 7.0 of hoger.
+- Readme aangepast aan wijzigingen.
+- De nieuwe layout, met alleen 2 knoppen in het hoofdvenster, is de standaard geworden.
+
 ## [4.8.1] - 2026-07-15
 ### Bugfixes
 - Icoontje van snelkoppeling op het bureaublad verwees naar het verkeerde bestand. 
@@ -56,7 +76,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ### Overige wijzigingen
 - In de programma code wijzigingen aangebracht in hoe met bepaalde fases wordt omgegaan.
--  Van 2 functies, console openen en -sluiten, 1 gemaakt.
+- Van 2 functies, console openen en -sluiten, 1 gemaakt.
 - Bij de **Moppenbot** heb je de keuze uit moppen van 3 websites.
 - Het is mogelijk om het aantal dagen dat de logbestanden bewaard blijven op 0 te zetten.
 - Het programma wordt nu geüpdatet vanuit een repository in Github.

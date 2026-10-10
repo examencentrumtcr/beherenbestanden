@@ -33,7 +33,7 @@ $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
     versie = '5.0.0'
-    extralabel = 'optie.1.261004' # buildnummer of branch + eventuele volgnr + datum. 
+    extralabel = 'optie.1.261010' # buildnummer of branch + eventuele volgnr + datum. 
                                   # Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
                                   # Als dit wel het geval is, dan wordt dit aangepast naar "alpha.1".
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
@@ -785,7 +785,7 @@ if (test-path -path $gebruikersbestand -pathtype leaf) {
         foreach( $subproperty in $myobject.$property.psobject.properties.name )
         {
         # alleen toevoegen als deze bij 'init' al bestaat
-        if ( $global:init.$property.$subproperty -ne $null) { 
+        if ($null -ne $global:init.$property.$subproperty) { 
             $global:init[$property][$subproperty] = $myObject.$property.$subproperty 
             }
         } # einde foreach $subproperty - loop 
@@ -1819,9 +1819,6 @@ function StartTaak {
     # $form2.hide()
 
     uitvoerentaken;
-
-    # wissen selecties in listbox zodat je niet per ongeluk nogmaals op start kan klikken.
-    $listBox.selecteditems.clear()
     
 } # einde StartTaak
 
@@ -3210,7 +3207,7 @@ $doelselectie.add_SelectedIndexChanged(
         $doelselectie.selecteditem = $null
         }
     # kijken of startknop zichtbaar mag zijn
-    if (($doelselectie.selecteditem -ne $null) -and ($bronselectie.selecteditem -ne $null)) {
+    if (($null -ne $doelselectie.selecteditem) -and ($null -ne $bronselectie.selecteditem)) {
         $Btnstart.Enabled= $true
         } else {
         $Btnstart.Enabled= $false
@@ -5565,6 +5562,12 @@ $Btwissen.Add_Click({
         # naar overzichttaken gaan met de taak wissen en directe uitvoering
         # overzichttaken -taak "wissen" -directeuitvoering
         overzichttaken -taak "wissen"
+        
+        # wissen selecties in listbox, objtekst2 en doelselectie zodat je niet per ongeluk nogmaals op start kan klikken met dezelfde keuzes,
+        # en dat je na het uitvoeren niet verkeerde inhoud ziet, bv van een map die al gewist is.
+        $listBox.selecteditems.clear()
+        $objtekst2.Clear()
+        $doelselectie.selecteditem = $null
     }
 }) # einde Btnverplaatsen.add_click
 
@@ -5584,6 +5587,9 @@ $Btnverplaatsen.Add_Click({
   # alleen als 1 item is geselecteerd in de listbox
     if ($listBox.selecteditems.count -eq 1) {
        overzichttaken -taak "verplaatsen"
+       $listBox.selecteditems.clear()
+       $objtekst2.Clear()
+       $doelselectie.selecteditem = $null
     }   
 }) # einde Btnverplaatsen.add_click
 

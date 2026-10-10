@@ -33,7 +33,7 @@ $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
     versie = '5.0.0'
-    extralabel = 'optie.1.261004' # buildnummer of branch + eventuele volgnr + datum. 
+    extralabel = 'optie.1.261010' # buildnummer of branch + eventuele volgnr + datum. 
                                   # Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
                                   # Als dit wel het geval is, dan wordt dit aangepast naar "alpha.1".
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
@@ -50,8 +50,6 @@ write-host "** PowerShell versie is "$PSVersionTable.PSVersion -f Green
 write-host ""
 write-host "Initialiseren van het programma."
 
-# test! kan verwijderd worden
-# write-host "waarde van pnppowershell-updatecheck is $pnppowershell_updatecheck"
 
 <# Manier om console af te sluiten en weer te openen.
    Het sluiten wordt uitgevoerd voor het starten van de hoofdscherm.
@@ -384,7 +382,7 @@ $global:bestandsformaten = @(
 # functions ---------------------------------------------------------------------------------
 # hieronder de kleine functies die door andere functies gebruikt worden ---------------------
 
-function ShowHide-ConsoleWindow($mode) {
+function Toonofverbergconsole($mode) {
   
   if ($hwnd -ne [System.IntPtr]::Zero) {
     # When you got HWND of the console window:
@@ -416,7 +414,7 @@ function ShowHide-ConsoleWindow($mode) {
       Write-Host "Niet gelukt om de status van de console window te wijzigen naar waarde $mode." -ForegroundColor Red
     }
   }
-} # einde ShowHide-ConsoleWindow
+} # einde Toonofverbergconsole
 
 Function declareren_standaardvenster ($titel, $pos_x, $pos_y)
 {
@@ -785,7 +783,7 @@ if (test-path -path $gebruikersbestand -pathtype leaf) {
         foreach( $subproperty in $myobject.$property.psobject.properties.name )
         {
         # alleen toevoegen als deze bij 'init' al bestaat
-        if ( $global:init.$property.$subproperty -ne $null) { 
+        if ( $null -ne $global:init.$property.$subproperty) { 
             $global:init[$property][$subproperty] = $myObject.$property.$subproperty 
             }
         } # einde foreach $subproperty - loop 
@@ -905,17 +903,15 @@ $positiepunt = $bestand.LastIndexOf(".")
 
     # Standaard krijgt elk bestand icoontje 1, maar afhankelijk van de extensie krijgt het een ander nummer. 
     # De nummering is afhankelijk van de volgorde van aanmaken bij functie Declareericoontjes. zie hierboven.
-    $gevondennr = 1
     $teller = 0
-    $global:bestandsformaten | ForEach-Object {
-        $formats = $_.typen
-        if ($formats.Contains($extensie) ) { 
-            $gevondennr = $teller 
-            return 
+    foreach ($formaat in $global:bestandsformaten) {
+        $formats = $formaat.typen
+        if ($formats.Contains($extensie)) {
+            return $teller
         }
         $teller += 1
-    } # einde ForEach-Object - loop
-return $gevondennr
+    } # einde foreach-loop
+return 1
 }
 
 Function Bepaalicoontjenr ($controlemap, $bestand) {
@@ -1018,6 +1014,45 @@ $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
         $Button13.Visible = $false
          
     }
+
+function controleerenverbindsharepoint {
+
+    try {
+        # Controleer of er een actieve PnP-verbinding bestaat
+        $connection = Get-PnPConnection -ErrorAction Stop
+
+        if ($null -eq $connection) {
+            throw "Geen SharePoint-verbinding gevonden."
+        }
+
+        # Test of de verbinding effectief werkt
+        Get-PnPWeb -Connection $connection -ErrorAction Stop |
+            Out-Null
+
+        Write-Host "SharePoint-verbinding is actief." 
+        return $true
+    }
+    catch {
+        Write-Host "Geen werkende SharePoint-verbinding. Opnieuw verbinden..."
+
+        try {
+            Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive -ErrorAction Stop
+
+            # Test de nieuwe verbinding
+            Get-PnPWeb -ErrorAction Stop | Out-Null
+
+            Write-Host "Opnieuw verbonden met SharePoint."
+            return $true
+        }
+        catch {
+            Write-Host "Verbinding met SharePoint mislukt: $($_.Exception.Message)" -ForegroundColor Red
+
+            return $false
+        }
+    }
+} # einde function controleerenverbindsharepoint
+
+
 
 # hieronder de hoofdfuncties ----------------------------------------------------------------
 
@@ -1225,7 +1260,7 @@ switch ($uitvoeren.taak) {
                 # extra test of de specifieke rpc-map wel bestaat. Anders wordt de catch getriggerd en heb je een foutmelding.
                 if (!(Test-Path $bronmap)) { throw "Map $bronmap niet gevonden."}
 
-                # backup maken gegint hier.
+                # backup maken begint hier.
                 # Aanroepen en het resultaat opvangen
                 $errors = UploadSharePointFolder `
                     -LocalFolderPath $bronmap `
@@ -3173,7 +3208,7 @@ $doelselectie.add_SelectedIndexChanged(
         $doelselectie.selecteditem = $null
         }
     # kijken of startknop zichtbaar mag zijn
-    if (($doelselectie.selecteditem -ne $null) -and ($bronselectie.selecteditem -ne $null)) {
+    if (($null -ne $doelselectie.selecteditem) -and ($null -ne $bronselectie.selecteditem)) {
         $Btnstart.Enabled= $true
         } else {
         $Btnstart.Enabled= $false
@@ -3187,7 +3222,7 @@ $bronselectie.add_SelectedIndexChanged(
         $bronselectie.selecteditem = $null
         }
     # kijken of startknop zichtbaar mag zijn
-     if (($doelselectie.selecteditem -ne $null) -and ($bronselectie.selecteditem -ne $null)) {
+     if (($null -ne $doelselectie.selecteditem) -and ($null -ne $bronselectie.selecteditem)) {
         $Btnstart.Enabled= $true
         } else {
         $Btnstart.Enabled= $false
@@ -4476,9 +4511,9 @@ $_"
     # Console open houden of sluiten
     if (($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'prerelease')) {
         if ($keuzeoptie9.Selectedindex -eq 0) {
-        ShowHide-ConsoleWindow 0;
+        Toonofverbergconsole 0;
         } else {
-        ShowHide-ConsoleWindow 5;
+        Toonofverbergconsole 5;
         }
     }
 
@@ -5398,8 +5433,6 @@ $BtnTerug.add_MouseHover({
 })
 $Form2.controls.add($BtnTerug)
 
-# standaard tekst in venster met geselecteerd examenmap. Nodig voor Objtekst, weergave van geselecteerde homemap.
-$Startexamenmap = "Homemap kandidaat"
 # Tekst tussen twee geselecteerde mappen, om deze uit elkaar te houden
 $Scheidingstekst = " » "
 
@@ -5408,6 +5441,7 @@ $objtekst2.Location = New-Object System.Drawing.Size(200,80)
 $objtekst2.Size = New-Object System.Drawing.Size(660,47)
 $objtekst2.font = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
 $objtekst2.Text = ''
+
 $objtekst2.ReadOnly = $true
 $objtekst2.Multiline = $true
 $objtekst2.BackColor  = 'white'
@@ -5693,7 +5727,7 @@ if (!(Get-Module -name pnp.powershell -ListAvailable)) {
 
 # dan verbinden ......
 try {
-    write-host "Verbinding maken met SharePoint. Log via de default browser in op SharePoint."
+    write-host "Verbinding maken met SharePoint. Log via de default browser in op SharePoint." -f Yellow
     Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive
     }
 
@@ -5743,6 +5777,9 @@ $tempmap
     "
     $netwerkmapfout = $true 
 } 
+
+ #>
+
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $false )) { 
     $tempmap = $global:beheer.examenmappen.homemapstudenten
     Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
@@ -5750,7 +5787,9 @@ De volgende Netwerkmap is niet gevonden
 $tempmap
     "
     $netwerkmapfout = $true 
-    } 
+    }
+
+   
 if (!(Netwerkmapaanwezig $global:beheer.examenmappen.backupmap $false )) { 
     $tempmap = $global:beheer.examenmappen.backupmap
     Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
@@ -5761,7 +5800,7 @@ $tempmap
     } 
 
 if ($netwerkmapfout) { Start-Sleep -Seconds 5}
-#>
+
 
 # Probleem van onjuiste programma icoon oplossen door opnieuw snelkoppeling te maken
 if ($Global:init.uitvoerennaopstarten.snelkoppeling -eq 'Ja') {
@@ -5806,7 +5845,7 @@ write-host "Opstarten hoofdvenster."
 # Hide Console. Alleen bij mode = release of prerelease
 if (( ($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'prerelease')) -and ($global:init.algemeen.consolesluiten -eq 'Ja')) { 
     write-host "De console wordt afgesloten..."
-    ShowHide-ConsoleWindow 0;
+    Toonofverbergconsole 0;
     }
 
 # Hoofdvenster declareren --------------------------------------------------------------------
