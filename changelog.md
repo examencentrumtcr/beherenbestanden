@@ -14,7 +14,6 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ### Bugfix
 - Probleem opgelost waarbij de map Mijn Documenten niet werd gevonden tijdens het klaarzetten van bestanden.
-- Bij het controleren van netwerkmappen worden fouten opgevangen.
 
 ### Overige wijzigingen
 - De functies **Verkenner**, **Wissen** en **Verplaatsen** zijn geïntegreerd en onder één nieuwe icoon geplaatst.
@@ -23,6 +22,11 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 - Script werkt nu alleen met PowerShell 7.0 of hoger.
 - Readme aangepast aan wijzigingen.
 - De nieuwe layout, met alleen 2 knoppen in het hoofdvenster, is de standaard geworden.
+- Controle netwerkmappen gewijzigd; 
+  Alleen controleren als het nodig is.
+  Eventuele fouten worden gelogd.
+- De developer kan het updateproces testen met een testmap in SharePoint.
+- Code optimalisatie en opgeschoond. 
 
 ## [4.8.1] - 2026-07-15
 ### Bugfixes

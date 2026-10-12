@@ -33,7 +33,7 @@ $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
     versie = '5.0.0'
-    extralabel = 'optie.1.261010' # buildnummer of branch + eventuele volgnr + datum. 
+    extralabel = 'optie.1.261012' # buildnummer of branch + eventuele volgnr + datum. 
                                   # Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
                                   # Als dit wel het geval is, dan wordt dit aangepast naar "alpha.1".
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
@@ -753,6 +753,7 @@ $uitvoerennaopstarten=@{
     controleopupdate = 'Ja'
     handmatigupdate = 'Nee'
     snelkoppeling = 'Ja'
+    PS7snelkoppeling = 'Ja'
 }
 $Std_inst=@{
     algemeen  = $algemeen
@@ -796,52 +797,68 @@ if (test-path -path $gebruikersbestand -pathtype leaf) {
 
 } # einde Inlezengebruikersinstellingen
 
-Function Netwerkmapaanwezig ($netwerkmap, $vensterweergeven) {
+Function Netwerkmapaanwezig {
 
-# Controleren of de netwerkmap aanwezig is en indien nodig herstellen
-# De Write-Host regels zie je alleen in een testfase of bij start script, als de console open is
-
+<# Controleren of de netwerkmap aanwezig is en indien nodig herstellen
+   Een netwerkmap moet altijd gegeven worden.
+   De switch Geenmelding geef je als je geen melding met een venster wilt zien. Het programma loopt dan gewoon door.
+   Deze switch wordt nog nergens gebruikt maar blijft aanwezig voor eventule wijzigign in de toekomst.
+   De Write-Host regels zie je alleen in een testfase of bij start script, als de console open is
+#>
+param (
+    [Parameter(Mandatory = $true)] [string]$netwerkmap,
+    [switch]$geenmelding
+)
 $gevonden = $false
 
-if (!(test-path -path "$netwerkmap")) {
-    
-    if ($global:programma.mode -ne "alpha") {
+try {
+    if (!(Test-Path -Path $netwerkmap -ErrorAction SilentlyContinue)) {
+        
+        # met mode alpha worden de lokale mappen gebruikt en onderstaande geldt alleen voor netwerkmappen
+        if ($global:programma.mode -ne "alpha") {
 
-    # bepaal de schijf letter
-    $schijf = $netwerkmap.substring(0, 2)
-    # controleren of schijf aanwezig is.
-    $item = Get-SmbMapping | Where-Object -property LocalPath -Value $schijf -EQ
-    if ($item) {
-        # controleren of schijf ook verbonden is en anders herstellen
-        if ($item.Status -eq 'Unavailable') {
-            Write-Host "Herstellen van netwerkschijf " $item.LocalPath " naar " $item.RemotePath
-            net use $item.LocalPath $item.RemotePath
-            # net use $item.LocalPath $item.RemotePath >$null 2>&1
+        # bepaal de schijf letter
+        $schijf = $netwerkmap.substring(0, 2)
+        # controleren of schijf aanwezig is.
+        $item = Get-SmbMapping | Where-Object -property LocalPath -Value $schijf -EQ
+        if ($item) {
+            # controleren of schijf ook verbonden is en anders herstellen
+            if ($item.Status -eq 'Unavailable') {
+                Write-Host "Herstellen van netwerkschijf " $item.LocalPath " naar " $item.RemotePath
+                net use $item.LocalPath $item.RemotePath
+                # net use $item.LocalPath $item.RemotePath >$null 2>&1
 
-            # controleren of map aanwezig is na herstel.
-            if (test-path -path "$netwerkmap") { $gevonden = $true } 
-        }
-    } # einde if ($item)
+                # controleren of map aanwezig is na herstel.
+                if (Test-Path -Path $netwerkmap -ErrorAction SilentlyContinue) { $gevonden = $true } 
+            }
+        } # einde if ($item)
 
-    }  # einde if ($global:programma.mode -eq "alpha") 
-
-} else {
-    $gevonden = $true 
-} # einde 1e controle netwerkmap
-
-if (!($gevonden)) {
-    if ($vensterweergeven) {
-        $vraagdoorgaan = "Er is geen verbinding met een netwerkschijf!" + "`r`n" + "Controleer of de volgende netwerkschijf aanwezig is :" + "`r`n" + "$netwerkmap" + "`r`n" + "`r`n" + "De taak kan nu niet opgestart worden."
-        $null=venstermetvraag -titel "Geen verbinding met netwerkschijf" -vraag $vraagdoorgaan 
+        }  # einde if ($global:programma.mode -eq "alpha") 
 
     } else {
-    Write-Host -f Red "Er is geen verbinding met de netwerkschijf " $netwerkmap
+        $gevonden = $true 
+    } # einde 1e controle netwerkmap
+}
+catch {
+    $melding= $($_.Exception.Message)
+    $gevonden = $false
+}
+
+if (!($gevonden)) {
+    $melding = -join ("Er is geen verbinding met de netwerkschijf ", "`r`n", $netwerkmap)
+    # melding wordt altijd gelogd. Dit kan eventueel met het toevoegen van een switch worden uitgezet.
+    Meldingnaarlogbestand -meldtekst $melding
+    if ($geenmelding) {
+        Write-Host -f Red $melding
+    } else {
+        $vraagdoorgaan = -join ($melding, "`r`n", "Controleer of de netwerkschijf aanwezig is.", "`r`n", "De taak kan nu niet opgestart worden.")
+        $null=venstermetvraag -titel "Geen verbinding met netwerkschijf" -vraag $vraagdoorgaan -schuifbalk
     }
 } # einde if (!($gevonden))
 
 
 return $gevonden
-}
+} # einde Netwerkmapaanwezig
 
 Function declarerenlijstlocaties ($keuzelocatienr, $wijd, $loc_x, $loc_y) {
 
@@ -1015,42 +1032,47 @@ $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
          
     }
 
-function controleerenverbindsharepoint {
+function VerbindmetSharePoint {
+       
+try {
+    Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive -ErrorAction Stop
 
+    # Test de nieuwe verbinding
+    Get-PnPWeb -ErrorAction Stop | Out-Null
+
+    Write-Host "Verbonden met SharePoint."
+    return $true
+}
+catch {
+    Write-Host "Verbinding met SharePoint mislukt: $($_.Exception.Message)" -ForegroundColor Red
+    $null = venstermetvraag -titel "Geen verbinding met SharePoint." -vraag "Geen verbinding kunnen maken met SharePoint.
+De volgende foutmelding is geretourneerd:
+- $_
+
+Een aantal taken kunnen nu niet uitgevoerd worden." "OK"
+    return $false
+}
+} # einde function VerbindmetSharePoint
+
+function ControleerverbindingSharePoint {
+
+param (
+    [string]$controlemap = $global:beheer.examenmappen.digitalebestanden
+)
     try {
-        # Controleer of er een actieve PnP-verbinding bestaat
-        $connection = Get-PnPConnection -ErrorAction Stop
+        Get-PnPFolder -Url $controlemap -ErrorAction Stop | Out-Null
+        
+        throw "Fout ingezet..."
 
-        if ($null -eq $connection) {
-            throw "Geen SharePoint-verbinding gevonden."
-        }
-
-        # Test of de verbinding effectief werkt
-        Get-PnPWeb -Connection $connection -ErrorAction Stop |
-            Out-Null
-
-        Write-Host "SharePoint-verbinding is actief." 
+        Write-Host "SharePoint-verbinding is actief en map $controlemap bestaat." 
         return $true
     }
     catch {
-        Write-Host "Geen werkende SharePoint-verbinding. Opnieuw verbinden..."
-
-        try {
-            Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive -ErrorAction Stop
-
-            # Test de nieuwe verbinding
-            Get-PnPWeb -ErrorAction Stop | Out-Null
-
-            Write-Host "Opnieuw verbonden met SharePoint."
-            return $true
-        }
-        catch {
-            Write-Host "Verbinding met SharePoint mislukt: $($_.Exception.Message)" -ForegroundColor Red
-
-            return $false
-        }
+        Write-Host "Opnieuw verbinden : " -NoNewline
+        $controle = VerbindmetSharePoint
+        return $controle
     }
-} # einde function controleerenverbindsharepoint
+} # einde function ControleerverbindingSharePoint
 
 
 
@@ -1527,45 +1549,27 @@ switch ($uitvoeren.taak) {
 } # einde scriptRun
 
 function uitvoerentaken {
-# hier worden de 4 belangrijkste taken uitgevoerd.
+# hier worden de 5 belangrijkste taken uitgevoerd.
 
 # controleren of mappen bestaan - afhankelijk van de taak
 # map uitvoeren.homemap wordt in ieder geval gecontroleerd
-# Eerste regel van elke foutmelding
-$foutmeldingbegin = "Uitvoeren van een taak : "
 
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { 
-    $tempmap = $global:beheer.examenmappen.homemapstudenten
-    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
-De volgende Netwerkmap is niet gevonden
-$tempmap
-    "
+if (!(Netwerkmapaanwezig -netwerkmap $global:beheer.examenmappen.homemapstudenten)) { 
     return; 
 } 
-<# Deze controles zijn niet meer nodig als met SharePoint wordt gewerkt.
 
 if ($uitvoeren.taak -eq "kopiëren") {
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.digitalebestanden $true )) { 
-    $tempmap = $global:beheer.examenmappen.digitalebestanden
-    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
-De volgende Netwerkmap is niet gevonden
-$tempmap
-    "
-    return; 
+    if (!( ControleerverbindingSharePoint -controlemap $global:beheer.examenmappen.digitalebestanden )) {
+        return
     } 
 } 
 
 if ($uitvoeren.taak -eq "backup") {
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.backupmap $true )) { 
-    $tempmap = $global:beheer.examenmappen.backupmap
-    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
-De volgende Netwerkmap is niet gevonden
-$tempmap
-    "
-    return; 
-    } 
+    if (!( ControleerverbindingSharePoint -controlemap $global:beheer.examenmappen.backupmap )) {
+        return
+    }
 } 
-#>
+
 
 # einde controleren of mappen bestaan
 
@@ -2149,9 +2153,9 @@ $digitalebestanden = $global:beheer.examenmappen.digitalebestanden
 # lijst met geselecteerde examenmappen
 $global:geselecteerdebronmap = [System.Collections.ArrayList]@()
 
-# if (!(Netwerkmapaanwezig $global:beheer.examenmappen.digitalebestanden $true )) { return; } 
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { return; } 
-
+if (!( ControleerverbindingSharePoint)) {
+    return
+}
 
 # rpcnrs declareren met een function
 $global:listBox = declareren_rpcnrs;
@@ -2835,12 +2839,6 @@ function vensterbackup {
 # variabelen
 $keuzelocatie=$global:init["algemeen"]["locatiekeuze"]
 
-<# controleren of de mappen beschikbaar zijn
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { return; } 
-
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.backupmap $true )) { return; } 
-#>
-
 # De hoofdmenu onzichtbaar maken
 $form.Hide()
 
@@ -2973,10 +2971,6 @@ function vensterwissen {
 # variabelen
 $keuzelocatie=$global:init["algemeen"]["locatiekeuze"]
 
-
-# controleren of de mappen beschikbaar zijn
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { return; } 
-
 # De hoofdmenu onzichtbaar maken
 $form.Hide()
 
@@ -3092,9 +3086,6 @@ function vensterverplaatsen {
 $keuzelocatie=$global:init["algemeen"]["locatiekeuze"]
 $keuzedoelmaplegen=$global:init["algemeen"]["maplegenvoorverplaatsen"]
 
-
-# controleren of de mappen beschikbaar zijn
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { return; } 
 
 # De hoofdmenu onzichtbaar maken
 $form.Hide()
@@ -4556,8 +4547,8 @@ $form.show()
 
 function vensteropschonen {
 
-# inlezen van backupmappen, bepalen aantal te verwijderen mappen en vullen van venster
 function inlezenmappen {
+# inlezen van backupmappen, bepalen aantal te verwijderen mappen en vullen van venster
 
 if ($objTextBox1.Text -eq "") {
     $null = venstermetvraag -titel "Geen getal ingevuld" -vraag "`r`nVul een geldige getal in voor het aantal dagen waarna een back-up wordt verwijderd."
@@ -4601,7 +4592,9 @@ if ($tellerbackups -eq 0 ) { $Btnaccept.Enabled=$false }
 # ------ begin van de function vensteropschonen ---------------------
 
 # controleren of de mappen beschikbaar zijn
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.backupmap $true )) { return; } 
+if (!( ControleerverbindingSharePoint -controlemap $global:beheer.examenmappen.backupmap )) {
+        return
+    }
 
 # De hoofdmenu onzichtbaar maken
 $form.Hide()
@@ -4964,7 +4957,7 @@ $weertegevenlogs = bepaaleigenlogbestanden
 
 <# Controleren of er logbestanden zijn om te verwijderen. 
    Hiervoor worden de eigen logbestanden die kunnen worden verwijderd geteld.
-   Met try-catch fouten worden fouten opvangen
+   Met try-catch worden fouten opvangen
 #>
 
 $tellerlogs=0
@@ -5001,7 +4994,7 @@ $melding_opschonen_begint | out-file $logbestand -Append
 # bepaal de lijst met mappen die verwijderd worden en opvangen foutmelding met try- catch methode
 try {
     Get-ChildItem -Path $weertegevenlogs -ErrorAction Stop | Where-Object {(!($_.psiscontainer) -and $_.LastWriteTime -lt (Get-Date).AddDays(-$getal2))} | foreach-object {
-        # map om te verwijderen
+        # bestand om te verwijderen
         $todelete = $_.Name
         # in logbestand schrijven
         " - $todelete " | out-file $logbestand -Append
@@ -5291,7 +5284,7 @@ $keuzelocatie     = $global:init["algemeen"]["locatiekeuze"]
 $global:geselecteerdebronmap = [System.Collections.ArrayList]@()
 
 # controleren of de mappen beschikbaar zijn
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { return; } 
+if (!(Netwerkmapaanwezig -netwerkmap $global:beheer.examenmappen.homemapstudenten )) { return; } 
 
 # rpcnrs declareren met een function
 $global:listBox = declareren_rpcnrs;
@@ -5675,24 +5668,6 @@ $gebruikersbestand = bepaalinitnaamgebruiker
 
 write-host "Gebruikersinstellingen inlezen."
 
-# Inlezen oude algemene initialisatiebestand en omzetten naar gebruikersbestand. Dit kan op een gegeven moment eruit.
-# Oude initialisatiebestand werd gebruikt tot versie 4.5.0
-$global:initbestand = -join ("$startmap","\","initialisatie.ini")
-if (test-path -path $global:initbestand -pathtype leaf) { 
-    # als nieuwe bestand al bestaat, verwijderen
-    if (test-path -path $gebruikersbestand -pathtype leaf) {
-         Remove-Item $gebruikersbestand
-         }
-    Rename-Item -Path $global:initbestand -NewName $gebruikersbestand
-}
-
-# Vanaf versie 4.7.0 naam gebruikersbestand wijzigen. Dit kan op een gegeven moment weg.
-$oudenaam = -join ("$startmap","\gebruiker",$env:username,".ini")
-$nieuwenaam = bepaalinitnaamgebruiker
-if (test-path -path $oudenaam -pathtype leaf) { 
-    Rename-Item -Path $oudenaam -NewName $nieuwenaam
-}
-
 # inlezen van gebruikers instellingen
 Inlezengebruikersinstellingen;
 
@@ -5726,21 +5701,7 @@ if (!(Get-Module -name pnp.powershell -ListAvailable)) {
     }
 
 # dan verbinden ......
-try {
-    write-host "Verbinding maken met SharePoint. Log via de default browser in op SharePoint." -f Yellow
-    Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive
-    }
-
-catch {
-
-$null = venstermetvraag -titel "Geen verbinding met SharePoint." -vraag "Geen verbinding kunnen maken met SharePoint.
-De volgende foutmelding is geretourneerd:
-- $_
-
-Een aantal taken kunnen nu niet uitgevoerd worden." "OK"
-      } # einde catch 
-
-# einde verbinden met SharePoint
+$null = VerbindmetSharePoint;
 
 #Overige controles en tijdelijke taken uitvoeren
 write-host "Controleren of bestanden moeten worden opgeschoond of hersteld."
@@ -5761,49 +5722,9 @@ if (test-path -path "$startmap\changelog.txt") { Remove-Item "$startmap\changelo
 # verwijderen beheren.ico vanaf versie 4.8.0
 if (test-path -path "$startmap\beheren.ico") { Remove-Item "$startmap\beheren.ico" }
 
-<# Tijdelijk controle netwerkmappen uitgeschakeld ivm Sharepoint testen!!!
 
-# Controleren of netwerkschijven aanwezig zijn en eventueel herstellen.
-# Eerste regel van elke foutmelding tijdens deze controle.
-$foutmeldingbegin = "Initialiseren van het programma : "
-# Als er een fout is dan hiermee onthouden.
-$netwerkmapfout = $false
-Write-host "Controleren of netwerkmappen aanwezig zijn. Dit kan even duren..."
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.digitalebestanden $false )) { 
-    $tempmap = $global:beheer.examenmappen.digitalebestanden
-    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
-De volgende Netwerkmap is niet gevonden
-$tempmap
-    "
-    $netwerkmapfout = $true 
-} 
-
- #>
-
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $false )) { 
-    $tempmap = $global:beheer.examenmappen.homemapstudenten
-    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
-De volgende Netwerkmap is niet gevonden
-$tempmap
-    "
-    $netwerkmapfout = $true 
-    }
-
-   
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.backupmap $false )) { 
-    $tempmap = $global:beheer.examenmappen.backupmap
-    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
-De volgende Netwerkmap is niet gevonden
-$tempmap
-    "
-    $netwerkmapfout = $true 
-    } 
-
-if ($netwerkmapfout) { Start-Sleep -Seconds 5}
-
-
-# Probleem van onjuiste programma icoon oplossen door opnieuw snelkoppeling te maken
-if ($Global:init.uitvoerennaopstarten.snelkoppeling -eq 'Ja') {
+# Opnieuw snelkoppeling maken omdat programma alleen met PowerShell 7 kan werken. Eenmalig uitvoeren.
+if ($Global:init.uitvoerennaopstarten.PS7snelkoppeling -eq 'Ja') {
 
     # Maken van snelkoppeling
     # benodigde variabelen
@@ -5815,13 +5736,10 @@ if ($Global:init.uitvoerennaopstarten.snelkoppeling -eq 'Ja') {
     if (Test-Path $ShortcutPath) {
         # write-host "Snelkoppeling op bureaublad wordt opnieuw aangemaakt."
         
-        if ($PSVersionTable.PSVersion.Major -ge 6) {
-            Meldingnaarlogbestand -meldtekst "Snelkoppeling op bureaublad is aangemaakt om met PowerShell 7 te starten." -type "MEDEDELING"
-            & "$PSScriptRoot\$snelkoppeling_script" -auto -pwsh7 -startmap $startmap
-        } else {
-            Meldingnaarlogbestand -meldtekst "Snelkoppeling op bureaublad is aangemaakt om met PowerShell 5 te starten." -type "MEDEDELING"
-            & "$PSScriptRoot\$snelkoppeling_script" -auto -startmap $startmap
-        }
+        Meldingnaarlogbestand -meldtekst "Snelkoppeling op bureaublad is aangemaakt om met PowerShell 7 te starten." -type "MEDEDELING"
+        & "$PSScriptRoot\$snelkoppeling_script" -auto -pwsh7 -startmap $startmap
+        
+        # $lastexitcode bevat de errorcode van de laatst uitgevoerde code, in dit geval van snelkoppeling_maken.ps1
         if ($LASTEXITCODE -ne 0) {
             Meldingnaarlogbestand -meldtekst "Fout opgetreden bij het aanmaken van de snelkoppeling.
 Startmap = $startmap
@@ -5830,9 +5748,9 @@ Bureaubladlink = $ShortcutPath" -type "FOUT"
     } # einde if (Test-Path $ShortcutPath) 
 
     # De volgende keer niet uitvoeren.
-    $Global:init.uitvoerennaopstarten.snelkoppeling='Nee'
+    $Global:init.uitvoerennaopstarten.PS7snelkoppeling='Nee'
     Bewareninstellingen
-} # einde if ($Global:init.uitvoerennaopstarten.updateinfo -eq 'Ja')
+} # einde if ($Global:init.uitvoerennaopstarten.PS7snelkoppeling -eq 'Ja')
 
 # Einde controles en tijdelijke taken uitvoeren
 
