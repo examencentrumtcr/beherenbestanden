@@ -6,14 +6,14 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ## [5.0.0] - Development
 ### Nieuwe functies
-- Gebruiker moet inloggen bij de RPC Sharepointmap om bestanden klaar te zetten en
+- Gebruiker moet inloggen bij de Sharepoint van RPCtestsiteexaminering om bestanden klaar te zetten en
   een backup te maken.
 
 ### Verwijderde functies
-- De functie **Kopiëren** is verwijderd van het hoofdscherm.
+- De mogelijkheid om bestanden tussen mappen te kopiëren is verwijderd.
 
 ### Bugfix
-- Probleem opgelost waarbij de map Mijn Documenten niet werd gevonden tijdens het klaarzetten van bestanden.
+- Probleem opgelost waarbij de map "Mijn Documenten" niet werd gevonden tijdens het klaarzetten van bestanden.
 
 ### Overige wijzigingen
 - De functies **Verkenner**, **Wissen** en **Verplaatsen** zijn geïntegreerd en onder één nieuwe icoon geplaatst.
@@ -22,9 +22,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 - Script werkt nu alleen met PowerShell 7.0 of hoger.
 - Readme aangepast aan wijzigingen.
 - De nieuwe layout, met alleen 2 knoppen in het hoofdvenster, is de standaard geworden.
-- Controle netwerkmappen gewijzigd; 
-  Alleen controleren als het nodig is.
-  Eventuele fouten worden gelogd.
+- Controle netwerkmappen gewijzigd. Alleen controleren als het nodig is.
 - De developer kan het updateproces testen met een testmap in SharePoint.
 - Code optimalisatie en opgeschoond. 
 

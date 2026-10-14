@@ -1,7 +1,4 @@
 ﻿<# 
-Functie Wissen en Verplaatsen/kopieren zijn geïntegreerd.
-Zie functie Wissen
-
 Beherenbestanden.ps1
 Programma om bestanden op pc's in een netwerk te beheren, dus bestanden klaarzetten, back-uppen, verplaatsen of wissen
 Zie voor versienummer hier onder de comments.
@@ -36,7 +33,8 @@ $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
     versie = '5.0.0'
-    extralabel = 'test.2.260930' # buildnummer + datum. Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
+    extralabel = 'optie.1.261012' # buildnummer of branch + eventuele volgnr + datum. 
+                                  # Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
                                   # Als dit wel het geval is, dan wordt dit aangepast naar "alpha.1".
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
@@ -384,7 +382,7 @@ $global:bestandsformaten = @(
 # functions ---------------------------------------------------------------------------------
 # hieronder de kleine functies die door andere functies gebruikt worden ---------------------
 
-function ShowHide-ConsoleWindow($mode) {
+function Toonofverbergconsole($mode) {
   
   if ($hwnd -ne [System.IntPtr]::Zero) {
     # When you got HWND of the console window:
@@ -416,7 +414,7 @@ function ShowHide-ConsoleWindow($mode) {
       Write-Host "Niet gelukt om de status van de console window te wijzigen naar waarde $mode." -ForegroundColor Red
     }
   }
-} # einde ShowHide-ConsoleWindow
+} # einde Toonofverbergconsole
 
 Function declareren_standaardvenster ($titel, $pos_x, $pos_y)
 {
@@ -755,6 +753,7 @@ $uitvoerennaopstarten=@{
     controleopupdate = 'Ja'
     handmatigupdate = 'Nee'
     snelkoppeling = 'Ja'
+    PS7snelkoppeling = 'Ja'
 }
 $Std_inst=@{
     algemeen  = $algemeen
@@ -785,7 +784,7 @@ if (test-path -path $gebruikersbestand -pathtype leaf) {
         foreach( $subproperty in $myobject.$property.psobject.properties.name )
         {
         # alleen toevoegen als deze bij 'init' al bestaat
-        if ( $global:init.$property.$subproperty -ne $null) { 
+        if ( $null -ne $global:init.$property.$subproperty) { 
             $global:init[$property][$subproperty] = $myObject.$property.$subproperty 
             }
         } # einde foreach $subproperty - loop 
@@ -798,52 +797,68 @@ if (test-path -path $gebruikersbestand -pathtype leaf) {
 
 } # einde Inlezengebruikersinstellingen
 
-Function Netwerkmapaanwezig ($netwerkmap, $vensterweergeven) {
+Function Netwerkmapaanwezig {
 
-# Controleren of de netwerkmap aanwezig is en indien nodig herstellen
-# De Write-Host regels zie je alleen in een testfase of bij start script, als de console open is
-
+<# Controleren of de netwerkmap aanwezig is en indien nodig herstellen
+   Een netwerkmap moet altijd gegeven worden.
+   De switch Geenmelding geef je als je geen melding met een venster wilt zien. Het programma loopt dan gewoon door.
+   Deze switch wordt nog nergens gebruikt maar blijft aanwezig voor eventule wijzigign in de toekomst.
+   De Write-Host regels zie je alleen in een testfase of bij start script, als de console open is
+#>
+param (
+    [Parameter(Mandatory = $true)] [string]$netwerkmap,
+    [switch]$geenmelding
+)
 $gevonden = $false
 
-if (!(test-path -path "$netwerkmap")) {
-    
-    if ($global:programma.mode -ne "alpha") {
+try {
+    if (!(Test-Path -Path $netwerkmap -ErrorAction SilentlyContinue)) {
+        
+        # met mode alpha worden de lokale mappen gebruikt en onderstaande geldt alleen voor netwerkmappen
+        if ($global:programma.mode -ne "alpha") {
 
-    # bepaal de schijf letter
-    $schijf = $netwerkmap.substring(0, 2)
-    # controleren of schijf aanwezig is.
-    $item = Get-SmbMapping | Where-Object -property LocalPath -Value $schijf -EQ
-    if ($item) {
-        # controleren of schijf ook verbonden is en anders herstellen
-        if ($item.Status -eq 'Unavailable') {
-            Write-Host "Herstellen van netwerkschijf " $item.LocalPath " naar " $item.RemotePath
-            net use $item.LocalPath $item.RemotePath
-            # net use $item.LocalPath $item.RemotePath >$null 2>&1
+        # bepaal de schijf letter
+        $schijf = $netwerkmap.substring(0, 2)
+        # controleren of schijf aanwezig is.
+        $item = Get-SmbMapping | Where-Object -property LocalPath -Value $schijf -EQ
+        if ($item) {
+            # controleren of schijf ook verbonden is en anders herstellen
+            if ($item.Status -eq 'Unavailable') {
+                Write-Host "Herstellen van netwerkschijf " $item.LocalPath " naar " $item.RemotePath
+                net use $item.LocalPath $item.RemotePath
+                # net use $item.LocalPath $item.RemotePath >$null 2>&1
 
-            # controleren of map aanwezig is na herstel.
-            if (test-path -path "$netwerkmap") { $gevonden = $true } 
-        }
-    } # einde if ($item)
+                # controleren of map aanwezig is na herstel.
+                if (Test-Path -Path $netwerkmap -ErrorAction SilentlyContinue) { $gevonden = $true } 
+            }
+        } # einde if ($item)
 
-    }  # einde if ($global:programma.mode -eq "alpha") 
-
-} else {
-    $gevonden = $true 
-} # einde 1e controle netwerkmap
-
-if (!($gevonden)) {
-    if ($vensterweergeven) {
-        $vraagdoorgaan = "Er is geen verbinding met een netwerkschijf!" + "`r`n" + "Controleer of de volgende netwerkschijf aanwezig is :" + "`r`n" + "$netwerkmap" + "`r`n" + "`r`n" + "De taak kan nu niet opgestart worden."
-        $null=venstermetvraag -titel "Geen verbinding met netwerkschijf" -vraag $vraagdoorgaan 
+        }  # einde if ($global:programma.mode -eq "alpha") 
 
     } else {
-    Write-Host -f Red "Er is geen verbinding met de netwerkschijf " $netwerkmap
+        $gevonden = $true 
+    } # einde 1e controle netwerkmap
+}
+catch {
+    $melding= $($_.Exception.Message)
+    $gevonden = $false
+}
+
+if (!($gevonden)) {
+    $melding = -join ("Er is geen verbinding met de netwerkschijf ", "`r`n", $netwerkmap)
+    # melding wordt altijd gelogd. Dit kan eventueel met het toevoegen van een switch worden uitgezet.
+    Meldingnaarlogbestand -meldtekst $melding
+    if ($geenmelding) {
+        Write-Host -f Red $melding
+    } else {
+        $vraagdoorgaan = -join ($melding, "`r`n", "Controleer of de netwerkschijf aanwezig is.", "`r`n", "De taak kan nu niet opgestart worden.")
+        $null=venstermetvraag -titel "Geen verbinding met netwerkschijf" -vraag $vraagdoorgaan -schuifbalk
     }
 } # einde if (!($gevonden))
 
 
 return $gevonden
-}
+} # einde Netwerkmapaanwezig
 
 Function declarerenlijstlocaties ($keuzelocatienr, $wijd, $loc_x, $loc_y) {
 
@@ -905,17 +920,15 @@ $positiepunt = $bestand.LastIndexOf(".")
 
     # Standaard krijgt elk bestand icoontje 1, maar afhankelijk van de extensie krijgt het een ander nummer. 
     # De nummering is afhankelijk van de volgorde van aanmaken bij functie Declareericoontjes. zie hierboven.
-    $gevondennr = 1
     $teller = 0
-    $global:bestandsformaten | ForEach-Object {
-        $formats = $_.typen
-        if ($formats.Contains($extensie) ) { 
-            $gevondennr = $teller 
-            return 
+    foreach ($formaat in $global:bestandsformaten) {
+        $formats = $formaat.typen
+        if ($formats.Contains($extensie)) {
+            return $teller
         }
         $teller += 1
-    } # einde ForEach-Object - loop
-return $gevondennr
+    } # einde foreach-loop
+return 1
 }
 
 Function Bepaalicoontjenr ($controlemap, $bestand) {
@@ -1019,6 +1032,46 @@ $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
          
     }
 
+function VerbindmetSharePoint {
+       
+try {
+    # Verbinden met SharePoint
+    Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive -ErrorAction Stop
+
+    # Test de nieuwe verbinding
+    Get-PnPWeb -ErrorAction Stop | Out-Null
+
+    return $true
+}
+catch {
+    # Loggen van fout
+    $melding = -join ("Verbinding met SharePoint mislukt.","`r`n", $($_.Exception.Message))
+    Meldingnaarlogbestand -meldtekst $melding
+    # melding geven met venster
+    $melding = -join ("`r`n", $melding, "`r`n", "Een aantal taken kunnen nu niet uitgevoerd worden.")
+    $null = venstermetvraag -titel "Geen verbinding met SharePoint." -vraag $melding "OK"
+    return $false
+}
+} # einde function VerbindmetSharePoint
+
+function ControleerverbindingSharePoint {
+
+param (
+    [string]$controlemap = $global:beheer.examenmappen.digitalebestanden
+)
+    try {
+        Get-PnPFolder -Url $controlemap -ErrorAction Stop | Out-Null
+        return $true
+    }
+    catch {
+
+        $controle = VerbindmetSharePoint
+        return $controle
+    }
+} # einde function ControleerverbindingSharePoint
+
+
+
 # hieronder de hoofdfuncties ----------------------------------------------------------------
 
 
@@ -1089,6 +1142,83 @@ function DownloadSharepoint {
     }
 } # einde DownloadSharepoint
 
+function UploadSharePointFolder {
+    param(
+        [Parameter(Mandatory)]
+        [string]$LocalFolderPath,
+
+        [Parameter(Mandatory)]
+        [string]$SharePointFolder
+    )
+
+    $errors = New-Object System.Collections.Generic.List[string]
+
+    if (-not (Test-Path -LiteralPath $LocalFolderPath -PathType Container)) {
+        $errors.Add("Lokale map niet gevonden: $LocalFolderPath")
+        return $errors
+    }
+
+    $SharePointFolder = $SharePointFolder.Replace('\','/').Trim('/')
+    $RootFolderName = Split-Path -Path $LocalFolderPath -Leaf
+    $RootSharePointPath = "$SharePointFolder/$RootFolderName"
+
+    try {
+        # Add-PnPFolder -Name $LocalFolderPath -Folder $SharePointFolder # | Out-Null
+        Add-PnPFolder -Name $RootFolderName -Folder $SharePointFolder | Out-Null
+    }
+    catch {
+        $errors.Add("Map $LocalFolderPath niet geüpload naar SharePoint: $SharePointFolder `n$($_.Exception.Message)")
+        return $errors
+    }
+
+    UploadFolderContentsRecursive `
+        -LocalPath $LocalFolderPath `
+        -SharePointPath $RootSharePointPath `
+        -ErrorList $errors
+
+    return $errors
+} # einde functie UploadSharePointFolder
+
+function UploadFolderContentsRecursive {
+    param(
+        [Parameter(Mandatory)]
+        [string]$LocalPath,
+
+        [Parameter(Mandatory)]
+        [string]$SharePointPath,
+
+        [System.Collections.Generic.List[string]]$ErrorList
+    )
+
+    $files = Get-ChildItem -LiteralPath $LocalPath -File
+    foreach ($file in $files) {
+        try {
+            Add-PnPFile -Path $file.FullName -Folder $SharePointPath | Out-Null
+        }
+        catch {
+            $ErrorList.Add("Bestand niet geüpload naar SharePoint: $($file.FullName) `n$($_.Exception.Message)")
+        }
+    }
+
+    $subFolders = Get-ChildItem -LiteralPath $LocalPath -Directory
+    foreach ($subFolder in $subFolders) {
+        $childSharePointPath = "$SharePointPath/$($subFolder.Name)"
+        try {
+            Add-PnPFolder -Name $subFolder.Name -Folder $SharePointPath | Out-Null
+        }
+        catch {
+            $ErrorList.Add(("Map niet geüpload naar SharePoint: {0}{1}{2}" -f $childSharePointPath, [Environment]::NewLine, $_.Exception.Message))
+            continue
+        }
+
+        UploadFolderContentsRecursive `
+            -LocalPath $subFolder.FullName `
+            -SharePointPath $childSharePointPath `
+            -ErrorList $ErrorList
+    }
+} # einde functie UploadFolderContentsRecursive
+
+
 ########## Function Scriptrun begint hieronder ##################################################
 
 # nodig voor afhandelen foutmeldingen
@@ -1105,6 +1235,29 @@ switch ($uitvoeren.taak) {
     # datum en tijdstip van vandaag in variabele plaatsen. nodig om de backup-mapnaam te bepalen.
     $datumvandaag = get-date -Format "yyyy-MM-dd__HH-mm-ss"
 
+# variabele voor test met sharepoint.
+    [string]$Sharepointmap = $uitvoeren.doelmap
+
+    # test of sharepoint map bestaat en aanmaken
+    try {
+        
+        # controleren of de map bestaat. Als dit niet het geval is, wordt de map aangemaakt.
+        # eerst de Sahrepointmap de sitegedeelte toevoegen
+        $web = Get-PnPWeb
+        $Sharepointmap = $Sharepointmap.TrimStart("/")
+        $Sharepointteammap = "$($web.ServerRelativeUrl)/$Sharepointmap"
+
+        Add-PnPFolder `
+            -Name $datumvandaag `
+            -Folder $Sharepointteammap | Out-Null
+        
+    }
+    catch {
+        ("Controleren SharePointmap: " + $Sharepointteammap + "`n" + $_.Exception.Message) | Out-File -FilePath $logbestand -Append
+        $uitvoeren.foutmelding = $true
+        break
+    } # einde catch
+
     #kopiëren bestanden naar homemappen van de kandidaten
     foreach ($rpcitem in $uitvoeren.listbox.selecteditems) {
         # progressie laten zien op balk
@@ -1117,7 +1270,7 @@ switch ($uitvoeren.taak) {
         $bronmap = -join ($uitvoeren.homemap,'\',$rpcitem)
 
         # bepalen doelmap. dit is de map waar de backup in komt.
-        $doelmap = -join ($uitvoeren.doelmap,'\',$datumvandaag,'\',$rpcitem)
+        [string]$doelmap = -join ($Sharepointmap,'/',$datumvandaag)
 
         # errors leeg maken
         $error.clear()
@@ -1125,17 +1278,27 @@ switch ($uitvoeren.taak) {
                 # extra test of de specifieke rpc-map wel bestaat. Anders wordt de catch getriggerd en heb je een foutmelding.
                 if (!(Test-Path $bronmap)) { throw "Map $bronmap niet gevonden."}
 
-                #backup maken
-                # de toevoeging \\? voor de bronmap en doelmap zorgt ervoor dat lange namen - meer dan maximaal 256 tekens, geen foutmelding geven en dus het kopieren en verwijderen ook dan lukt.
-                Copy-Item -path "$bronmap" -destination "$doelmap" -recurse -Force -container -ErrorAction Stop
+                # backup maken begint hier.
+                # Aanroepen en het resultaat opvangen
+                $errors = UploadSharePointFolder `
+                    -LocalFolderPath $bronmap `
+                    -SharePointFolder $doelmap
+                
+                # Kijken of er iets is misgegaan en daarna wissen als "wissen na backup" is geselecteerd 
+                if ($errors.Count -gt 0) {
+                    
+                    # erros loggen naar logbestand
+                    "$foutmelding_log Er zijn $($errors.Count) fout(en) opgetreden tijdens de upload." | Out-File -FilePath $logbestand -Append
+                    $errors | ForEach-Object { "$_" | Out-File -FilePath $logbestand -Append }
+                    $uitvoeren.foutmelding = $true
 
-                # en daarna wissen als dit geselecteerd is
-                if ($uitvoeren.wissennabackup -eq $true) { 
-                    # verwijderen van bestanden. Eerst de inhoud van mijn documenten
+                    } elseif ($uitvoeren.wissennabackup -eq $true) { 
+                    # en daarna wissen als dit geselecteerd is
+                    # Eerst de inhoud van mijn documenten
                     Remove-Item "$bronmap\mijn documenten\*" -Recurse -Force -ErrorAction Stop
                     # dan de root van rpc-map exclusief map mijn documenten
                     Remove-Item "$bronmap\*" -Recurse -Force -Exclude "mijn documenten" -ErrorAction Stop
-                    }
+                    } # einde elseif $uitvoeren.wissennabackup -eq $true
                 } # einde try
 
             catch {
@@ -1175,7 +1338,7 @@ switch ($uitvoeren.taak) {
 
     # progressie laten zien op balk
     $uitvoeren.progressbar.PerformStep()
-    <# Als er geen items zijn geselecteerd in de examenmap dan moet de gehele map worden gekopiërd naar $lo
+    <# Als er geen items zijn geselecteerd in de examenmap dan moet de gehele map worden gekopiërd naar $localPath
      anders worden de geselecteerde items een voor een gekopieerd.
     #>
     # foutmelding van PowerShell naar logbestand
@@ -1222,7 +1385,7 @@ switch ($uitvoeren.taak) {
         # write-host "Geselecteerde items toegevoegd aan lijst met te kopiëren items."
     } # einde if $uitvoeren.listview1.selecteditems.count -eq 0
 
-    #kopiëren bestanden naar homemappen van de kandidaten
+     #kopiëren bestanden naar homemappen van de kandidaten
 
     foreach ($rpcitem in $uitvoeren.listbox.selecteditems) {
         # progressie laten zien op balk
@@ -1358,12 +1521,15 @@ switch ($uitvoeren.taak) {
             $foutmelding_log = "[ $rpcitem - FOUT ] : "
             
             # doelmap bepalen. dit is een lokale variabele voor de deel-functie wissen hieronder.
-            $doelmap = -join ($uitvoeren.doelmap,'\',$rpcitem)
+            # $doelmap = -join ($uitvoeren.doelmap,'\',$rpcitem)
+            $doelmap = $uitvoeren.doelmap
+            # verwijderen van / aan het begin
+            $doelmap = $doelmap.Trim('/')
 
             $error.clear()
             try {
                 # compleet verwijderen van mappen. 
-                Remove-Item "$doelmap" -Recurse -Force -ErrorAction Stop
+                Remove-PnPFolder -Name $rpcitem -Folder $doelmap -Force
 
                 }
             catch {
@@ -1382,45 +1548,27 @@ switch ($uitvoeren.taak) {
 } # einde scriptRun
 
 function uitvoerentaken {
-# hier worden de 4 belangrijkste taken uitgevoerd.
+# hier worden de 5 belangrijkste taken uitgevoerd.
 
 # controleren of mappen bestaan - afhankelijk van de taak
 # map uitvoeren.homemap wordt in ieder geval gecontroleerd
-# Eerste regel van elke foutmelding
-$foutmeldingbegin = "Uitvoeren van een taak : "
 
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { 
-    $tempmap = $global:beheer.examenmappen.homemapstudenten
-    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
-De volgende Netwerkmap is niet gevonden
-$tempmap
-    "
+if (!(Netwerkmapaanwezig -netwerkmap $global:beheer.examenmappen.homemapstudenten)) { 
     return; 
 } 
-<# Deze controles zijn niet meer nodig als met SharePoint wordt gewerkt.
 
 if ($uitvoeren.taak -eq "kopiëren") {
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.digitalebestanden $true )) { 
-    $tempmap = $global:beheer.examenmappen.digitalebestanden
-    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
-De volgende Netwerkmap is niet gevonden
-$tempmap
-    "
-    return; 
+    if (!( ControleerverbindingSharePoint -controlemap $global:beheer.examenmappen.digitalebestanden )) {
+        return
     } 
 } 
 
 if ($uitvoeren.taak -eq "backup") {
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.backupmap $true )) { 
-    $tempmap = $global:beheer.examenmappen.backupmap
-    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
-De volgende Netwerkmap is niet gevonden
-$tempmap
-    "
-    return; 
-    } 
+    if (!( ControleerverbindingSharePoint -controlemap $global:beheer.examenmappen.backupmap )) {
+        return
+    }
 } 
-#>
+
 
 # einde controleren of mappen bestaan
 
@@ -1493,9 +1641,12 @@ $uitvoeren.progressbar.Location = New-Object System.Drawing.Point(20, 40)
 $uitvoeren.progressbar.Size = New-Object System.Drawing.Size(560, 30)
 $uitvoeren.progressbar.Style = "continuous"
 
-# de maximumwaarde van de progressbar. Deze is bij taak opschonen anders.
+# de maximumwaarde van de progressbar. Deze is bij taak opschonen en kopieren anders.
 if ($uitvoeren.taak -eq "opschonen") {
     $uitvoeren.progressbar.maximum = $listbox.items.count
+    } elseif ($uitvoeren.taak -eq "kopiëren") {
+    # plus 2 omdat er eerst een stap is voor het downloaden van de bestanden en, na het kopiëren van de bestanden, het leegmaken van tijdelijke map.
+    $uitvoeren.progressbar.maximum = $listbox.selecteditems.count +2
     } else {
     $uitvoeren.progressbar.maximum = $listbox.selecteditems.count
     }
@@ -1955,67 +2106,25 @@ if (($global:listbox.selecteditems.count -gt 0) -and ($global:geselecteerdebronm
 
 } # einde startknopklikbaar
 
-function HaalSharepointInhoudOp {
-    
-param(
-    [string]$sharepointmap = $global:beheer.examenmappen.digitalebestanden
-    )
-
-    $foutmelding_log = "Fout bij inlezen SharePointmap."
-
-    <# 1. Controleer verbinding met SharePoint
-    try {
-        $web = Get-PnPWeb -ErrorAction Stop
-    }
-    catch {
-        Meldingnaarlogbestand -meldtekst "$foutmelding_log
-Geen verbinding met SharePoint.`r`nFoutmelding: $($_.Exception.Message)"
-        return
-    }
-    
-    # 2. Controleer of $Sharepointmap een bestand is (en geen map)
-    $bestand = Get-PnPFile -Url $Sharepointmap -ErrorAction SilentlyContinue
-    if ($bestand) {
-        # Dit niet loggen want kan vaak voorkomen
-        # Meldingnaarlogbestand -meldtekst "$Sharepointmap is een bestand, geen map."
-        return
-    }
-    
-    # 3. Controleer of de map bestaat
-    $map = Get-PnPFolder -Url $Sharepointmap -ErrorAction SilentlyContinue
-    if (-not $map) {
-        Meldingnaarlogbestand -meldtekst "$foutmelding_log `r`nMap bestaat niet: $Sharepointmap"
-        return
-    }
-    #>
-
-    # Alle controles geslaagd, haal inhoud op
-    try {
-        $Sharepointinhoud = Get-PnPFolderItem -FolderSiteRelativeUrl $Sharepointmap -ErrorAction Stop
-        return $Sharepointinhoud
-    }
-    catch {
-        Meldingnaarlogbestand -meldtekst "$foutmelding_log`r`nOphalen van inhoud $Sharepointmap is niet gelukt.`r`nFoutmelding: $($_.Exception.Message)"
-        return
-    }
-}
-
-# Inlezen van SharePointmap . 
-# Wordt gebruikt bij Vensterkopieren. 
 function InlezenSharePointMap {
-# inlezen gekozen map en in variabele plaatsen
-# param $sharepointmap krijgt een waarde voor het geval het leeg wordt meegegeven
+<# inlezen gekozen map en in variabele plaatsen
+ param $sharepointmap krijgt een waarde voor het geval het leeg wordt meegegeven
+ Bij een fout wordt er alleen melding gemaakt in logboek.
+ Wordt gebruikt bij Vensterkopieren. 
+#>
 
 param(
     [string]$sharepointmap = $global:beheer.examenmappen.digitalebestanden
+    
     )
 
   try { 
   $Sharepointinhoud = Get-PnPFolderItem -FolderSiteRelativeUrl $sharepointmap  
+
   }
   catch {
   # melding loggen
-  $melding = -join ("Inlezen SharePoint map : ", $sharepointmap, "`n", $_.exception.message )
+  $melding = -join ("Inlezen SharePoint map ", $sharepointmap, "`n", $_.exception.message )
   Meldingnaarlogbestand -meldtekst $melding
   }
   return $Sharepointinhoud
@@ -2044,9 +2153,9 @@ $digitalebestanden = $global:beheer.examenmappen.digitalebestanden
 # lijst met geselecteerde examenmappen
 $global:geselecteerdebronmap = [System.Collections.ArrayList]@()
 
-# if (!(Netwerkmapaanwezig $global:beheer.examenmappen.digitalebestanden $true )) { return; } 
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { return; } 
-
+if (!( ControleerverbindingSharePoint)) {
+    return
+}
 
 # rpcnrs declareren met een function
 $global:listBox = declareren_rpcnrs;
@@ -2730,11 +2839,6 @@ function vensterbackup {
 # variabelen
 $keuzelocatie=$global:init["algemeen"]["locatiekeuze"]
 
-# controleren of de mappen beschikbaar zijn
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { return; } 
-
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.backupmap $true )) { return; } 
-
 # De hoofdmenu onzichtbaar maken
 $form.Hide()
 
@@ -2867,10 +2971,6 @@ function vensterwissen {
 # variabelen
 $keuzelocatie=$global:init["algemeen"]["locatiekeuze"]
 
-
-# controleren of de mappen beschikbaar zijn
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { return; } 
-
 # De hoofdmenu onzichtbaar maken
 $form.Hide()
 
@@ -2879,113 +2979,42 @@ $global:listBox = declareren_rpcnrs;
 $global:listBox = lijstrpcnrsaanmaken $keuzelocatie $global:listBox 
 
 # venster declareren
-$Form2 = declareren_standaardvenster "Wissen, verplaatsen en kopiëren van homemappen van de kandidaten" 600 640;
+$Form2 = declareren_standaardvenster "Wissen van homemappen van de kandidaten" 480 640;
 
 $Description3                     = New-Object system.Windows.Forms.Label
 $Description3.text                = "Locatie"
 $Description3.AutoSize            = $false
-$Description3.width               = 200
+$Description3.width               = 800
 $Description3.height              = 40
-$Description3.location            = New-Object System.Drawing.Point(10,10)
+$Description3.location            = New-Object System.Drawing.Point(290,15)
 $Description3.Font                = 'Microsoft Sans Serif,11'
 $Description3.ForeColor = [System.Drawing.Color]::Blue
 
 $Description4                     = New-Object system.Windows.Forms.Label
 $Description4.text                = "RPC-nummers"
 $Description4.AutoSize            = $false
-$Description4.width               = 300
+$Description4.width               = 800
 $Description4.height              = 40
-$Description4.location            = New-Object System.Drawing.Point(10,80)
+$Description4.location            = New-Object System.Drawing.Point(290,55)
 $Description4.Font                = 'Microsoft Sans Serif,11'
-$Description4.ForeColor = [System.Drawing.Color]::blue
+$Description4.ForeColor = [System.Drawing.Color]::Blue
 
-$Description5                     = New-Object system.Windows.Forms.Label
-$Description5.text                = ": Nog niet geselecteerd"
-$Description5.AutoSize            = $false
-$Description5.width               = 200
-$Description5.height              = 40
-$Description5.location            = New-Object System.Drawing.Point(400,110)
-$Description5.Font                = 'Microsoft Sans Serif,11'
-$Description5.ForeColor = [System.Drawing.Color]::Red
 
-$Description6                     = New-Object system.Windows.Forms.Label
-$Description6.text                = ": Nog niet geselecteerd"
-$Description6.AutoSize            = $false
-$Description6.width               = 200
-$Description6.height              = 40
-$Description6.location            = New-Object System.Drawing.Point(400,160)
-$Description6.Font                = 'Microsoft Sans Serif,11'
-$Description6.ForeColor = [System.Drawing.Color]::Red
-
-$Description7                     = New-Object system.Windows.Forms.Label
-$Description7.text                = "Geselecteerd"
-$Description7.AutoSize            = $false
-$Description7.width               = 200
-$Description7.height              = 40
-$Description7.location            = New-Object System.Drawing.Point(400,75)
-$Description7.Font                = 'Microsoft Sans Serif,11'
-$Description7.ForeColor = [System.Drawing.Color]::blue
-
-$Btnbron = New-object System.Windows.Forms.Button 
-$Btnbron.text= "Bron"
-$Btnbron.location = "250,105" 
-$Btnbron.size = "150,30"  
-$Btnbron.BackColor = 'blue'
-$Btnbron.ForeColor = 'white'
-$Btnbron.Add_Click({ overzichttaken "wissen" }) 
-$Btnbron.Enabled= $false
-$Btnbron.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bevestig je keuze en ga door naar het overzicht." )
-})
-
-$Btndoel = New-object System.Windows.Forms.Button 
-$Btndoel.text= "Doel"
-$Btndoel.location = "250,155" 
-$Btndoel.size = "150,30"  
-$Btndoel.BackColor = 'blue'
-$Btndoel.ForeColor = 'white'
-$Btndoel.Add_Click({ overzichttaken "wissen" }) 
-$Btndoel.Enabled= $false
-$Btndoel.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bevestig je keuze en ga door naar het overzicht." )
-})
-
-$Btnwissen = New-object System.Windows.Forms.Button 
-$Btnwissen.text= "Wissen"
-$Btnwissen.location = "250,490" 
-$Btnwissen.size = "150,30"  
-$Btnwissen.BackColor = 'green'
-$Btnwissen.ForeColor = 'white'
-$Btnwissen.Add_Click({ overzichttaken "wissen" }) 
-$Btnwissen.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bevestig je keuze en ga door naar het overzicht." )
-})
-
-$Btnverplaatsen = New-object System.Windows.Forms.Button 
-$Btnverplaatsen.text= "Verplaatsen"
-$Btnverplaatsen.location = "250,255" 
-$Btnverplaatsen.size = "150,30"  
-$Btnverplaatsen.BackColor = 'green'
-$Btnverplaatsen.ForeColor = 'white'
-$Btnverplaatsen.Add_Click({ overzichttaken "wissen" }) 
-$Btnverplaatsen.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bevestig je keuze en ga door naar het overzicht." )
-})
-
-$Btnkopieren = New-object System.Windows.Forms.Button 
-$Btnkopieren.text= "Kopiëren"
-$Btnkopieren.location = "250,305" 
-$Btnkopieren.size = "150,30"  
-$Btnkopieren.BackColor = 'green'
-$Btnkopieren.ForeColor = 'white'
-$Btnkopieren.Add_Click({ overzichttaken "wissen" }) 
-$Btnkopieren.add_MouseHover({
+$Btnstart = New-object System.Windows.Forms.Button 
+$Btnstart.text= "Bevestigen"
+$Btnstart.location = "50,540" 
+$Btnstart.size = "150,30"  
+$BtnStart.BackColor = 'green'
+$BtnStart.ForeColor = 'white'
+$Btnstart.Add_Click({ overzichttaken "wissen" }) 
+$Btnstart.Enabled= $false
+$Btnstart.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Bevestig je keuze en ga door naar het overzicht." )
 })
 
 $Btnescape = New-object System.Windows.Forms.Button 
 $Btnescape.text= "Terug"
-$Btnescape.location = "50,560" 
+$Btnescape.location = "250,540" 
 $Btnescape.size = "150,30"  
 $Btnescape.BackColor = 'red'
 $Btnescape.ForeColor = 'white'
@@ -2997,11 +3026,11 @@ $Btnescape.add_MouseHover({
 
 
 # listbox is in het begin al gedeclareerd.
-$listBox.Location = New-Object System.Drawing.Point(10,105)
-$listBox.Size = New-Object System.Drawing.Size(220,20)
+$listBox.Location = New-Object System.Drawing.Point(10,55)
+$listBox.Size = New-Object System.Drawing.Size(260,20)
 $listBox.font = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
 $listBox.SelectionMode = 'MultiExtended'
-$listBox.Height = 415
+$listBox.Height = 475
 $listBox.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Selecteer de RPC-nummers waarvan de back-up wordt gemaakt." )
 })
@@ -3010,14 +3039,14 @@ $listBox.add_MouseHover({
 $listbox.add_SelectedIndexChanged(
      { 
      if ($listbox.selecteditems.count -gt 0) {
-        $Btnbron.Enabled= $true
+        $Btnstart.Enabled= $true
         } else {
-        $Btnbron.Enabled= $false
+        $Btnstart.Enabled= $false
         }
     } )
 
 # Standaard lijst met alle locaties maken, met standaardwaarden
-$lijstlocaties = declarerenlijstlocaties $keuzelocatie 220 10 35
+$lijstlocaties = declarerenlijstlocaties $keuzelocatie 260 10 15
 
 # bij wijzigen van selectie lijstlocaties
 $lijstlocaties.add_SelectedIndexChanged(
@@ -3028,23 +3057,8 @@ $lijstlocaties.add_SelectedIndexChanged(
      # nieuwe rpcnrs declareren
      $global:listBox = lijstrpcnrsaanmaken $keuzelocatie $global:listBox 
      # startknop niet klikbaar maken
-     $Btnbron.Enabled= $false
+     $Btnstart.Enabled= $false
      } ) 
-
-$doelmaplegen = New-Object System.Windows.Forms.Checkbox 
-$doelmaplegen.Location = New-Object System.Drawing.Point(250,350)
-$doelmaplegen.Size = New-Object System.Drawing.Size(250,60)
-$doelmaplegen.Text = "Doelmap wissen alvorens het verplaatsen of kopiëren."
-$doelmaplegen.Font = 'Microsoft Sans Serif,12'
-$doelmaplegen.ForeColor = [System.Drawing.Color]::Green
-if ($keuzedoelmaplegen -eq "Ja") {
-    $doelmaplegen.Checked = $true
-    } else {
-    $doelmaplegen.Checked = $false
-    }
-$doelmaplegen.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Geef aan of de doelmap geleegd moet worden voor het uitvoeren van de taak." )
-})
 
 # venster met uitleg over deze taak wordt gedeclareerd. hieronder worden enkele variabelen aangepast aan deze taakvenster
 declareren_uitlegvenster "Uitleg over de taak Wissen." 690 180 430 550 "Hier kunt u bestanden van de geselecteerde RPC-nummers verwijderen.
@@ -3053,8 +3067,7 @@ Bovenaan kunt u de locatie en daaronder de RPC-nummers die verwijderd moet worde
 Om naar het overzicht te gaan waar u het verwijderen kan starten moet u op Bevestigen klikken.
 "
 
-$form2.controls.AddRange(@($lijstlocaties, $listBox, $Btnbron, $Btndoel, $Btnwissen, $Btnverplaatsen, $Btnkopieren, $doelmaplegen, $Btnescape, $Description3, $Description4, 
-                           $Description5, $Description6, $Global:vraagtekenicoon))
+$form2.controls.AddRange(@($lijstlocaties, $listBox, $Btnstart, $Btnescape, $Description3, $Description4, $Global:vraagtekenicoon))
 
 Add-EscapeClose -Form $form2
 
@@ -3073,9 +3086,6 @@ function vensterverplaatsen {
 $keuzelocatie=$global:init["algemeen"]["locatiekeuze"]
 $keuzedoelmaplegen=$global:init["algemeen"]["maplegenvoorverplaatsen"]
 
-
-# controleren of de mappen beschikbaar zijn
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { return; } 
 
 # De hoofdmenu onzichtbaar maken
 $form.Hide()
@@ -3189,7 +3199,7 @@ $doelselectie.add_SelectedIndexChanged(
         $doelselectie.selecteditem = $null
         }
     # kijken of startknop zichtbaar mag zijn
-    if (($doelselectie.selecteditem -ne $null) -and ($bronselectie.selecteditem -ne $null)) {
+    if (($null -ne $doelselectie.selecteditem) -and ($null -ne $bronselectie.selecteditem)) {
         $Btnstart.Enabled= $true
         } else {
         $Btnstart.Enabled= $false
@@ -3203,7 +3213,7 @@ $bronselectie.add_SelectedIndexChanged(
         $bronselectie.selecteditem = $null
         }
     # kijken of startknop zichtbaar mag zijn
-     if (($doelselectie.selecteditem -ne $null) -and ($bronselectie.selecteditem -ne $null)) {
+     if (($null -ne $doelselectie.selecteditem) -and ($null -ne $bronselectie.selecteditem)) {
         $Btnstart.Enabled= $true
         } else {
         $Btnstart.Enabled= $false
@@ -4492,9 +4502,9 @@ $_"
     # Console open houden of sluiten
     if (($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'prerelease')) {
         if ($keuzeoptie9.Selectedindex -eq 0) {
-        ShowHide-ConsoleWindow 0;
+        Toonofverbergconsole 0;
         } else {
-        ShowHide-ConsoleWindow 5;
+        Toonofverbergconsole 5;
         }
     }
 
@@ -4537,8 +4547,8 @@ $form.show()
 
 function vensteropschonen {
 
-# inlezen van backupmappen, bepalen aantal te verwijderen mappen en vullen van venster
 function inlezenmappen {
+# inlezen van backupmappen, bepalen aantal te verwijderen mappen en vullen van venster
 
 if ($objTextBox1.Text -eq "") {
     $null = venstermetvraag -titel "Geen getal ingevuld" -vraag "`r`nVul een geldige getal in voor het aantal dagen waarna een back-up wordt verwijderd."
@@ -4561,17 +4571,46 @@ $listBox.items.clear()
 # beheer-variabele krijgt hier een verkorte naam tbv leesbaarheid
 $backupmap = $global:beheer.examenmappen.backupmap
 # inlezen backupmap en fouten opvangen
-try {
+<# try {
    Get-ChildItem -Path "$backupmap" -ErrorAction Stop | Where-Object {( ($_.psiscontainer) -and ($_.LastWriteTime -lt (Get-Date).AddDays(-$getal1)) )} | foreach-object {
         $tellerbackups++
         $listbox.Items.Add($_.Name) 
         }
    
 }
+
+#>
+try {
+    $folders = InlezenSharePointMap -sharepointmap $backupmap
+}
 catch {
         $melding = -join ("Taak verwijderen van backups van de homemappen is gestart : ", "`n", $_.exception.message )
         Meldingnaarlogbestand -meldtekst $melding
+        # knop is niet klikbaar bij foutmelding.
+        $Btnaccept.Enabled=$false
+        return
        }
+    
+# Filteren op dagen ($getal1)
+$grensdatum = (Get-Date).AddDays(-$getal1)
+
+foreach ($folder in $folders) {
+
+    # Alleen verwerken als het een map is; bestanden overslaan
+    if ($folder.GetType().Name -eq "Folder") {
+
+        # Aanmaakdatum van de map ophalen
+        $map = Get-PnPFolder -Url $folder.ServerRelativeUrl -Includes ListItemAllFields
+        $aanmaakdatum = $map.ListItemAllFields["Created"]
+
+        # Alleen mappen toevoegen die ouder zijn dan $dagen
+        if ($aanmaakdatum -and ([datetime]$aanmaakdatum) -lt $grensdatum) {
+            $tellerbackups++
+            [void]$listbox.Items.Add($folder.Name)
+        }
+    }
+}
+
 # Knop Bevestigen laten zien als er mappen zijn om te verwijderen
 if ($tellerbackups -eq 0 ) { $Btnaccept.Enabled=$false }
       else { $Btnaccept.Enabled=$true }
@@ -4582,7 +4621,9 @@ if ($tellerbackups -eq 0 ) { $Btnaccept.Enabled=$false }
 # ------ begin van de function vensteropschonen ---------------------
 
 # controleren of de mappen beschikbaar zijn
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.backupmap $true )) { return; } 
+if (!( ControleerverbindingSharePoint -controlemap $global:beheer.examenmappen.backupmap )) {
+        return
+    }
 
 # De hoofdmenu onzichtbaar maken
 $form.Hide()
@@ -4703,11 +4744,15 @@ Om naar het overzicht te gaan waar u het verwijderen kan starten moet u op Beves
 $Form2.Controls.AddRange(@( $objTextBox1, $global:listbox, $description1, $description2, $description3, $description4,  $BtInlezen, $Btnaccept, $Btnescape, $Global:vraagtekenicoon ))
 
 
-# eerst inlezen mappen
-inlezenmappen;
+
 
 Add-EscapeClose -Form $form2
 
+# uitvoeren bij het starten van de form
+$Form2.add_Shown({ 
+    # eerst inlezen mappen
+    inlezenmappen;
+})
 # openen venster
 $null = $form2.ShowDialog()
 
@@ -4945,7 +4990,7 @@ $weertegevenlogs = bepaaleigenlogbestanden
 
 <# Controleren of er logbestanden zijn om te verwijderen. 
    Hiervoor worden de eigen logbestanden die kunnen worden verwijderd geteld.
-   Met try-catch fouten worden fouten opvangen
+   Met try-catch worden fouten opvangen
 #>
 
 $tellerlogs=0
@@ -4982,7 +5027,7 @@ $melding_opschonen_begint | out-file $logbestand -Append
 # bepaal de lijst met mappen die verwijderd worden en opvangen foutmelding met try- catch methode
 try {
     Get-ChildItem -Path $weertegevenlogs -ErrorAction Stop | Where-Object {(!($_.psiscontainer) -and $_.LastWriteTime -lt (Get-Date).AddDays(-$getal2))} | foreach-object {
-        # map om te verwijderen
+        # bestand om te verwijderen
         $todelete = $_.Name
         # in logbestand schrijven
         " - $todelete " | out-file $logbestand -Append
@@ -5272,7 +5317,7 @@ $keuzelocatie     = $global:init["algemeen"]["locatiekeuze"]
 $global:geselecteerdebronmap = [System.Collections.ArrayList]@()
 
 # controleren of de mappen beschikbaar zijn
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $true )) { return; } 
+if (!(Netwerkmapaanwezig -netwerkmap $global:beheer.examenmappen.homemapstudenten )) { return; } 
 
 # rpcnrs declareren met een function
 $global:listBox = declareren_rpcnrs;
@@ -5414,8 +5459,6 @@ $BtnTerug.add_MouseHover({
 })
 $Form2.controls.add($BtnTerug)
 
-# standaard tekst in venster met geselecteerd examenmap. Nodig voor Objtekst, weergave van geselecteerde homemap.
-$Startexamenmap = "Homemap kandidaat"
 # Tekst tussen twee geselecteerde mappen, om deze uit elkaar te houden
 $Scheidingstekst = " » "
 
@@ -5424,6 +5467,7 @@ $objtekst2.Location = New-Object System.Drawing.Size(200,80)
 $objtekst2.Size = New-Object System.Drawing.Size(660,47)
 $objtekst2.font = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
 $objtekst2.Text = ''
+
 $objtekst2.ReadOnly = $true
 $objtekst2.Multiline = $true
 $objtekst2.BackColor  = 'white'
@@ -5559,7 +5603,7 @@ $form.show()
 function Start-Pwsh7 {
         param($path)
         # $path wijst naar de locatie van pwsh.exe, deze is nodig om PowerShell 7 te starten.
-        # $scriptnaam wordt is de naam vh programma met .ps1 erachter, en het volledige pad naar dit script. 
+        # $scriptnaam is de naam van het programma met .ps1 erachter, en het volledige pad naar dit script. 
         $scriptnaam = $global:programma.naam
         $scriptnaam = -join ($startmap, "\", $scriptnaam, ".ps1")
 
@@ -5567,7 +5611,7 @@ function Start-Pwsh7 {
         Start-Sleep -Seconds 2
         Start-Process $path -ArgumentList '-File', "`"$scriptnaam`"" 
         
-    }
+}
 
 
 function Start-Pwsh5 {
@@ -5581,35 +5625,11 @@ start-process PowerShell.exe -argumentlist '-File', "`"$scriptnaam`""
 #>
 
 
-# Bepalen van de persoonlijke initialisatiebestand.
-$gebruikersbestand = bepaalinitnaamgebruiker
-
-write-host "Gebruikersinstellingen inlezen."
-
-# Inlezen oude algemene initialisatiebestand en omzetten naar gebruikersbestand. Dit kan op een gegeven moment eruit.
-# Oude initialisatiebestand werd gebruikt tot versie 4.5.0
-$global:initbestand = -join ("$startmap","\","initialisatie.ini")
-if (test-path -path $global:initbestand -pathtype leaf) { 
-    # als nieuwe bestand al bestaat, verwijderen
-    if (test-path -path $gebruikersbestand -pathtype leaf) {
-         Remove-Item $gebruikersbestand
-         }
-    Rename-Item -Path $global:initbestand -NewName $gebruikersbestand
-}
-
-# Vanaf versie 4.7.0 naam gebruikersbestand wijzigen. Dit kan op een gegeven moment weg.
-$oudenaam = -join ("$startmap","\gebruiker",$env:username,".ini")
-$nieuwenaam = bepaalinitnaamgebruiker
-if (test-path -path $oudenaam -pathtype leaf) { 
-    Rename-Item -Path $oudenaam -NewName $nieuwenaam
-}
-
-# inlezen van gebruikers instellingen
-Inlezengebruikersinstellingen;
-
 # Controleren of PowerShell 7 is geïnstalleerd en anders installeren en starten met PowerShell 7.
 
-if (($PSVersionTable.PSVersion.Major -lt 7) -and ($global:init.uitvoerennaopstarten.powershell7start -eq "Ja")) {
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+
+    write-host "Programma is opgestart met een PowerShell versie die lager is dan 7." -ForegroundColor Yellow
 
     # eerst controleren of pwsh al ergens anders staat, bijvoorbeeld in de map van Microsoft Store apps.
     $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
@@ -5623,89 +5643,66 @@ if (($PSVersionTable.PSVersion.Major -lt 7) -and ($global:init.uitvoerennaopstar
     if (Test-Path $pwsh7_locatie) {
         try {
             Start-Pwsh7 $pwsh7_locatie
-            Exit   # alleen hier exit!
+            Exit # Exit hier zodat het programma niet verder gaat in PS5
         }
         catch {
-        Write-Host "PowerShell 7 kon niet gestart worden. Programma gaat verder in huidige versie.
-$_" -ForegroundColor Yellow
-        $Global:init.uitvoerennaopstarten.powershell7start='Nee'
-        Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 is gevonden maar kon niet gestart worden.
-$_"
+        $melding = -join ("PowerShell 7 is aanwezig maar kan niet gestart worden.","`r`n","De volgende foutmelding is gegeven :","`r`n", $_)
         }
+
     } else {
 
     # Controleer winget
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        Write-Host "winget niet beschikbaar. Programma gaat verder zonder PowerShell 7." -ForegroundColor Yellow
-         # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
-        $Global:init.uitvoerennaopstarten.powershell7start='Nee'
-        Meldingnaarlogbestand -meldtekst "PowerShell 7 check : winget niet beschikbaar. 
-PowerShell 7 kan niet automatisch worden geïnstalleerd. 
-Programma gaat verder zonder PowerShell 7."
-        
-    }
-    else {
-        Write-Host "PowerShell 7 wordt geïnstalleerd..." -ForegroundColor Green
+        $melding = "Winget is niet beschikbaar. PowerShell 7 kan niet automatisch worden geïnstalleerd."
+
+    } else {
+        Write-Host "PowerShell 7 wordt geïnstalleerd." -ForegroundColor Green
 
         try {
             # winget install Microsoft.PowerShell --accept-source-agreements --accept-package-agreements --source winget --scope user
             winget install --id Microsoft.PowerShell --exact --source winget --accept-source-agreements --accept-package-agreements 
+
+            # Opnieuw controleren of pwsh al ergens anders staat, bijvoorbeeld in de map van Microsoft Store apps.
+            $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
+            if ($cmd) {
+                $pwsh7_locatie = $cmd.Source
+                } else {
+                $pwsh7_locatie = "$env:LOCALAPPDATA\Microsoft\WindowsApps\pwsh.exe"
+            }
+
+            # als pwsh7 gevonden is, deze starten. Zo niet, dan foutmelding geven dat PowerShell 7 niet is gevonden na installatie.
+            if (Test-Path $pwsh7_locatie) {
+                Start-Pwsh7 $pwsh7_locatie
+                Exit # Exit hier zodat het programma niet verder gaat in PS5
+            } else {
+                $melding = "PowerShell 7 is niet gevonden na installatie in de map $pwsh7_locatie. Controleer of PowerShell 7 handmatig kan worden gestart."
+            }
+
         }
         catch {
-            Write-Host "Installatie mislukt, programma gaat verder zonder PowerShell 7." -ForegroundColor Yellow
-            Write-Host $_.exception.message 
-            # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
-            $Global:init.uitvoerennaopstarten.powershell7start='Nee'
-            Meldingnaarlogbestand -meldtekst "PowerShell 7 check : Er is een fout opgetreden bij het installeren van PowerShell 7 met winget.
-Programma gaat verder zonder PowerShell 7."
-        }
-        Start-Sleep -Seconds 3
-
-        # opnieuw proberen pwsh te vinden
-        $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
-        if ($cmd) {
-            $pwsh7_locatie = $cmd.Source
-        } else {
-            $pwsh7_locatie = $null
+            $melding = -join ("Er is een fout opgetreden bij het installeren van PowerShell 7 met Winget.","`r`n","De volgende foutmelding is gegeven :","`r`n", $_)
         }
 
-        if (-not $pwsh7_locatie) {
-            $pwsh7_locatie = "$env:LOCALAPPDATA\Microsoft\WindowsApps\pwsh.exe"
-        }
-
-        if (Test-Path $pwsh7_locatie) {
-            Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 is succesvol geïnstalleerd. 
-Programma is gestart met PowerShell 7." -type "MEDEDELING"
-            Write-Host "PowerShell 7 check : PowerShell 7 is succesvol geïnstalleerd."
-            try {
-            Start-Pwsh7 $pwsh7_locatie
-            Exit   # alleen hier exit!
-            }
-            catch {
-                Write-Host "PowerShell 7 kon niet gestart worden. Programma gaat verder in huidige versie.
-$_" -ForegroundColor Yellow
-                # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
-                $Global:init.uitvoerennaopstarten.powershell7start='Nee'
-                Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 is geïnstalleerd maar kon niet gestart worden.
-$_"
-            } 
-        }
-        else {
-            Write-Host "PowerShell 7 kon niet gestart worden. Programma gaat verder in huidige versie." -ForegroundColor Yellow
-            # Deze vraag niet meer stellen -> Waarde op nee zetten. Bewaren wordt verderop in dit script uitgevoerd.
-            $Global:init.uitvoerennaopstarten.powershell7start='Nee'
-            Meldingnaarlogbestand -meldtekst "PowerShell 7 check : PowerShell 7 kon niet geïnstalleerd worden.
-Programma gaat verder in huidige versie."
-        }
     } # einde else van if (-not (get-command winget ....
 
     } # einde else van if test-path pwsh7_locatie
 
-    # Bewaren instellingen voor het geval "PowerShell 7 check" op nee is gezet, zodat deze niet meer wordt uitgevoerd. 
-    # Dit kan bij een eerdere catch gewijzigd zijn.
-    Bewareninstellingen
-    # GEEN EXIT → script loopt gewoon door in PS5
-}
+    $melding = -join ($melding,"`n","Het programma kan niet werken zonder PowerShell 7.0 of hoger.")
+    Meldingnaarlogbestand -meldtekst $melding
+    write-host $melding -ForegroundColor Red
+    write-host "Installeer PowerShell 7.0 (of hoger) handmatig via de Microsoft Store of via de website.`nHet programma wordt afgesloten in 10 seconden." -ForegroundColor Red
+    start-sleep -Seconds 10
+    Exit # Exit hier zodat het programma niet verder gaat in PS5 
+
+} # einde if ($PSVersionTable.PSVersion.Major -lt 7)
+
+# Bepalen van de persoonlijke initialisatiebestand.
+$gebruikersbestand = bepaalinitnaamgebruiker
+
+write-host "Gebruikersinstellingen inlezen."
+
+# inlezen van gebruikers instellingen
+Inlezengebruikersinstellingen;
 
 # controleren op een update. 
 updateuitvoeren;
@@ -5737,21 +5734,8 @@ if (!(Get-Module -name pnp.powershell -ListAvailable)) {
     }
 
 # dan verbinden ......
-try {
-    write-host "Verbinding maken met SharePoint. Log via de default browser in op SharePoint."
-    Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive
-    }
-
-catch {
-
-$null = venstermetvraag -titel "Geen verbinding met SharePoint." -vraag "Geen verbinding kunnen maken met SharePoint.
-De volgende foutmelding is geretourneerd:
-- $_
-
-Een aantal taken kunnen nu niet uitgevoerd worden." "OK"
-      } # einde catch 
-
-# einde verbinden met SharePoint
+Write-Host "Verbinden met SharePoint. Meld u aan via de default browser." -f Yellow
+$null = VerbindmetSharePoint;
 
 #Overige controles en tijdelijke taken uitvoeren
 write-host "Controleren of bestanden moeten worden opgeschoond of hersteld."
@@ -5772,44 +5756,9 @@ if (test-path -path "$startmap\changelog.txt") { Remove-Item "$startmap\changelo
 # verwijderen beheren.ico vanaf versie 4.8.0
 if (test-path -path "$startmap\beheren.ico") { Remove-Item "$startmap\beheren.ico" }
 
-<# Tijdelijk controle netwerkmappen uitgeschakeld ivm Sharepoint testen!!!
 
-# Controleren of netwerkschijven aanwezig zijn en eventueel herstellen.
-# Eerste regel van elke foutmelding tijdens deze controle.
-$foutmeldingbegin = "Initialiseren van het programma : "
-# Als er een fout is dan hiermee onthouden.
-$netwerkmapfout = $false
-Write-host "Controleren of netwerkmappen aanwezig zijn. Dit kan even duren..."
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.digitalebestanden $false )) { 
-    $tempmap = $global:beheer.examenmappen.digitalebestanden
-    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
-De volgende Netwerkmap is niet gevonden
-$tempmap
-    "
-    $netwerkmapfout = $true 
-} 
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.homemapstudenten $false )) { 
-    $tempmap = $global:beheer.examenmappen.homemapstudenten
-    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
-De volgende Netwerkmap is niet gevonden
-$tempmap
-    "
-    $netwerkmapfout = $true 
-    } 
-if (!(Netwerkmapaanwezig $global:beheer.examenmappen.backupmap $false )) { 
-    $tempmap = $global:beheer.examenmappen.backupmap
-    Meldingnaarlogbestand -meldtekst "$foutmeldingbegin
-De volgende Netwerkmap is niet gevonden
-$tempmap
-    "
-    $netwerkmapfout = $true 
-    } 
-
-if ($netwerkmapfout) { Start-Sleep -Seconds 5}
-#>
-
-# Probleem van onjuiste programma icoon oplossen door opnieuw snelkoppeling te maken
-if ($Global:init.uitvoerennaopstarten.snelkoppeling -eq 'Ja') {
+# Opnieuw snelkoppeling maken omdat programma alleen met PowerShell 7 kan werken. Eenmalig uitvoeren.
+if ($Global:init.uitvoerennaopstarten.PS7snelkoppeling -eq 'Ja') {
 
     # Maken van snelkoppeling
     # benodigde variabelen
@@ -5820,14 +5769,11 @@ if ($Global:init.uitvoerennaopstarten.snelkoppeling -eq 'Ja') {
     # object aanmaken en bewaren. Alleen als er al een snelkoppeling is. 
     if (Test-Path $ShortcutPath) {
         # write-host "Snelkoppeling op bureaublad wordt opnieuw aangemaakt."
+        # Dit wordt ook gelogd. 
+        Meldingnaarlogbestand -meldtekst "Snelkoppeling op bureaublad is aangemaakt om met PowerShell 7 te starten." -type "MEDEDELING"
+        & "$PSScriptRoot\$snelkoppeling_script" -auto -pwsh7 -startmap $startmap
         
-        if ($PSVersionTable.PSVersion.Major -ge 6) {
-            Meldingnaarlogbestand -meldtekst "Snelkoppeling op bureaublad is aangemaakt om met PowerShell 7 te starten." -type "MEDEDELING"
-            & "$PSScriptRoot\$snelkoppeling_script" -auto -pwsh7 -startmap $startmap
-        } else {
-            Meldingnaarlogbestand -meldtekst "Snelkoppeling op bureaublad is aangemaakt om met PowerShell 5 te starten." -type "MEDEDELING"
-            & "$PSScriptRoot\$snelkoppeling_script" -auto -startmap $startmap
-        }
+        # $lastexitcode bevat de errorcode van de laatst uitgevoerde code, in dit geval van snelkoppeling_maken.ps1
         if ($LASTEXITCODE -ne 0) {
             Meldingnaarlogbestand -meldtekst "Fout opgetreden bij het aanmaken van de snelkoppeling.
 Startmap = $startmap
@@ -5836,9 +5782,9 @@ Bureaubladlink = $ShortcutPath" -type "FOUT"
     } # einde if (Test-Path $ShortcutPath) 
 
     # De volgende keer niet uitvoeren.
-    $Global:init.uitvoerennaopstarten.snelkoppeling='Nee'
+    $Global:init.uitvoerennaopstarten.PS7snelkoppeling='Nee'
     Bewareninstellingen
-} # einde if ($Global:init.uitvoerennaopstarten.updateinfo -eq 'Ja')
+} # einde if ($Global:init.uitvoerennaopstarten.PS7snelkoppeling -eq 'Ja')
 
 # Einde controles en tijdelijke taken uitvoeren
 
@@ -5851,7 +5797,7 @@ write-host "Opstarten hoofdvenster."
 # Hide Console. Alleen bij mode = release of prerelease
 if (( ($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'prerelease')) -and ($global:init.algemeen.consolesluiten -eq 'Ja')) { 
     write-host "De console wordt afgesloten..."
-    ShowHide-ConsoleWindow 0;
+    Toonofverbergconsole 0;
     }
 
 # Hoofdvenster declareren --------------------------------------------------------------------
@@ -6187,8 +6133,16 @@ if ($global:init.algemeen.nieuwelayout -eq 'Ja') {
 
 # Einde hoofdvenster declareren
 
-# Bij het tonen van het hoofdvenster, een aantal controles uitvoeren. Bijvoorbeeld een melding tonen als het programma nog in testfase is.
+# Bij het tonen van het hoofdvenster, een aantal controles uitvoeren (Bijvoorbeeld een melding tonen als het programma nog in testfase is)
+# En zorgen dat het venster op de voorgrond komt. Dit is nodig omdat het venster anders achter andere vensters kan komen te staan.
 $form.add_Shown({ 
+    # zorgen dat het venster op de voorgrond komt. Topmost = $true en dan weer terugzetten naar false. Anders blijft het venster altijd op de voorgrond.
+    $form.Topmost = $true 
+    $form.Activate()
+    $form.Focus()
+    start-sleep -Milliseconds 100
+    $form.Topmost = $false
+
     # Als het programma in testfase is, dan venster tonen met melding
     $mode=$global:programma.mode
     if ($global:programma.mode -ne 'release') {

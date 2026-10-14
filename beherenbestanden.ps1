@@ -33,7 +33,7 @@ $startmap=Split-Path -Parent $PSCommandPath
 
 $global:programma = @{
     versie = '5.0.0'
-    extralabel = 'optie.1.261012' # buildnummer of branch + eventuele volgnr + datum. 
+    extralabel = 'optie.1.261014' # buildnummer of branch + eventuele volgnr + datum. 
                                   # Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
                                   # Als dit wel het geval is, dan wordt dit aangepast naar "alpha.1".
     mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
@@ -248,13 +248,12 @@ $examenmappen = @{
     homemapstudenten  = 'Y:\RPC'
     backupmap         = '/gedeelde documenten/Backup kandidaten'
 }
-$opschonen=@{
-    dagenbewarenbackup = 730
-}
+
 $global:beheer = @{
     examenmappen      = $examenmappen
     locaties          = $locaties
     opschonen         = $opschonen
+    dagenbewarenbackup = 730
     }
 
 # lokale mappen worden gebruikt als programma.mode is alpha.
@@ -1035,21 +1034,21 @@ $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
 function VerbindmetSharePoint {
        
 try {
+    # Verbinden met SharePoint
     Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive -ErrorAction Stop
 
     # Test de nieuwe verbinding
     Get-PnPWeb -ErrorAction Stop | Out-Null
 
-    Write-Host "Verbonden met SharePoint."
     return $true
 }
 catch {
-    Write-Host "Verbinding met SharePoint mislukt: $($_.Exception.Message)" -ForegroundColor Red
-    $null = venstermetvraag -titel "Geen verbinding met SharePoint." -vraag "Geen verbinding kunnen maken met SharePoint.
-De volgende foutmelding is geretourneerd:
-- $_
-
-Een aantal taken kunnen nu niet uitgevoerd worden." "OK"
+    # Loggen van fout
+    $melding = -join ("Verbinding met SharePoint mislukt.","`r`n", $($_.Exception.Message))
+    Meldingnaarlogbestand -meldtekst $melding
+    # melding geven met venster
+    $melding = -join ("`r`n", $melding, "`r`n", "Een aantal taken kunnen nu niet uitgevoerd worden.")
+    $null = venstermetvraag -titel "Geen verbinding met SharePoint." -vraag $melding "OK"
     return $false
 }
 } # einde function VerbindmetSharePoint
@@ -1061,14 +1060,10 @@ param (
 )
     try {
         Get-PnPFolder -Url $controlemap -ErrorAction Stop | Out-Null
-        
-        throw "Fout ingezet..."
-
-        Write-Host "SharePoint-verbinding is actief en map $controlemap bestaat." 
         return $true
     }
     catch {
-        Write-Host "Opnieuw verbinden : " -NoNewline
+
         $controle = VerbindmetSharePoint
         return $controle
     }
@@ -1342,7 +1337,7 @@ switch ($uitvoeren.taak) {
 
     # progressie laten zien op balk
     $uitvoeren.progressbar.PerformStep()
-    <# Als er geen items zijn geselecteerd in de examenmap dan moet de gehele map worden gekopiërd naar $lo
+    <# Als er geen items zijn geselecteerd in de examenmap dan moet de gehele map worden gekopiërd naar $localPath
      anders worden de geselecteerde items een voor een gekopieerd.
     #>
     # foutmelding van PowerShell naar logbestand
@@ -1525,12 +1520,15 @@ switch ($uitvoeren.taak) {
             $foutmelding_log = "[ $rpcitem - FOUT ] : "
             
             # doelmap bepalen. dit is een lokale variabele voor de deel-functie wissen hieronder.
-            $doelmap = -join ($uitvoeren.doelmap,'\',$rpcitem)
+            # $doelmap = -join ($uitvoeren.doelmap,'\',$rpcitem)
+            $doelmap = $uitvoeren.doelmap
+            # verwijderen van / aan het begin
+            $doelmap = $doelmap.Trim('/')
 
             $error.clear()
             try {
                 # compleet verwijderen van mappen. 
-                Remove-Item "$doelmap" -Recurse -Force -ErrorAction Stop
+                Remove-PnPFolder -Name $rpcitem -Folder $doelmap -Force
 
                 }
             catch {
@@ -2121,6 +2119,7 @@ param(
 
   try { 
   $Sharepointinhoud = Get-PnPFolderItem -FolderSiteRelativeUrl $sharepointmap  
+
   }
   catch {
   # melding loggen
@@ -4568,20 +4567,33 @@ $tellerbackups = 0
 # hier wordt er ingelezen, aantal te verwijderen mappen bepaald en venster gevuld.
 $listBox.items.clear()
 
-# beheer-variabele krijgt hier een verkorte naam tbv leesbaarheid
+# backupmap krijgt hier een verkorte naam tbv leesbaarheid
 $backupmap = $global:beheer.examenmappen.backupmap
+# de datum tot waar de mappen worden geselecteerd
+$grensdatum = (Get-Date).AddDays(-$getal1)
+# het volledige pad naar de map in Sharepoint die ingelezen wordt
+$zoekfolder = -join ($global:Sharepoint.team, $backupmap)
 # inlezen backupmap en fouten opvangen
 try {
-   Get-ChildItem -Path "$backupmap" -ErrorAction Stop | Where-Object {( ($_.psiscontainer) -and ($_.LastWriteTime -lt (Get-Date).AddDays(-$getal1)) )} | foreach-object {
+    $folders = Get-PnPListItem -List "Documenten" -FolderServerRelativeUrl $zoekfolder -PageSize 1000 -Fields "FileRef","FileLeafRef","Created","FSObjType" | Where-Object {
+        ($_.FieldValues["FileRef"].Substring(0, $_.FieldValues["FileRef"].LastIndexOf("/"))) -eq $zoekfolder
+    }
+    foreach ($folder in $folders) {
+        if (
+        $folder["FSObjType"] -eq 1 -and
+        $folder["Created"] -lt $grensdatum
+        ) {
         $tellerbackups++
-        $listbox.Items.Add($_.Name) 
+        [void]$listbox.Items.Add($folder["FileLeafRef"])
         }
-   
+    } # einde foreach
 }
 catch {
-        $melding = -join ("Taak verwijderen van backups van de homemappen is gestart : ", "`n", $_.exception.message )
-        Meldingnaarlogbestand -meldtekst $melding
-       }
+  # melding loggen
+  $melding = -join ("Inlezen SharePoint map ", $zoekfolder, "`n", $_.exception.message )
+  Meldingnaarlogbestand -meldtekst $melding
+}
+
 # Knop Bevestigen laten zien als er mappen zijn om te verwijderen
 if ($tellerbackups -eq 0 ) { $Btnaccept.Enabled=$false }
       else { $Btnaccept.Enabled=$true }
@@ -4644,7 +4656,7 @@ $objTextBox1.Location = New-Object System.Drawing.Size(380,13)
 $objTextBox1.Size = New-Object System.Drawing.Size(55,50)
 $objTextBox1.MaxLength = 4
 $objTextBox1.Font = 'Microsoft Sans Serif,11'
-$objTextBox1.Text=$Global:beheer.opschonen.dagenbewarenbackup
+$objTextBox1.Text=$Global:beheer.dagenbewarenbackup
 $objTextBox1.Add_TextChanged({
     $this.Text = $this.Text -replace '\D'
 })
@@ -4715,11 +4727,15 @@ Om naar het overzicht te gaan waar u het verwijderen kan starten moet u op Beves
 $Form2.Controls.AddRange(@( $objTextBox1, $global:listbox, $description1, $description2, $description3, $description4,  $BtInlezen, $Btnaccept, $Btnescape, $Global:vraagtekenicoon ))
 
 
-# eerst inlezen mappen
-inlezenmappen;
+
 
 Add-EscapeClose -Form $form2
 
+# uitvoeren bij het starten van de form
+$Form2.add_Shown({ 
+    # eerst inlezen mappen
+    inlezenmappen;
+})
 # openen venster
 $null = $form2.ShowDialog()
 
@@ -5701,6 +5717,7 @@ if (!(Get-Module -name pnp.powershell -ListAvailable)) {
     }
 
 # dan verbinden ......
+Write-Host "Verbinden met SharePoint. Meld u aan via de default browser." -f Yellow
 $null = VerbindmetSharePoint;
 
 #Overige controles en tijdelijke taken uitvoeren
@@ -5735,7 +5752,7 @@ if ($Global:init.uitvoerennaopstarten.PS7snelkoppeling -eq 'Ja') {
     # object aanmaken en bewaren. Alleen als er al een snelkoppeling is. 
     if (Test-Path $ShortcutPath) {
         # write-host "Snelkoppeling op bureaublad wordt opnieuw aangemaakt."
-        
+        # Dit wordt ook gelogd. 
         Meldingnaarlogbestand -meldtekst "Snelkoppeling op bureaublad is aangemaakt om met PowerShell 7 te starten." -type "MEDEDELING"
         & "$PSScriptRoot\$snelkoppeling_script" -auto -pwsh7 -startmap $startmap
         
