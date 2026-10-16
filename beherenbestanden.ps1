@@ -5846,7 +5846,7 @@ if ($Global:init.uitvoerennaopstarten.PS7snelkoppeling -eq 'Ja') {
         # write-host "Snelkoppeling op bureaublad wordt opnieuw aangemaakt."
         # Dit wordt ook gelogd. 
         Meldingnaarlogbestand -meldtekst "Snelkoppeling op bureaublad is aangemaakt om met PowerShell 7 te starten." -type "MEDEDELING"
-        & "$PSScriptRoot\$snelkoppeling_script" -auto -pwsh7 -startmap $startmap
+        & "$PSScriptRoot\$snelkoppeling_script" -auto
         
         # $lastexitcode bevat de errorcode van de laatst uitgevoerde code, in dit geval van snelkoppeling_maken.ps1
         if ($LASTEXITCODE -ne 0) {
@@ -6041,9 +6041,8 @@ $Button12.Location = New-Object System.Drawing.Size(52,150)
 $Button12.Size = New-Object System.Drawing.Size(60,60)
 $Button12.Image = [System.Drawing.Image]::FromFile("$icoontjesmap\icoon-opties.png")
 $Button12.Add_Click({ 
-    # venster met subtaken tonen 
-    # subtaken zijn de knoppen 4 t/m 11, uitgezonderd de knoppen 7 en 8
-    # uitvoeren via function zodat deze makkelijk weer kan worden gebruikt bij het teruggaan van een subtaken naar het hoofdmenu
+    # switchen tussen de hoofdvenster en venster met subtaken.
+    # uitvoeren via function zodat deze makkelijk weer kan worden gebruikt bij het teruggaan van een subtaken naar het hoofdmenu.
     if ($Button1.visible) {
         subtakentonen
     } else {
