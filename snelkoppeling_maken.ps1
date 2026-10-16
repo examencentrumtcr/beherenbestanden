@@ -11,8 +11,9 @@ Je kan de volgende parameters meegeven aan het script:
 param (
     [switch]$auto,
     [switch]$pwsh7,
-    [string]$startmap="$env:USERPROFILE\beherenbestanden"
+    [string]$startmap=(Split-Path -Parent $PSCommandPath)
 )
+# $startmap=Split-Path -Parent $PSCommandPath
 
 # controleren van startmap van het programma. Eerst de exitcode op 0 zetten zodat deze zeker 0 is!
 $global:LASTEXITCODE = 0

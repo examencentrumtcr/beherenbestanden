@@ -46,7 +46,7 @@ $scriptnaam = $global:programma.naam
 write-host ""
 write-host "** Programma $scriptnaam " -f Green
 write-host "** Versie is "$global:programma.versie -f Green
-write-host "** PowerShell versie is "$PSVersionTable.PSVersion -f Green
+write-host "** Werkt met PowerShell versie "$PSVersionTable.PSVersion -f Green
 write-host ""
 write-host "Initialiseren van het programma."
 
@@ -958,11 +958,10 @@ $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
 }
 
  function subtakenverbergen {
-        # subtaken zijn de knoppen 4 t/m 11, uitgezonderd de knoppen 7 en 8
+        # subtaken zijn de knoppen 5 t/m 13 
 
         # subtaken verbergen
-        $Button4.visible = $false
-        $Button3.visible = $false
+        $Button8.visible = $false
         $Button9.visible = $false
         $Button10.visible = $false
         $Button6.visible = $false
@@ -972,29 +971,25 @@ $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
         $Button2.visible = $true
         $uitleg2.visible = $true
         $uitleg1.visible = $true
-        $Button13.visible = $false
-        $Button12.visible = $true
+        
     }
 
     function subtakentonen {
-        $Button4.visible = $true
-        $Button3.visible = $true
-        $Button9.visible = $true
-        $Button10.visible = $true
-        $Button6.visible = $true
-        $Button5.visible = $true
-        $Button11.visible = $true
+
         $Button1.visible = $false
         $Button2.visible = $false
         $uitleg2.visible = $false
         $uitleg1.visible = $false
-        $Button13.visible = $true
-        $Button12.visible = $false
-        
+        $Button8.visible = $true
+        $Button9.visible = $true
+        $Button10.visible = $true
+        $Button11.visible = $true
+        $Button6.visible = $true
+        $Button5.visible = $true
     }
 
     function Nieuwelayoutgebruiken {
-        # deze functie zorgt dat de layout van het hoofdvenster wordt aangepast als er voor een andere taak wordt gekozen waarbij subtaken worden weergegeven. 
+        # deze functie zorgt dat de layout van het hoofdvenster wordt aangepast als er voor een andere layout wordt gekozen waarbij subtaken worden weergegeven. 
    
         $Form.ClientSize = New-Object System.Drawing.Point(700,480)
         $Button1.Location = New-Object System.Drawing.Point(164,50)
@@ -1002,24 +997,23 @@ $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
         $uitleg1.Location = New-Object System.Drawing.Point(168, 215)
         $uitleg2.Location = New-Object System.Drawing.Point(402, 215)
 
-        $Button3.Location = New-Object System.Drawing.Point(286,150)
-        $Button4.Location = New-Object System.Drawing.Point(286,50)
         $Button5.Location = New-Object System.Drawing.Point(164,150)
-        $Button6.Location = New-Object System.Drawing.Point(398,50)
-        $Button9.Location = New-Object System.Drawing.Point(510,50)
-        $Button10.Location = New-Object System.Drawing.Point(398,150)
+        $Button6.Location = New-Object System.Drawing.Point(276,50)
+        $Button8.Location = New-Object System.Drawing.Point(388,150)
+        $Button9.Location = New-Object System.Drawing.Point(388,50)
+        $Button10.Location = New-Object System.Drawing.Point(276,150)
         $Button11.Location = New-Object System.Drawing.Point(164,50)
+        $Button12.visible = $true
     }
 
     function Oudelayoutgebruiken {
-        # deze functie zorgt dat de layout van het hoofdvenster wordt aangepast als er voor een andere taak wordt gekozen waarbij subtaken worden verborgen. 
+        # deze functie zorgt dat de layout van het hoofdvenster wordt aangepast als er voor een andere layout wordt gekozen waarbij subtaken worden verborgen. 
  
-        $Button3.Location = New-Object System.Drawing.Point(588,150)
-        $Button4.Location = New-Object System.Drawing.Point(588,50)
         $Button5.Location = New-Object System.Drawing.Point(52,250)
         $Button6.Location = New-Object System.Drawing.Point(52,350)
-        $Button9.Location = New-Object System.Drawing.Point(588,250)
-        $Button10.Location = New-Object System.Drawing.Point(588,350)
+        $Button8.Location = New-Object System.Drawing.Point(588,250)
+        $Button9.Location = New-Object System.Drawing.Point(588,50)
+        $Button10.Location = New-Object System.Drawing.Point(588,150)
         $Button11.Location = New-Object System.Drawing.Point(52,150)
         # $Button2.Location = New-Object System.Drawing.Point(376,50)
         $Button1.visible = $true
@@ -1027,7 +1021,6 @@ $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
         $uitleg2.visible = $true
         $uitleg1.visible = $true
         $Button12.Visible = $false
-        $Button13.Visible = $false
          
     }
 
@@ -1152,6 +1145,7 @@ function UploadSharePointFolder {
 
     $errors = New-Object System.Collections.Generic.List[string]
 
+    # controle lokale map
     if (-not (Test-Path -LiteralPath $LocalFolderPath -PathType Container)) {
         $errors.Add("Lokale map niet gevonden: $LocalFolderPath")
         return $errors
@@ -1162,14 +1156,15 @@ function UploadSharePointFolder {
     $RootSharePointPath = "$SharePointFolder/$RootFolderName"
 
     try {
-        # Add-PnPFolder -Name $LocalFolderPath -Folder $SharePointFolder # | Out-Null
+        # aanmaken map
         Add-PnPFolder -Name $RootFolderName -Folder $SharePointFolder | Out-Null
     }
     catch {
-        $errors.Add("Map $LocalFolderPath niet geüpload naar SharePoint: $SharePointFolder `n$($_.Exception.Message)")
+        $errors.Add("Map $LocalFolderPath niet geüpload naar SharePoint: `r`n - $SharePointFolder `r`n$($_.Exception.Message)")
         return $errors
     }
 
+    # kopiëren map naar Sharepoint
     UploadFolderContentsRecursive `
         -LocalPath $LocalFolderPath `
         -SharePointPath $RootSharePointPath `
@@ -1195,7 +1190,7 @@ function UploadFolderContentsRecursive {
             Add-PnPFile -Path $file.FullName -Folder $SharePointPath | Out-Null
         }
         catch {
-            $ErrorList.Add("Bestand niet geüpload naar SharePoint: $($file.FullName) `n$($_.Exception.Message)")
+            $ErrorList.Add("Bestand niet geüpload naar SharePoint:`r`n - $($file.FullName) `r`n$($_.Exception.Message)")
         }
     }
 
@@ -1206,7 +1201,8 @@ function UploadFolderContentsRecursive {
             Add-PnPFolder -Name $subFolder.Name -Folder $SharePointPath | Out-Null
         }
         catch {
-            $ErrorList.Add(("Map niet geüpload naar SharePoint: {0}{1}{2}" -f $childSharePointPath, [Environment]::NewLine, $_.Exception.Message))
+            # $ErrorList.Add(("Map niet geüpload naar SharePoint: {0}{1}{2}" -f $childSharePointPath, [Environment]::NewLine, $_.Exception.Message))
+            $ErrorList.Add(("Map niet geüpload naar SharePoint:", [Environment]::NewLine," - {0}{1}{2}" -f $childSharePointPath, [Environment]::NewLine, $_.Exception.Message))
             continue
         }
 
@@ -1217,8 +1213,20 @@ function UploadFolderContentsRecursive {
     }
 } # einde functie UploadFolderContentsRecursive
 
+function toevoegentekstvenster ($tekst) {
+    # deze functie voegt tekst toe aan venster "Objtekst2". 
+    # de tekst wordt altijd onderaan toegevoegd en het venster wordt automatisch naar beneden gescrold.
+    $uitvoeren.objtekst2.Invoke([Action]{
+        $uitvoeren.objtekst2.AppendText($tekst + "`r`n")
+    })
+
+}
 
 ########## Function Scriptrun begint hieronder ##################################################
+
+# info geven in rechter venster
+toevoegentekstvenster "`r`n**********************"
+toevoegentekstvenster "De taak is gestart"
 
 # nodig voor afhandelen foutmeldingen
 $uitvoeren.foutmelding = $false
@@ -1234,26 +1242,26 @@ switch ($uitvoeren.taak) {
     # datum en tijdstip van vandaag in variabele plaatsen. nodig om de backup-mapnaam te bepalen.
     $datumvandaag = get-date -Format "yyyy-MM-dd__HH-mm-ss"
 
-# variabele voor test met sharepoint.
+    # variabele voor test met sharepoint.
     [string]$Sharepointmap = $uitvoeren.doelmap
 
     # test of sharepoint map bestaat en aanmaken
+    toevoegentekstvenster "Aanmaken SharePointmap."
     try {
-        
         # controleren of de map bestaat. Als dit niet het geval is, wordt de map aangemaakt.
         # eerst de Sahrepointmap de sitegedeelte toevoegen
         $web = Get-PnPWeb
         $Sharepointmap = $Sharepointmap.TrimStart("/")
         $Sharepointteammap = "$($web.ServerRelativeUrl)/$Sharepointmap"
-
+        
         Add-PnPFolder `
             -Name $datumvandaag `
             -Folder $Sharepointteammap | Out-Null
-        
     }
     catch {
-        ("Controleren SharePointmap: " + $Sharepointteammap + "`n" + $_.Exception.Message) | Out-File -FilePath $logbestand -Append
+        ("Aanmaken SharePointmap: " + $Sharepointteammap + "`n" + $_.Exception.Message) | Out-File -FilePath $logbestand -Append
         $uitvoeren.foutmelding = $true
+        toevoegentekstvenster "$_"
         break
     } # einde catch
 
@@ -1273,12 +1281,13 @@ switch ($uitvoeren.taak) {
 
         # errors leeg maken
         $error.clear()
-            try {
+        try {
                 # extra test of de specifieke rpc-map wel bestaat. Anders wordt de catch getriggerd en heb je een foutmelding.
                 if (!(Test-Path $bronmap)) { throw "Map $bronmap niet gevonden."}
 
+                toevoegentekstvenster  "Backup maken van $rpcitem"
                 # backup maken begint hier.
-                # Aanroepen en het resultaat opvangen
+                # Aanroepen functie om map te uploaden en het resultaat opvangen
                 $errors = UploadSharePointFolder `
                     -LocalFolderPath $bronmap `
                     -SharePointFolder $doelmap
@@ -1286,26 +1295,28 @@ switch ($uitvoeren.taak) {
                 # Kijken of er iets is misgegaan en daarna wissen als "wissen na backup" is geselecteerd 
                 if ($errors.Count -gt 0) {
                     
-                    # erros loggen naar logbestand
-                    "$foutmelding_log Er zijn $($errors.Count) fout(en) opgetreden tijdens de upload." | Out-File -FilePath $logbestand -Append
-                    $errors | ForEach-Object { "$_" | Out-File -FilePath $logbestand -Append }
-                    $uitvoeren.foutmelding = $true
+                    # errors verzamelen en teruggeven
+                    $melding = "Er zijn $($errors.Count) fout(en) opgetreden tijdens de upload."
+                    $errors | ForEach-Object { $melding = -join ($melding, "`r`n", "$_") }
+                    throw $melding
 
-                    } elseif ($uitvoeren.wissennabackup -eq $true) { 
-                    # en daarna wissen als dit geselecteerd is
-                    # Eerst de inhoud van mijn documenten
+                    } elseif ($uitvoeren.wissennabackup -eq $true) {
+                    # Wissen als dit geselecteerd is
+
+                    # voortgang weergeven
+                    toevoegentekstvenster  "Wissen van $rpcitem"                  
+                    # Eerst de inhoud van mijn documenten 
                     Remove-Item "$bronmap\mijn documenten\*" -Recurse -Force -ErrorAction Stop
                     # dan de root van rpc-map exclusief map mijn documenten
                     Remove-Item "$bronmap\*" -Recurse -Force -Exclude "mijn documenten" -ErrorAction Stop
                     } # einde elseif $uitvoeren.wissennabackup -eq $true
-                } # einde try
-
-            catch {
-
+        } # einde try
+        catch {
                 # foutmelding van PowerShell naar logbestand
                 "$foutmelding_log" + $_.exception.message | out-file "$logbestand" -Append
                 $uitvoeren.foutmelding = $true
-                  } # einde catch
+                toevoegentekstvenster "$_"
+        } # einde catch
 
     } # einde foreach rpcitem
 
@@ -1317,6 +1328,7 @@ switch ($uitvoeren.taak) {
     # Deze items worden vervolgens gekopiëerd.
     $geselecteerdeitems = [System.Collections.ArrayList]@()
 
+    toevoegentekstvenster "Tijdelijke map aanmaken."
      # Tijdelijke map om bestanden uit te delen. Deze map wordt na het kopiëren verwijderd.
     $localPath = $env:USERPROFILE + "\Temp_BeherenBestanden"
     # onderstaande is nodig omdat bij DownloadSharepoint alleen de tijdelijke map automatisch wordt aangemaakt 
@@ -1343,23 +1355,39 @@ switch ($uitvoeren.taak) {
     # foutmelding van PowerShell naar logbestand
     $foutmelding_log = "[ Downloaden SharePoint FOUT ] : "
 
+    toevoegentekstvenster "Downloaden bestanden."
     if ($uitvoeren.listview1.selecteditems.count -eq 0) {
-        
-        # $geselecteerdeitems.Add("$bronmap")
+        # uitvoeren als er niet is geklikt in het venster met mappen. Dit betekent dus de hele inhoud kopieëren.
         try { 
         DownloadSharepoint -FolderUrl $bronmap -LocalFolder $localPath -Teamsname $teamsname
         }
         catch {
-            
-            "$foutmelding_log" + $_.exception.message | out-file "$logbestand" -Append
+            $melding = -join ($foutmelding_log, "`n", $_.exception.message)
+            $melding | out-file "$logbestand" -Append
             $uitvoeren.foutmelding = $true
+            $uitvoeren.progressbar.PerformStep()
+            toevoegentekstvenster "$_"
+            break
         } # einde = try catch DownloadSharepoint
 
         } else {
-        # loop door alle items in de examenmap en controleren of deze geselecteerd zijn. 
-        # Als dit het geval is, worden deze toegevoegd aan de array $geselecteerdeitems.
+        # alleen de geselecteerd items in het venster met mappen kopieëren.
+        
         $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $bronmap
+        try { 
+            $folders = Get-PnPFolderItem -FolderSiteRelativeUrl $bronmap  
+        }
+        catch {
+            $melding = -join ($foutmelding_log, "`n", $_.exception.message)
+            $melding | out-file "$logbestand" -Append
+            $uitvoeren.foutmelding = $true
+            $uitvoeren.progressbar.PerformStep()
+            toevoegentekstvenster "$_"
+            break
+        } # einde catch
 
+        # loop door alle items en controleren of deze geselecteerd zijn.
+        # Als dit het geval is, worden deze gedownload.
         foreach ($item in $uitvoeren.listview1.selecteditems) {
             $bronmap = -join ($uitvoeren.bronmap,'/',$item[0].text)
            
@@ -1370,12 +1398,13 @@ switch ($uitvoeren.taak) {
                         $sublocalpath = Join-Path $localPath $folder.Name
                         DownloadSharepoint -FolderUrl $bronmap -LocalFolder $sublocalpath -Teamsname $teamsname
                         } elseif ($folder.GetType().Name -eq "File") {
-                        Get-PnPFile -Url $bronmap -Path $localPath -FileName $folder.Name -AsFile -Force
+                        Get-PnPFile -Url $bronmap -Path $localPath -FileName $folder.Name -AsFile -Force -ErrorAction Stop
                     } # einde if $folder.GetType().Name .. elseif... 
                     }
                     catch {
                         "$foutmelding_log" + $_.exception.message | out-file "$logbestand" -Append
                         $uitvoeren.foutmelding = $true
+                        toevoegentekstvenster "$_"
                     } # einde try catch DownloadSharepoint binnen if $folder.Name -eq $item[0].text
 
                 } # einde if $folder.Name -eq $item[0].text
@@ -1396,6 +1425,9 @@ switch ($uitvoeren.taak) {
         # doelmap bepalen. dit is een lokale variabele
         $doelmap = -join ($uitvoeren.homemap,'\',$rpcitem,'\Mijn Documenten')
     
+        # Weergeven in venster dat bestanden worden gekopieerd naar de homemap van de kandidaat.
+        toevoegentekstvenster "Kopiëren bestanden naar $rpcitem"
+
         # kopieren geselecteerde mappen of bestanden  
         Copy-Item -path "$localPath\*" -destination "$doelmap" -recurse -Force -ErrorAction Stop
         
@@ -1433,6 +1465,8 @@ switch ($uitvoeren.taak) {
                 if (!(Test-Path $doelmap)) { throw "Map $doelmap niet gevonden."}
                 if (!(Test-Path $doelmaproot)) { throw "Map $doelmaproot niet gevonden."}
 
+                toevoegentekstvenster  "Wissen van $rpcitem"
+
                 # verwijderen van bestanden. Eerst de inhoud van mijn documenten
                 Remove-Item "$doelmap\*" -Recurse -Force -ErrorAction Stop
                 # dan de root van rpc-map exclusief map mijn documenten
@@ -1466,6 +1500,7 @@ switch ($uitvoeren.taak) {
             try {
                 # extra test of de specifieke rpc-map wel bestaat
                 if (!(Test-Path $doelmap)) { throw "Map $doelmap niet gevonden."}
+                toevoegentekstvenster  "Map $doelmap leegmaken"
                 # verwijderen van bestanden in doelmap
                 Remove-Item "$doelmap\*" -Recurse -Force -ErrorAction Stop
                 }
@@ -1475,11 +1510,12 @@ switch ($uitvoeren.taak) {
                 "$foutmelding_log" + $_.exception.message | out-file "$logbestand" -Append
                 $uitvoeren.foutmelding = $true
 
+                toevoegentekstvenster "$_"
                 # Verder ook niet meer uitvoeren
 
                 # progressie laten zien op balk
                 $uitvoeren.progressbar.PerformStep()
-                return;
+                break;
                   } # einde catch
         }
 
@@ -1490,10 +1526,12 @@ switch ($uitvoeren.taak) {
             if (!(Test-Path $bronmap)) { throw "Map $bronmap niet gevonden."}
             
             # eerst kopiëren
+            toevoegentekstvenster "Kopiëren van $bronmap naar $doelmap"
             Copy-Item -path "$bronmap" -destination "$doelmap" -recurse -ErrorAction Stop
 
             # verwijderen van bestanden als keuze is verplaatsen. alleen de inhoud van mijn documenten
             if ($uitvoeren.keuzeverplaatsen -eq "verplaatsen") {
+                toevoegentekstvenster  "Wissen van $bronmap"
                 Remove-Item "$bronmap" -Recurse -Force -ErrorAction Stop
                 }
             }
@@ -1502,6 +1540,7 @@ switch ($uitvoeren.taak) {
               $uitvoeren.foutmelding = $true
               # foutmelding van PowerShell naar logbestand
               "$foutmelding_log" + $_.exception.message | out-file "$logbestand" -Append
+              toevoegentekstvenster "$_"
               
               } # einde catch
 
@@ -1520,19 +1559,17 @@ switch ($uitvoeren.taak) {
             $foutmelding_log = "[ $rpcitem - FOUT ] : "
             
             # doelmap bepalen. dit is een lokale variabele voor de deel-functie wissen hieronder.
-            # $doelmap = -join ($uitvoeren.doelmap,'\',$rpcitem)
             $doelmap = $uitvoeren.doelmap
             # verwijderen van / aan het begin
             $doelmap = $doelmap.Trim('/')
 
             $error.clear()
             try {
+                toevoegentekstvenster "Wissen van $rpcitem"
                 # compleet verwijderen van mappen. 
                 Remove-PnPFolder -Name $rpcitem -Folder $doelmap -Force
-
                 }
             catch {
-
                 # foutmelding van PowerShell naar logbestand
                 "$foutmelding_log" + $_.exception.message | out-file "$logbestand" -Append
                 $uitvoeren.foutmelding = $true
@@ -1543,6 +1580,9 @@ switch ($uitvoeren.taak) {
                } # einde taak wissen
 
 } # einde switch commando $uitvoeren.taak
+
+toevoegentekstvenster "De taak is uitgevoerd."
+toevoegentekstvenster "**********************"
 
 } # einde scriptRun
 
@@ -1776,7 +1816,12 @@ if ($uitvoeren.taak -eq "kopiëren") {
     $Btnescape.text= "Opnieuw bestanden klaarzettenn"
     $Btnescape.BackColor = 'green'
     $Btnescape.show()
-    
+} elseif ($uitvoeren.taak -in @("wissen", "verplaatsen")) {
+    $Btnescape.size = New-Object System.Drawing.Size(200,40)
+    # escape knop wordt nu terug knop
+    $Btnescape.text= "Terug naar Verkenner"
+    $Btnescape.BackColor = 'green'
+    $Btnescape.show()  
 } else {
 # knop logbestand bekijken wordt nu naar links verplaatst om aan te sluiten met knop Terug.
 $LogButton.Location = New-Object System.Drawing.Size(160, 400)
@@ -1845,6 +1890,9 @@ $StartButton.Add_click( {
     $uitvoeren.listbox = New-Object System.Windows.Forms.Listbox
     $uitvoeren.listbox = $listbox
 
+    # doorgeven objtekst. dit is de venster waarin de voortgang wordt bijgehouden.
+    $uitvoeren.objtekst2 = New-Object System.Windows.Forms.textbox
+    $uitvoeren.objtekst2 = $objtekst2
     <# specifieke variabelen voor de gegeven taak.
        o.a. toevoegen tekst aan variabele uitvoeren.logbestandtekst om in logbestand te plaatsen
     #>
@@ -1868,7 +1916,7 @@ $StartButton.Add_click( {
 
         "verplaatsen" {
         # bepalen doel-, bronmap en doelmaplegen
-        $uitvoeren.bronmap = -join ($homemapstudenten,"\",$bronselectie.selecteditem,"\Mijn Documenten\*")
+        $uitvoeren.bronmap = -join ($homemapstudenten,"\",$listbox.selecteditem,"\Mijn Documenten\*")
         $uitvoeren.doelmap = -join ($homemapstudenten,"\",$doelselectie.selecteditem,"\Mijn Documenten")
         $uitvoeren.doelmaplegen=$doelmaplegen.checked
         # keuze tussen kopieren of verplaatsen doorgeven
@@ -1977,14 +2025,14 @@ $objtekst2.Text = ""
 $objtekst2.ReadOnly = $true
 $objtekst2.Multiline = $true
 $objtekst2.ScrollBars = "Both"
-$objtekst2.Visible = $false
+# $objtekst2.Visible = $false
 $objtekst2.BackColor  = 'white'
 $objtekst2.WordWrap = $false
 
 # geselecteerde rpc-nummers links weergeven
 # als taak is verplaatsen of opschonen heb je een andere inhoud dan bij overige taken
 if ($taak -eq "verplaatsen") {
-    $objtekst1.Text = $objtekst1.Text + " Bron is " + $bronselectie.selecteditem + "`r`n" + "`r`n"
+    $objtekst1.Text = $objtekst1.Text + " Bron is " + $listbox.selecteditem + "`r`n" + "`r`n"
     $objtekst1.Text = $objtekst1.Text + " Doel is " + $doelselectie.selecteditem + "`r`n"
 
     } elseif ($taak -eq "opschonen") {
@@ -2002,7 +2050,7 @@ if ($taak -eq "verplaatsen") {
 # geselecteerde mappen bij taak kopiëren rechts weergeven in overzicht. alleen als taak kopieren is geslecteerd
 if ($taak -eq "kopiëren") {
     $objtekst2.Text = "Examenmap:" + "`r`n"
-    $objtekst2.Visible = $true
+    # $objtekst2.Visible = $true
 
     # bepalen van geselecteerde bronmap.
     [string] $selectie = ""
@@ -3642,6 +3690,7 @@ if ($updateto -eq "0.0.0") {
         $fout = $true
         $melding = -join ($foutmeldingbegin, "Er is geen update gevonden in de GitHub repository: $url
 Neem contact op met de eigenaar van $url"  ) 
+        # het volgende is niet nodig want de return wordt gedaan na de else...
         return [PSCustomObject]@{
         tedownloadenbestand = ""
         updateto = ""
@@ -3757,6 +3806,8 @@ if ($resultaatcontrole.fout) {
 } elseif (($resultaatcontrole.updateto -eq "gelijk") -or ($resultaatcontrole.updateto -eq "hoger")) {
     # er is geen update nodig, omdat de huidige versie gelijk is aan de update versie. Melding loggen en weergeven.
     write-host $resultaatcontrole.melding 
+    $melding = -join ("Controle op een update:","`r`n",$resultaatcontrole.melding )
+    Meldingnaarlogbestand -meldtekst $melding -type "MEDEDELING"
     #Start-Sleep -Seconds 3
     return
 } 
@@ -4300,29 +4351,7 @@ if ($keuzeoptie13.Selectedindex -eq 0) {
     $Btnupdate.Visible = $true
     }   
 $Btnupdate.add_click({
-    # function controleerupdate uitvoeren en resultaat in variabele plaatsen
-    $resultaatcontrole = controleerupdate 
-    if ($resultaatcontrole.fout) {
-        # er is een fout opgetreden bij het controleren op een update. De foutmelding wordt hier gelogd en weergegeven.
-        Meldingnaarlogbestand -meldtekst $resultaatcontrole.melding
-        $null = venstermetvraag -titel "Fout tijdens de controle op een update" -vraag "
-Er is iets mis gegaan bij het uitvoeren van de controle op een update.
-Controleer het logboek voor meer informatie over de foutmelding." -knopok "OK" 
-        } elseif (($resultaatcontrole.updateto -eq "gelijk") -or ($resultaatcontrole.updateto -eq "hoger")) {
-        $null = venstermetvraag -titel "Geen update gevonden" -vraag "
-Er is geen update beschikbaar.
-Het programma heeft de laatste versie geïnstalleerd." -knopok "OK" 
-        } else {
-        $nieuweversie = $resultaatcontrole.updateto
-        $result = venstermetvraag -titel "Update installeren?" -vraag "
-Een nieuwe versie van het programma is beschikbaar.
-Weet je zeker dat je versie $nieuweversie wilt installeren?
-Het programma zal opnieuw opgestart worden." -knopok "Ja" -knopterug "Nee"
-        if ($result -eq 'OK') {
-            $form2.DialogResult = [System.Windows.Forms.DialogResult]::OK
-            return
-        }
-    }   
+    
 })
 
 
@@ -5345,7 +5374,7 @@ $Form2.controls.add($Description4)
 $listBox.Location = New-Object System.Drawing.Point(10,40)
 $listBox.Size = New-Object System.Drawing.Size(130,500)
 $listBox.font = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
-$listBox.SelectionMode = 'One'
+$listBox.SelectionMode = 'MultiExtended'
 $listBox.BackColor  = 'white'
 $listBox.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Selecteer de RPC-nummer waarvan je de bestanden wilt zien." )
@@ -5553,8 +5582,70 @@ $Btnescape.add_MouseHover({
 })
 $Form2.controls.add($Btnescape)
 
+$Btwissen = New-object System.Windows.Forms.Button 
+$Btwissen.text= "Wissen"
+$Btwissen.location = "220,570" 
+$Btwissen.size = "150,30"  
+$Btwissen.BackColor = 'blue'
+$Btwissen.ForeColor = 'white'
+# $Btwissen.DialogResult = [System.Windows.Forms.DialogResult]::cancel
+$Btwissen.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Ga terug naar het hoofdvenster." )
+})
+$Form2.controls.add($Btwissen)
+    
+$Btwissen.Add_Click({ 
+    # alleen als minimaal 1 item is geselecteerd in de listbox
+    if ($listBox.selecteditems.count -gt 0) {
+        # naar overzichttaken gaan met de taak wissen en directe uitvoering
+        # overzichttaken -taak "wissen" -directeuitvoering
+        overzichttaken -taak "wissen"
+        
+        # wissen selecties in listbox, objtekst2 en doelselectie zodat je niet per ongeluk nogmaals op start kan klikken met dezelfde keuzes,
+        # en dat je na het uitvoeren niet verkeerde inhoud ziet, bv van een map die al gewist is.
+        $listBox.selecteditems.clear()
+        $objtekst2.Clear()
+        $doelselectie.selecteditem = $null
+    }
+}) # einde Btnverplaatsen.add_click
+
+$Btnverplaatsen = New-object System.Windows.Forms.Button 
+$Btnverplaatsen.text= "Verplaatsen naar ->"
+$Btnverplaatsen.location = "390,570" 
+$Btnverplaatsen.size = "200,30"  
+$Btnverplaatsen.BackColor = 'blue'
+$Btnverplaatsen.ForeColor = 'white'
+# $Btwissen.DialogResult = [System.Windows.Forms.DialogResult]::cancel
+$Btnverplaatsen.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Ga terug naar het hoofdvenster." )
+})
+$Form2.controls.add($Btnverplaatsen)
+
+$Btnverplaatsen.Add_Click({ 
+  # alleen als 1 item is geselecteerd in de listbox
+    if ($listBox.selecteditems.count -eq 1) {
+       overzichttaken -taak "verplaatsen"
+       $listBox.selecteditems.clear()
+       $objtekst2.Clear()
+       $doelselectie.selecteditem = $null
+    }   
+}) # einde Btnverplaatsen.add_click
+
+#  de selectie vd de doel rpc-nummer 
+$doelselectie                     = New-Object system.Windows.Forms.ComboBox
+$doelselectie.width               = 150
+$doelselectie.autosize            = $true
+$doelselectie.DropDownStyle       = "DropDownList"
+$doelselectie.Font                = 'Microsoft Sans Serif,12'
+$doelselectie.location = "600,570" 
+$doelselectie.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Selecteer het rpc-nummer waar de bestanden naar toe moeten." )
+})
+$doelselectie = lijstrpcnrsaanmaken $keuzelocatie $doelselectie
+$Form2.controls.add($doelselectie)
+
 # venster met uitleg over deze taak wordt gedeclareerd. 
-declareren_uitlegvenster "Uitleg over het venster Verkenner." 680 320 480 570 "Hier kunt u de bestanden van de homemappen van de kandidaten controleren en openen.
+declareren_uitlegvenster "Uitleg over het venster Verkenner." 680 320 800 570 "Hier kunt u de bestanden van de homemappen van de kandidaten controleren en openen.
 
 Eventueel kunt u eerst kiezen om de standaardlocatie te wijzigen.
 Links kiest u vervolgens het RPC-nummer van de betreffende homemap.
@@ -5695,7 +5786,8 @@ if ($global:init.uitvoerennaopstarten.handmatigupdate -eq "Ja") {
     $global:init.uitvoerennaopstarten.handmatigupdate = "Nee"
     Bewareninstellingen
     Write-host "De handmatige controle op een update is uitgevoerd."
-    $null = venstermetvraag -titel "Updatecontrole" -vraag "De handmatige controle op een update is uitgevoerd. 
+    $null = venstermetvraag -titel "Updatecontrole" -vraag "
+De handmatige controle op een update is uitgevoerd. 
 Lees de informatie in de console en druk op OK om verder te gaan."
 }
 
@@ -5857,31 +5949,8 @@ $Button2.add_MouseHover({
 })
 $Form.controls.add($Button2)
 
-$Button4                         = New-Object system.Windows.Forms.Button
-$Button4.width                   = 60
-$Button4.height                  = 60
-$Button4.location                = New-Object System.Drawing.Point(286,50)
-$Button4.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
-$Button4.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icon verplaatsen.png")
-$Button4.visible                 = $false # deze knop is alleen zichtbaar als subtaken worden weergeven
-$Button4.Add_Click({ vensterverplaatsen })
-$Button4.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bestanden van een pc verplaatsen of kopieëren naar een andere pc." )
-})
-$Form.controls.add($Button4)
+# Buttons 3 en 4, verplaatsen en wissen, zijn verwijderd!
 
-$Button3                         = New-Object system.Windows.Forms.Button
-$Button3.width                   = 60
-$Button3.height                  = 60
-$Button3.location                = New-Object System.Drawing.Point(286,150)
-$Button3.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
-$Button3.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icon wissen.png")
-$Button3.visible                 = $false # deze knop is alleen zichtbaar als subtaken worden weergeven
-$Button3.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bestanden verwijderen uit de geselecteerde pcs in het netwerk." )
-})
-$Button3.Add_Click({ vensterwissen })
-$Form.controls.add($Button3)
 
 $Button9                         = New-Object system.Windows.Forms.Button
 $Button9.width                   = 60
@@ -5921,7 +5990,7 @@ $Button7.Add_Click({
     if ($result -eq 'OK') {
         # programma sluiten
         $form.DialogResult = [System.Windows.Forms.DialogResult]::cancel
-        return
+        # return
         } 
     })
 $Button7.add_MouseHover({
@@ -5958,7 +6027,7 @@ $Button11                         = New-Object system.Windows.Forms.Button
 $Button11.width                   = 60
 $Button11.height                  = 60
 $Button11.location                = New-Object System.Drawing.Point(164,50)
-$Button11.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-verkenner.png")
+$Button11.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-bestanden.png")
 $Button11.visible                = $false # deze knop is alleen zichtbaar als $subtaken = $true
 $Button11.Add_Click({ vensterverkenner })
 $Button11.add_MouseHover({
@@ -5975,7 +6044,12 @@ $Button12.Add_Click({
     # venster met subtaken tonen 
     # subtaken zijn de knoppen 4 t/m 11, uitgezonderd de knoppen 7 en 8
     # uitvoeren via function zodat deze makkelijk weer kan worden gebruikt bij het teruggaan van een subtaken naar het hoofdmenu
-    subtakentonen
+    if ($Button1.visible) {
+        subtakentonen
+    } else {
+        subtakenverbergen
+    }
+    Start-Sleep -Milliseconds 200
 
  })
 $Button12.add_MouseHover({
@@ -5983,24 +6057,52 @@ $Button12.add_MouseHover({
 })
 $Form.controls.add($Button12)
 
-#$Button13 = new-object Windows.Forms.PictureBox
-$Button13  = New-Object system.Windows.Forms.Button
-$Button13.Location = New-Object System.Drawing.Size(52,150) 
-$Button13.Size = New-Object System.Drawing.Size(60,60)
-$Button13.Image = [System.Drawing.Image]::FromFile("$icoontjesmap\icoontje-home.png")
-$Button13.visible = $false # deze knop is alleen zichtbaar als $subtaken = $true
-$Button13.Add_Click({ 
-    subtakenverbergen;
+$Button8  = New-Object system.Windows.Forms.Button
+$Button8.Location = New-Object System.Drawing.Size(388,150) 
+$Button8.Size = New-Object System.Drawing.Size(60,60)
+$Button8.Image = [System.Drawing.Image]::FromFile("$icoontjesmap\icoon-updaten.png")
+$Button8.visible = $false # deze knop is alleen zichtbaar als $subtaken = $true
+$Button8.Add_Click({ 
+    # test
+    $global:programma.versie = '4.8.0'
+
+    # function controleerupdate uitvoeren en resultaat in variabele plaatsen
+    $resultaatcontrole = controleerupdate 
+    if ($resultaatcontrole.fout) {
+        # er is een fout opgetreden bij het controleren op een update. De foutmelding wordt gelogd en weergegeven.
+        Meldingnaarlogbestand -meldtekst $resultaatcontrole.melding
+        $null = venstermetvraag -titel "Fout tijdens de controle op een update" -vraag "
+Er is iets mis gegaan bij het uitvoeren van de controle op een update.
+Controleer het logboek voor meer informatie over de foutmelding." -knopok "OK" 
+        } elseif (($resultaatcontrole.updateto -eq "gelijk") -or ($resultaatcontrole.updateto -eq "hoger")) {
+        $null = venstermetvraag -titel "Geen update gevonden" -vraag "
+Er is geen update beschikbaar.
+Het programma heeft de laatste versie geïnstalleerd." -knopok "OK" 
+        } else {
+        $nieuweversie = $resultaatcontrole.updateto
+        $result = venstermetvraag -titel "Update installeren?" -vraag "
+Een nieuwe versie van het programma is beschikbaar.
+Weet je zeker dat je versie $nieuweversie wilt installeren?
+Het programma zal opnieuw opgestart worden." -knopok "Ja" -knopterug "Nee"
+        if ($result -eq 'OK') {
+            # instellen dat het programma gaat updaten na herstart
+            $global:init["uitvoerennaopstarten"]["handmatigupdate"] = "Ja"
+            Bewareninstellingen
+            # huidige proces vh programma afsluiten
+            $form.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+
+            # opnieuw opstarten
+            $pwsh7_locatie = (Get-Command pwsh -ErrorAction Stop).Source
+            Start-Pwsh7 $pwsh7_locatie
+            # return
+        }
+    } # einde if ($resultaatcontrole.fout) ... elseif ..ese .
     
  })
-$Button13.add_MouseHover({
+$Button8.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Terug naar de hoofdtaken" )
 })
- $Form.controls.add($Button13)
-
-<# handmatig updaten is niet meer mogelijk!
-   Hiervoor was $Button8 gedefinieerd
-#>
+ $Form.controls.add($Button8)
 
 
 # declareren venster met uitleg over programma. verschijnt als de muis over de vraagteken gaat.
@@ -6101,8 +6203,7 @@ if ($global:init.algemeen.nieuwelayout -eq 'Ja') {
     Nieuwelayoutgebruiken
     } else {
     Oudelayoutgebruiken
-    $Button4.visible = $true
-    $Button3.visible = $true
+    $Button8.visible = $true
     $Button9.visible = $true
     $Button10.visible = $true
     $Button6.visible = $true
