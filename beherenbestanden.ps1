@@ -12,7 +12,7 @@ Auteur: Benvindo Neves
 
 <# $global:programma is een object met alle variabelen die het programma beschrijven. 
    versie wordt aangepast als er een nieuwe versie is.
-   extralabel wordt aangepast als het programma naar een andere fase gaat of als er een nieuwe versie is.
+   extralabel wordt aangepast (de datum) als het programma is gewijzigd. 
    mode wordt aangepast afhankelijk van wat je wil testen of als er een nieuwe versie is.
    naam is de naam van het script. Deze wordt gebruikt in de titelbalk van het hoofdvenster.
    github is de locatie waar de updates vandaan gehaald worden. Dit is altijd hetzelfde.
@@ -21,25 +21,32 @@ Auteur: Benvindo Neves
    Mode kan de volgende waarden hebben:
     alpha      : Logbestanden verwijderen is uit, Automatisch updates is uit, Lokale mappen worden gebruikt en Console blijft open
     beta       : Automatisch updates is uit en Console blijft open
-    prerelease : Updates worden gedownload vanuit de prerelease pagina van Github. Alle functionalliteiten kunnen getest worden.
+    rc         : Updates worden gedownload vanuit de prerelease pagina van Github. Dit is een release candidate dus alles moet getest worden.
     release    : Normale gebruik
 
     De modus hoeven niet persé allemaal doorlopen te worden!
-    Bij het opstarten krijg je een melding als je in de fase alpha, beta of prelease zit.
+    Bij het opstarten krijg je een melding als je in de fase alpha, beta of rc zit.
 
 #>
 # startmap van het programma bepalen
 $startmap=Split-Path -Parent $PSCommandPath
 
+# map met png icoontjes bepalen
+$icoontjesmap = -join ("$startmap","\","png")
+
+# map met gif afbeeldingen bepalen
+$gifjesmap = -join ("$startmap","\","png")
+
+# map voor logbestanden bepalen
+$logmap = -join ("$startmap","\","log")
+
 $global:programma = @{
     versie = '5.0.0'
-    extralabel = 'optie.1.261014' # buildnummer of branch + eventuele volgnr + datum. 
-                                  # Hier is voor optie.1 gekozen omdat een nieuwe functie wordt getest die mogelijk niet in de release versie terecht komt. 
-                                  # Als dit wel het geval is, dan wordt dit aangepast naar "alpha.1".
-    mode = 'alpha' # alpha, beta, prerelease of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    extralabel = '189.261021.sharepoint' # buildnummer + datum + eventuele branch
+    mode = 'beta' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
-    icoon = -join ($startmap, "\", "script_icoon.ico")
+    icoon = -join ($icoontjesmap, "\", "script_icoon.ico")
 }
 
 $scriptnaam = $global:programma.naam
@@ -142,15 +149,6 @@ public class ListViewItemComparer : IComparer
     }
 }
 "@
-
-# map met png icoontjes bepalen
-$icoontjesmap = -join ("$startmap","\","png")
-
-# map met gif afbeeldingen bepalen
-$gifjesmap = -join ("$startmap","\","png")
-
-# map voor logbestanden bepalen
-$logmap = -join ("$startmap","\","log")
 
 # tijdelijke logbestand voor foutmeldingen
 $foutmeldingsbestand = -join ("$logmap","\","Foutmeldingen.txt")
@@ -734,7 +732,6 @@ function gebruikersinstellingen {
 $algemeen=@{
     locatiekeuze = 'PAL'
     wissennabackup = 'Ja'
-    maplegenvoorverplaatsen = 'Ja'
     gebruiker = ''
     afbeelding = 'Samenwerken'
     consolesluiten = 'Ja'
@@ -748,10 +745,8 @@ $opschonen=@{
 }
 $uitvoerennaopstarten=@{
     updateinfo = 'Ja'
-    powershell7start = 'Nee'
     controleopupdate = 'Ja'
     handmatigupdate = 'Nee'
-    snelkoppeling = 'Ja'
     PS7snelkoppeling = 'Ja'
 }
 $Std_inst=@{
@@ -1000,8 +995,8 @@ $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
         $Button5.Location = New-Object System.Drawing.Point(164,150)
         $Button6.Location = New-Object System.Drawing.Point(276,50)
         $Button8.Location = New-Object System.Drawing.Point(388,150)
-        $Button9.Location = New-Object System.Drawing.Point(388,50)
-        $Button10.Location = New-Object System.Drawing.Point(276,150)
+        $Button9.Location = New-Object System.Drawing.Point(276,150)
+        $Button10.Location = New-Object System.Drawing.Point(388,50)
         $Button11.Location = New-Object System.Drawing.Point(164,50)
         $Button12.visible = $true
     }
@@ -3131,7 +3126,7 @@ function vensterverplaatsen {
 
 # variabelen
 $keuzelocatie=$global:init["algemeen"]["locatiekeuze"]
-$keuzedoelmaplegen=$global:init["algemeen"]["maplegenvoorverplaatsen"]
+$keuzedoelmaplegen
 
 
 # De hoofdmenu onzichtbaar maken
@@ -3632,12 +3627,14 @@ $programmanaam = $global:programma.naam
 # Let op, dit betekent dat er een probleem is met de update.
 $updateto = "0.0.0" 
 
-# dit is de url van de github repository. Hier wordt bepaald of de release of prerelease wordt gedownload.
+# dit is de url van de github repository. Hier wordt bepaald of de release of release candidate wordt gedownload.
 $url = $global:programma.github 
 if ($global:programma.mode -eq "release") {
         $url = -join ($url,"release")
-        } else {
+        } elseif ($global:programma.mode -eq "rc") {
         $url = -join ($url,"prerelease")
+        } else {
+        $url = -join ($url,"test")
         }
 
 # inhoud van de map in github ophalen
@@ -3901,21 +3898,9 @@ Bewareninstellingen
 # $gebruikersbestand = bepaalinitnaamgebruiker
 # $global:init | ConvertTo-Json -depth 1 | Set-Content -Path $gebruikersbestand
 
-# opnieuw opstarten script met een andere procesnummer (sessie). De de oude kan worden afgesloten.
-if ($PSVersionTable.PSVersion.Major -ge 7){
-        try {
-            $pwsh7_locatie = (Get-Command pwsh -ErrorAction Stop).Source
-            Start-Pwsh7 $pwsh7_locatie
-             }
-        catch {
-            Write-Host "PowerShell 7 is niet gevonden op dit systeem. Het programma wordt met PowerShell 5 opgestart." -f Red
-            meldingnaarlogbestand -meldtekst "PowerShell 7 is niet gevonden op dit systeem na het updaten. `r`nHet programma wordt met PowerShell 5 opgestart."
-            Start-Pwsh5
-            }
-                
-        } else {
-            Start-Pwsh5
-        }
+# opnieuw opstarten script met een andere procesnummer (sessie). De oude kan worden afgesloten.
+$pwsh7_locatie = (Get-Command pwsh).Source
+Start-Pwsh7 $pwsh7_locatie
 
 # beëindigen van huidige proces. programma gaat verder in het nieuwe proces dat met start-process is gestart.
 exit;
@@ -3929,7 +3914,7 @@ function vensterinstellingen {
 $form.Hide()
 
 # venster declareren
-$Form2 = declareren_standaardvenster "Instellingen wijzigen" 1000 590
+$Form2 = declareren_standaardvenster "Instellingen wijzigen" 1000 510
 
 $keuzeoptie1                     = New-Object system.Windows.Forms.ComboBox
 $keuzeoptie1.width               = 80
@@ -3965,26 +3950,13 @@ if ($global:init["algemeen"]["wissennabackup"] -eq "Ja") {
     $keuzeoptie2.Selectedindex = 1
     }
 
-$keuzeoptie3                     = New-Object system.Windows.Forms.ComboBox
-$keuzeoptie3.width               = 80
-$keuzeoptie3.autosize            = $true
-$keuzeoptie3.DropDownStyle       = "DropDownList"
-$keuzeoptie3.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie3.location = "450,175" 
-[void] $keuzeoptie3.Items.Add("Ja")
-[void] $keuzeoptie3.Items.Add("Nee")
-if ($global:init["algemeen"]["maplegenvoorverplaatsen"] -eq "Ja") {
-    $keuzeoptie3.Selectedindex = 0
-    } else {
-    $keuzeoptie3.Selectedindex = 1
-    }
 
 $keuzeoptie4                     = New-Object system.Windows.Forms.ComboBox
 $keuzeoptie4.width               = 80
 $keuzeoptie4.autosize            = $true
 $keuzeoptie4.DropDownStyle       = "DropDownList"
 $keuzeoptie4.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie4.location = "450,255" 
+$keuzeoptie4.location = "450,215" 
 [void] $keuzeoptie4.Items.Add("Ja")
 [void] $keuzeoptie4.Items.Add("Nee")
 if ($global:init["opschonen"]["opschonenlogs"] -eq "Ja") {
@@ -3994,7 +3966,7 @@ if ($global:init["opschonen"]["opschonenlogs"] -eq "Ja") {
     }
 
 $keuzeoptie5 = New-Object System.Windows.Forms.TextBox 
-$keuzeoptie5.Location = New-Object System.Drawing.Size(450,295) 
+$keuzeoptie5.Location = New-Object System.Drawing.Size(450,255) 
 $keuzeoptie5.Size = New-Object System.Drawing.Size(80,60)
 $keuzeoptie5.MaxLength = 4
 $keuzeoptie5.Font = 'Microsoft Sans Serif,11'
@@ -4055,7 +4027,7 @@ $keuzeoptie9.width               = 80
 $keuzeoptie9.autosize            = $true
 $keuzeoptie9.DropDownStyle       = "DropDownList"
 $keuzeoptie9.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie9.location = "450,335" 
+$keuzeoptie9.location = "450,295" 
 [void] $keuzeoptie9.Items.Add("Ja")
 [void] $keuzeoptie9.Items.Add("Nee")
 if ($global:init["algemeen"]["consolesluiten"] -eq "Ja") {
@@ -4069,7 +4041,7 @@ $keuzeoptie10.width               = 80
 $keuzeoptie10.autosize            = $true
 $keuzeoptie10.DropDownStyle       = "DropDownList"
 $keuzeoptie10.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie10.location = "450,215" 
+$keuzeoptie10.location = "450,175" 
 [void] $keuzeoptie10.Items.Add("Ja")
 [void] $keuzeoptie10.Items.Add("Nee")
 if ($global:init["algemeen"]["controlevoorklaarzetten"] -eq "Ja") {
@@ -4092,26 +4064,14 @@ if ($global:init["algemeen"]["nieuwelayout"] -eq "Ja") {
     $keuzeoptie11.Selectedindex = 1
     }
 
-$keuzeoptie12                     = New-Object system.Windows.Forms.ComboBox
-$keuzeoptie12.width               = 80
-$keuzeoptie12.autosize            = $true
-$keuzeoptie12.DropDownStyle       = "DropDownList"
-$keuzeoptie12.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie12.location = "450,375" 
-[void] $keuzeoptie12.Items.Add("Ja")
-[void] $keuzeoptie12.Items.Add("Nee")
-if ($global:init["uitvoerennaopstarten"]["powershell7start"] -eq "Ja") {
-    $keuzeoptie12.Selectedindex = 0
-    } else {
-    $keuzeoptie12.Selectedindex = 1
-    }
+# Keuze PowerShell 7 start is verwijderd. Dit was keuzeoptie12
 
 $keuzeoptie13                     = New-Object system.Windows.Forms.ComboBox
 $keuzeoptie13.width               = 80
 $keuzeoptie13.autosize            = $true
 $keuzeoptie13.DropDownStyle       = "DropDownList"
 $keuzeoptie13.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie13.location = "450,415" 
+$keuzeoptie13.location = "450,335" 
 [void] $keuzeoptie13.Items.Add("Ja")
 [void] $keuzeoptie13.Items.Add("Nee")
 if ($global:init["uitvoerennaopstarten"]["Controleopupdate"] -eq "Ja") {
@@ -4119,13 +4079,6 @@ if ($global:init["uitvoerennaopstarten"]["Controleopupdate"] -eq "Ja") {
     } else {
     $keuzeoptie13.Selectedindex = 1
     }
-$keuzeoptie13.add_SelectedIndexChanged({
-    if ($keuzeoptie13.SelectedItem -eq "Ja") {
-        $Btnupdate.Visible = $false
-        } else {
-        $Btnupdate.Visible = $true
-        }
-})
 
 $Description1                     = New-Object system.Windows.Forms.Label
 $Description1.text                = "Standaard locatie"
@@ -4142,8 +4095,8 @@ $Description1.add_MouseHover({
 $Description2                     = New-Object system.Windows.Forms.Label
 $Description2.text                = "Homemap kandidaten wissen na uitvoeren van een back-up"
 $Description2.AutoSize            = $false
-$Description2.width               = 400
-$Description2.height              = 40
+$Description2.width               = 410
+$Description2.height              = 30
 $Description2.location            = New-Object System.Drawing.Point(40,140)
 $Description2.Font                = 'Microsoft Sans Serif,11'
 $Description2.ForeColor = [System.Drawing.Color]::Blue
@@ -4151,24 +4104,12 @@ $Description2.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Bepaal of de optie om homemappen te wissen standaard is geselecteerd bij het uitvoeren van een back-up." )
 })
 
-$Description3                     = New-Object system.Windows.Forms.Label
-$Description3.text                = "Doelmap wissen alvorens het verplaatsen van bestanden"
-$Description3.AutoSize            = $false
-$Description3.width               = 400
-$Description3.height              = 30
-$Description3.location            = New-Object System.Drawing.Point(40,180)
-$Description3.Font                = 'Microsoft Sans Serif,11'
-$Description3.ForeColor = [System.Drawing.Color]::Blue
-$Description3.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bepaal of de optie om de doelmap te wissen standaard is geselecteerd bij het verplaatsen van bestanden." )
-})
-
 $Description4                     = New-Object system.Windows.Forms.Label
 $Description4.text                = "Automatisch verwijderen oude logbestanden bij de start van het programma"
 $Description4.AutoSize            = $false
 $Description4.width               = 400
 $Description4.height              = 40
-$Description4.location            = New-Object System.Drawing.Point(40,260)
+$Description4.location            = New-Object System.Drawing.Point(40,220)
 $Description4.Font                = 'Microsoft Sans Serif,11'
 $Description4.ForeColor = [System.Drawing.Color]::Blue
 $Description4.add_MouseHover({
@@ -4180,7 +4121,7 @@ $Description5.text                = "Aantal dagen dat de logbestanden van het pr
 $Description5.AutoSize            = $false
 $Description5.width               = 400
 $Description5.height              = 40
-$Description5.location            = New-Object System.Drawing.Point(40,300)
+$Description5.location            = New-Object System.Drawing.Point(40,260)
 $Description5.Font                = 'Microsoft Sans Serif,11'
 $Description5.ForeColor = [System.Drawing.Color]::Blue
 $Description5.add_MouseHover({
@@ -4230,7 +4171,7 @@ $Description9.text                = "Console, venster met informatie over het sc
 $Description9.AutoSize            = $false
 $Description9.width               = 400
 $Description9.height              = 40
-$Description9.location            = New-Object System.Drawing.Point(40,340)
+$Description9.location            = New-Object System.Drawing.Point(40,300)
 $Description9.Font                = 'Microsoft Sans Serif,11'
 $Description9.ForeColor = [System.Drawing.Color]::Blue
 $Description9.add_MouseHover({
@@ -4242,7 +4183,7 @@ $Description10.text                = "Controleer of de homemappen van de kandida
 $Description10.AutoSize            = $false
 $Description10.width               = 400
 $Description10.height              = 40
-$Description10.location            = New-Object System.Drawing.Point(40,220)
+$Description10.location            = New-Object System.Drawing.Point(40,175)
 $Description10.Font                = 'Microsoft Sans Serif,11'
 $Description10.ForeColor = [System.Drawing.Color]::Blue
 $Description10.add_MouseHover({
@@ -4261,24 +4202,12 @@ $Description11.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Bepaal of je het nieuwe layout in het hoofdvenster wil tonen." )
 })
 
-$Description12                     = New-Object system.Windows.Forms.Label
-$Description12.text                = "Het programma met powershell 7 starten en deze indien nodig installeren."
-$Description12.AutoSize            = $false
-$Description12.width               = 400
-$Description12.height              = 40
-$Description12.location            = New-Object System.Drawing.Point(40,380)
-$Description12.Font                = 'Microsoft Sans Serif,11'
-$Description12.ForeColor = [System.Drawing.Color]::Blue
-$Description12.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bepaal of je het programma wil opstarten met PowerShell 7 of hoger als deze met powershell 5 is opgestart. Als het nodig is wordt PowerShell 7 geïnstalleerd." )
-})
-
 $Description13                     = New-Object system.Windows.Forms.Label
 $Description13.text                = "Automatisch controleren en installeren van updates bij het opstarten van het programma."
 $Description13.AutoSize            = $false
 $Description13.width               = 400
 $Description13.height              = 40
-$Description13.location            = New-Object System.Drawing.Point(40,420)
+$Description13.location            = New-Object System.Drawing.Point(40,340)
 $Description13.Font                = 'Microsoft Sans Serif,11'
 $Description13.ForeColor = [System.Drawing.Color]::Blue
 $Description13.add_MouseHover({
@@ -4287,7 +4216,7 @@ $Description13.add_MouseHover({
 
 $Btnstandaard = New-object System.Windows.Forms.Button 
 $Btnstandaard.text= "Herstel de standaardinstellingen"
-$Btnstandaard.location = "430,470" 
+$Btnstandaard.location = "430,390" 
 $Btnstandaard.size = "250,30"  
 $Btnstandaard.BackColor = 'blue'
 $Btnstandaard.ForeColor = 'white'
@@ -4298,7 +4227,6 @@ $Btnstandaard.add_click({
     # alle opties krijgen hun standaard waarde. Er wordt nog niets bewaard!
     $keuzeoptie1.SelectedItem=$temp_init["algemeen"]["locatiekeuze"]
     $keuzeoptie2.SelectedItem=$temp_init["algemeen"]["wissennabackup"]
-    $keuzeoptie3.SelectedItem=$temp_init["algemeen"]["maplegenvoorverplaatsen"]
     $keuzeoptie4.SelectedItem=$temp_init["opschonen"]["opschonenlogs"]
     $keuzeoptie5.Text=$temp_init["opschonen"]["dagenbewarenlogs"]
     $keuzeoptie6.SelectedItem=$temp_init["algemeen"]["afbeelding"]
@@ -4306,7 +4234,6 @@ $Btnstandaard.add_click({
     $keuzeoptie9.SelectedItem=$temp_init["algemeen"]["consolesluiten"]
     $keuzeoptie10.SelectedItem=$temp_init["algemeen"]["controlevoorklaarzetten"]
     $keuzeoptie11.SelectedItem=$temp_init["algemeen"]["nieuwelayout"]
-    $keuzeoptie12.SelectedItem=$temp_init["uitvoerennaopstarten"]["powershell7start"]
     $keuzeoptie13.SelectedItem=$temp_init["uitvoerennaopstarten"]["Controleopupdate"]
 }) # einde Btnstandaard.add_click
 $Btnstandaard.add_MouseHover({
@@ -4315,7 +4242,7 @@ $Btnstandaard.add_MouseHover({
 
 $Btnaccept = New-object System.Windows.Forms.Button 
 $Btnaccept.text= "Bewaren"
-$Btnaccept.location = "50,470" 
+$Btnaccept.location = "50,390" 
 $Btnaccept.size = "150,30"  
 $Btnaccept.BackColor = 'green'
 $Btnaccept.ForeColor = 'white'
@@ -4326,32 +4253,13 @@ $Btnaccept.add_MouseHover({
 
 $Btnescape = New-object System.Windows.Forms.Button 
 $Btnescape.text= "Terug"
-$Btnescape.location = "240,470" 
+$Btnescape.location = "240,390" 
 $Btnescape.size = "150,30"  
 $Btnescape.BackColor = 'red'
 $Btnescape.ForeColor = 'white'
 $Btnescape.DialogResult = [System.Windows.Forms.DialogResult]::cancel
 $Btnescape.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Ga terug naar het hoofdvenster zonder de wijzigingen op te slaan." )
-})
-
-$Btnupdate = New-object System.Windows.Forms.Button 
-$Btnupdate.text= "Update controleren en installeren"
-$Btnupdate.location = "720,470" 
-$Btnupdate.size = "210,30"  
-$Btnupdate.BackColor = 'blue'
-$Btnupdate.ForeColor = 'white'
-# $Btnupdate.DialogResult = [System.Windows.Forms.DialogResult]::cancel
-$Btnupdate.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Controleer of er een update beschikbaar is voor het programma en installeer deze indien beschikbaar." )
-})
-if ($keuzeoptie13.Selectedindex -eq 0) {
-    $Btnupdate.Visible = $false
-    } else {
-    $Btnupdate.Visible = $true
-    }   
-$Btnupdate.add_click({
-    
 })
 
 
@@ -4371,7 +4279,7 @@ foreach ($afbeelding in $global:afbeeldingen) {
 }
 $gifbox2.Image    = [System.Drawing.Image]::FromFile("$gifjesmap\$keuzeafbeelding")
 $gifbox2.location = New-Object System.Drawing.Point(570,80)
-$gifbox2.Size     = "370,400"
+$gifbox2.Size     = "370,320"
 $gifbox2.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Zoom
 $gifbox2.add_click({
     if ($keuzeoptie6.Selectedindex -eq 6) {
@@ -4386,10 +4294,10 @@ $gifbox2.add_MouseHover({
 
 
 # venster met uitleg over deze taak wordt gedeclareerd. hieronder worden enkele variabelen aangepast aan deze taakvenster
-declareren_uitlegvenster "Uitleg over het venster Instellingen." 680 300 950 490 "Wijzig hier de standaard instellingen van het programma. 
+declareren_uitlegvenster "Uitleg over het venster Instellingen." 680 300 950 410 "
+Wijzig hier de standaard instellingen van het programma. 
 Je kan de voorkeuren die standaard zijn ingesteld bij een taak wijzigen,
-enkele beheerinstellingen wijzigen en een update van het programma forceren.
-De knop om te controleren op een update is alleen zichtbaar als de optie om automatische te controleren op updates op Nee is ingesteld.
+enkele beheerinstellingen wijzigen en de layout aanpassen.
 
 U kunt alle instellingen herstellen naar de standaardwaarde door op de knop 
 Herstel de standaardinstellingen te klikken.
@@ -4399,9 +4307,9 @@ Als u terug wilt zonder de instellingen te bewaren klikt u op Terug.
 U krijgt extra informatie over een instelling als de muiscursor op een tekst staat.
 " 
 
-$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie1, $keuzeoptie11, $keuzeoptie2, $keuzeoptie3, $keuzeoptie10, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie7, $keuzeoptie6, $keuzeoptie12, $keuzeoptie13,
+$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie1, $keuzeoptie11, $keuzeoptie2, $keuzeoptie10, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie7, $keuzeoptie6, $keuzeoptie13,
 $description1, $description2, $description3, $description4, $description5, $description6, $description8, $description9, $description10, $description7, $Description11, $Description12, $Description13, 
-$Btnaccept, $Btnescape, $Btnstandaard, $Btnupdate, $Global:vraagtekenicoon, $gifbox2 ))
+$Btnaccept, $Btnescape, $Btnstandaard, $Global:vraagtekenicoon, $gifbox2 ))
 
 Add-EscapeClose -Form $form2
 
@@ -4410,20 +4318,15 @@ $result = $form2.ShowDialog()
 
 # bewaren van instellingen
 if ($result -eq [system.windows.forms.dialogResult]::yes) { 
-    # variabele  die de huidige instellingen bevatten. Deze worden gebruikt om te bepalen of er een wijziging is in de keuze voor het starten van powershell 7.
-    # Als deze keuze is gewijzigd, wordt het programma opnieuw opgestart. Zie verderop in deze functie.
-    $keuzepowershell7start = $global:init["uitvoerennaopstarten"]["powershell7start"]
 
     # keuzes worden opgehaald en in variabelen gezet. Deze worden vervolgens in het globale init object gezet. Daarna worden deze bewaard in het persoonlijke init bestand van de gebruiker.
     $global:init["algemeen"]["locatiekeuze"]=$keuzeoptie1.Selecteditem
     $global:init["algemeen"]["wissennabackup"]=$keuzeoptie2.Selecteditem
-    $global:init["algemeen"]["maplegenvoorverplaatsen"]=$keuzeoptie3.Selecteditem
     $global:init["opschonen"]["opschonenlogs"]=$keuzeoptie4.Selecteditem
     $global:init["algemeen"]["websitemoppen"]=$keuzeoptie7.Selecteditem
     $global:init["algemeen"]["consolesluiten"]=$keuzeoptie9.Selecteditem
     $global:init["algemeen"]["controlevoorklaarzetten"]=$keuzeoptie10.Selecteditem
     $global:init["algemeen"]["nieuwelayout"]=$keuzeoptie11.Selecteditem
-    $global:init["uitvoerennaopstarten"]["powershell7start"]=$keuzeoptie12.Selecteditem
     $global:init["uitvoerennaopstarten"]["Controleopupdate"]=$keuzeoptie13.Selecteditem
 
     # alle spaties aan begin en eind weghalen
@@ -4453,70 +4356,6 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
     # Eerst wordt de persoonlijke initialisatiebestand bepaald.
     Bewareninstellingen
 
-    # Als de keuze voor opstarten met Powershell 7 is gewijzigd, eerst vragen en dan opnieuw opstarten
-    if ($keuzepowershell7start -ne $keuzeoptie12.Selecteditem) {
-        # Eerst vragen of de gebruiker het programma opnieuw wil opstarten met Powershell 7. Dit is nodig omdat deze wijziging pas van kracht wordt bij een nieuw proces.
-        $melding = "U heeft een wijziging aangebracht op de PowerShell versie waarop het programma wordt uitgevoerd.`r`nOm deze wijziging door te voeren moet het programma opnieuw worden opgestart. `r`nWilt u het programma nu opnieuw starten?"
-        $result = venstermetvraag -titel "Programma opnieuw opstarten?" -vraag $melding -knopok "Ja" -knopterug "Nee"
-
-        if ($result -eq 'OK') {
-            # Controle of de huidige powershell versie en de gemaakte keuze niet in lijn zijn. Als dat het geval is, wordt het programma opnieuw opgestart met powershell 5 of 7. 
-            # Als dat niet het geval is, hoeft er niet opnieuw opgestart te worden en worden alleen de vensters gesloten.
-            if (( $keuzeoptie12.Selectedindex -eq 0) -and ($PSVersionTable.PSVersion.Major -lt 7)){
-                
-                $cmd = Get-Command pwsh -ErrorAction SilentlyContinue
-                if ($cmd) {
-                    $pwsh7_locatie = $cmd.Source
-                } else {
-                    $pwsh7_locatie = "$env:LOCALAPPDATA\Microsoft\WindowsApps\pwsh.exe"
-                }
-
-                # als pwsh7 al gevonden is, deze starten. Zo niet, dan opnieuw opstarten met PowerShell 5 om powershell 7 te installeren.
-                # de instelling om een snelkoppeling te maken wordt op Ja gezet, en bewaard, zodat deze gemaakt wordt.
-                if (Test-Path $pwsh7_locatie) {
-                    try {
-                        Start-Pwsh7 $pwsh7_locatie
-                        $Global:init.uitvoerennaopstarten.snelkoppeling = "Ja"
-                        Bewareninstellingen
-                        $form2.Close()
-                        $form.Close()
-                    }
-                    catch {
-                    Write-Host "PowerShell 7 kon niet gestart worden. Programma gaat verder in huidige versie.
-$_" -ForegroundColor Yellow
-                    $Global:init.uitvoerennaopstarten.powershell7start='Nee'
-                    Meldingnaarlogbestand -meldtekst "Instellingen : PowerShell 7 is gevonden maar kon niet gestart worden.
-$_"
-                    $null = venstermetvraag -titel "PowerShell 7 kon niet gestart worden." -vraag "`r`nPowerShell 7 kon niet gestart worden. `r`nProgramma gaat verder in huidige versie."
-                    }
-                } else {
-                    Start-Pwsh5
-                    $Global:init.uitvoerennaopstarten.snelkoppeling = "Ja"
-                    Bewareninstellingen
-                    $form2.Close()
-                    $form.Close()
-
-                } # einde if test-path $pwsh7_locatie ... else
-                
-            } elseif (( $keuzeoptie12.Selectedindex -eq 1) -and ($PSVersionTable.PSVersion.Major -ge 7)) {
-                # Optie om snelkoppeling te maken bij de start van het programma.
-                $Global:init.uitvoerennaopstarten.snelkoppeling = "Ja"
-                Bewareninstellingen
-                
-                Start-Pwsh5
-                $form2.Close()
-                $form.Close()
-            } else {
-                $null = venstermetvraag -titel "Het programma heeft al de gekozen PowerShell versie." -vraag "`r`nHet programma heeft al de gekozen PowerShell versie. `r`nHet programma wordt niet opnieuw gestart."
-            } # einde if (( $keuzeoptie12.Selectedindex -eq 0) -and ($PSVersionTable.PSVersion.Major -lt 7)) ... elseif... else
-
-            # Over sluiten van huidige vensters hierboven (gebruik van $form2.Close() en $form.Close() in plaats van exit):
-            # Als je hier exit gebruikt krijg je een error maar het proces wordt wel afgesloten. 
-            # Daarom worden hier de vensters gesloten en daarna gaat het programma verder in het nieuwe proces dat met start-process is gestart.
-
-        } # einde if $result -eq 'OK'
-    } # einde opnieuw opstarten bij wijziging keuze powershell versie
-
     # Nieuwe hoofdvenster tonen of niet
     if ($keuzeoptie11.Selectedindex -eq 0) {
         # nieuwe hoofdvenster tonen
@@ -4528,7 +4367,7 @@ $_"
         # subtakentonen
         }
     # Console open houden of sluiten
-    if (($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'prerelease')) {
+    if (($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'rc')) {
         if ($keuzeoptie9.Selectedindex -eq 0) {
         Toonofverbergconsole 0;
         } else {
@@ -4537,36 +4376,6 @@ $_"
     }
 
 } # einde bewaren van instellingen
-elseif ($result -eq [system.windows.forms.dialogResult]::OK) {
-    # Er wordt een handmatige update uitgevoerd omdat de gebruiker op de update knop heeft geklikt in het instellingen venster. 
-    # Deze update wordt uitgevoerd bij het opstarten van het programma en er wordt een instelling aangepast die bij het opstarten wordt gecontroleerd.
-    # Dit moet bewaard worden anders wordt het niet uitgevoerd.
-    $global:init.uitvoerennaopstarten.handmatigupdate = "Ja"
-    Bewareninstellingen
-
-    if ($PSVersionTable.PSVersion.Major -ge 7){
-        
-        try {
-                    $pwsh7_locatie = (Get-Command pwsh -ErrorAction Stop).Source
-                    Start-Pwsh7 $pwsh7_locatie
-                    $form2.Close()
-                    $form.Close()
-            }
-        catch {
-               $null = venstermetvraag -titel "PowerShell 7 niet gevonden." -vraag "`r`nPowerShell 7 is niet gevonden op dit systeem. `r`nHet programma wordt niet opnieuw gestart."
-               Meldingnaarlogbestand -meldtekst "Er is een fout opgetreden bij het starten van PowerShell 7 voor het uitvoeren van een handmatige update.`r`nOmschrijving: $($_.Exception.Message)"
-            }
-                
-        } else {
-
-            Start-Pwsh5
-            $form2.Close()
-            $form.Close()
-        } 
-    # Over sluiten van huidige vensters hierboven:
-    # Sluiten van huidige vensters. Als je hier exit gebruikt krijg je een error maar het proces wordt wel afgesloten. 
-    # Daarom worden hier de vensters gesloten en daarna gaat het programma verder in het nieuwe proces dat met start-process is gestart.
-}
 
 # De hoofdmenu zichtbaar maken
 $form.show()
@@ -5688,11 +5497,6 @@ function Start-Pwsh7 {
 }
 
 
-function Start-Pwsh5 {
-$scriptnaam = $global:programma.naam
-$scriptnaam = -join ($startmap, "\", $scriptnaam, ".ps1")
-start-process PowerShell.exe -argumentlist '-File', "`"$scriptnaam`"" 
-}
 <# ---------------------      Start programma ---------------------------------------------------------------
 
 
@@ -5833,7 +5637,7 @@ if (test-path -path "$startmap\beheren.ico") { Remove-Item "$startmap\beheren.ic
 
 
 # Opnieuw snelkoppeling maken omdat programma alleen met PowerShell 7 kan werken. Eenmalig uitvoeren.
-if ($Global:init.uitvoerennaopstarten.PS7snelkoppeling -eq 'Ja') {
+if (($Global:init.uitvoerennaopstarten.PS7snelkoppeling -eq 'Ja') -and ($Global:programma.mode -eq "release")) {
 
     # Maken van snelkoppeling
     # benodigde variabelen
@@ -5869,8 +5673,8 @@ opschonenlogsbijstart;
 
 write-host "Opstarten hoofdvenster."
 
-# Hide Console. Alleen bij mode = release of prerelease
-if (( ($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'prerelease')) -and ($global:init.algemeen.consolesluiten -eq 'Ja')) { 
+# Hide Console. Alleen bij mode = release of release candidate
+if (( ($global:programma.mode -eq 'release') -or ($global:programma.mode -eq 'rc')) -and ($global:init.algemeen.consolesluiten -eq 'Ja')) { 
     write-host "De console wordt afgesloten..."
     Toonofverbergconsole 0;
     }
@@ -5955,7 +5759,7 @@ $Form.controls.add($Button2)
 $Button9                         = New-Object system.Windows.Forms.Button
 $Button9.width                   = 60
 $Button9.height                  = 60
-$Button9.location                = New-Object System.Drawing.Point(510,50)
+$Button9.location                = New-Object System.Drawing.Point(398,150)
 $Button9.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
 $Button9.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-settings.png")
 $Button9.visible                 = $false # deze knop is alleen zichtbaar als subtaken worden weergeven
@@ -5968,7 +5772,7 @@ $Form.controls.add($Button9)
 $Button10                         = New-Object system.Windows.Forms.Button
 $Button10.width                   = 60
 $Button10.height                  = 60
-$Button10.location                = New-Object System.Drawing.Point(398,150)
+$Button10.location                = New-Object System.Drawing.Point(510,50)
 $Button10.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-clean.png")
 $Button10.visible                = $false # deze knop is alleen zichtbaar als subtaken worden weergeven
 $Button10.Add_Click({ vensteropschonen })
@@ -5977,95 +5781,13 @@ $Button10.add_MouseHover({
 })
 $Form.controls.add($Button10)
 
-$Button7                         = New-Object system.Windows.Forms.Button
-$Button7.width                   = 60
-$Button7.height                  = 60
-$Button7.location                = New-Object System.Drawing.Point(52,50)
-$Button7.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
-$Button7.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-stoppen.png")
-$Button7.Add_Click({ 
-    # $result = programmaafsluiten
-    $result = venstermetvraag -titel "Stoppen?" -vraag "`r`nWilt u het programma stoppen?" -knopok "Stoppen" -knopterug "Terug"
-
-    if ($result -eq 'OK') {
-        # programma sluiten
-        $form.DialogResult = [System.Windows.Forms.DialogResult]::cancel
-        # return
-        } 
-    })
-$Button7.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Het programma afsluiten." )
-})
-$Form.controls.add($Button7)
-
-$Button6                         = New-Object system.Windows.Forms.Button
-$Button6.width                   = 60
-$Button6.height                  = 60
-$Button6.location                = New-Object System.Drawing.Point(398,50)
-$Button6.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-info.png")
-$Button6.visible                = $false # deze knop is alleen zichtbaar als $subtaken = $true
-$Button6.Add_Click({ informatieprogramma })
-$Button6.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Algemene informatie over het programma lezen." )
-})
-$Form.controls.add($Button6)
-
-$Button5                         = New-Object system.Windows.Forms.Button
-$Button5.width                   = 60
-$Button5.height                  = 60
-$Button5.location                = New-Object System.Drawing.Point(164,150)
-$Button5.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
-$Button5.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-log.png")
-$Button5.visible                = $false # deze knop is alleen zichtbaar als $subtaken = $true
-$Button5.Add_Click({ vensterlogbestand })
-$Button5.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "De logbestanden van de uitgevoerde taken bekijken." )
-})
-$Form.controls.add($Button5)
-
-$Button11                         = New-Object system.Windows.Forms.Button
-$Button11.width                   = 60
-$Button11.height                  = 60
-$Button11.location                = New-Object System.Drawing.Point(164,50)
-$Button11.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-bestanden.png")
-$Button11.visible                = $false # deze knop is alleen zichtbaar als $subtaken = $true
-$Button11.Add_Click({ vensterverkenner })
-$Button11.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bestanden verkennen." )
-})
-$Form.controls.add($Button11)
-
-#$Button12 = new-object Windows.Forms.PictureBox
-$Button12 = New-Object system.Windows.Forms.Button
-$Button12.Location = New-Object System.Drawing.Size(52,150) 
-$Button12.Size = New-Object System.Drawing.Size(60,60)
-$Button12.Image = [System.Drawing.Image]::FromFile("$icoontjesmap\icoon-opties.png")
-$Button12.Add_Click({ 
-    # switchen tussen de hoofdvenster en venster met subtaken.
-    # uitvoeren via function zodat deze makkelijk weer kan worden gebruikt bij het teruggaan van een subtaken naar het hoofdmenu.
-    if ($Button1.visible) {
-        subtakentonen
-    } else {
-        subtakenverbergen
-    }
-    Start-Sleep -Milliseconds 200
-
- })
-$Button12.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Naar de subtaken gaan" )
-})
-$Form.controls.add($Button12)
-
 $Button8  = New-Object system.Windows.Forms.Button
 $Button8.Location = New-Object System.Drawing.Size(388,150) 
 $Button8.Size = New-Object System.Drawing.Size(60,60)
 $Button8.Image = [System.Drawing.Image]::FromFile("$icoontjesmap\icoon-updaten.png")
 $Button8.visible = $false # deze knop is alleen zichtbaar als $subtaken = $true
 $Button8.Add_Click({ 
-    # test
-    $global:programma.versie = '4.8.0'
-
-    # function controleerupdate uitvoeren en resultaat in variabele plaatsen
+     # function controleerupdate uitvoeren en resultaat in variabele plaatsen
     $resultaatcontrole = controleerupdate 
     if ($resultaatcontrole.fout) {
         # er is een fout opgetreden bij het controleren op een update. De foutmelding wordt gelogd en weergegeven.
@@ -6091,7 +5813,7 @@ Het programma zal opnieuw opgestart worden." -knopok "Ja" -knopterug "Nee"
             $form.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
 
             # opnieuw opstarten
-            $pwsh7_locatie = (Get-Command pwsh -ErrorAction Stop).Source
+            $pwsh7_locatie = (Get-Command pwsh).Source
             Start-Pwsh7 $pwsh7_locatie
             # return
         }
@@ -6099,10 +5821,87 @@ Het programma zal opnieuw opgestart worden." -knopok "Ja" -knopterug "Nee"
     
  })
 $Button8.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Terug naar de hoofdtaken" )
+    $global:tooltip1.SetToolTip($this, "Controleren en updaten van het programma" )
 })
  $Form.controls.add($Button8)
 
+$Button7                         = New-Object system.Windows.Forms.Button
+$Button7.width                   = 60
+$Button7.height                  = 60
+$Button7.location                = New-Object System.Drawing.Point(52,50)
+$Button7.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
+$Button7.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-stoppen.png")
+$Button7.Add_Click({ 
+    # $result = programmaafsluiten
+    $result = venstermetvraag -titel "Stoppen?" -vraag "`r`nWilt u het programma stoppen?" -knopok "Stoppen" -knopterug "Terug"
+
+    if ($result -eq 'OK') {
+        # programma sluiten
+        $form.DialogResult = [System.Windows.Forms.DialogResult]::cancel
+        # return
+        } 
+    })
+$Button7.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Het programma afsluiten." )
+})
+$Form.controls.add($Button7)
+
+$Button12 = New-Object system.Windows.Forms.Button
+$Button12.Location = New-Object System.Drawing.Size(52,150) 
+$Button12.Size = New-Object System.Drawing.Size(60,60)
+$Button12.Image = [System.Drawing.Image]::FromFile("$icoontjesmap\icoon-opties.png")
+$Button12.Add_Click({ 
+    # switchen tussen de hoofdvenster en venster met subtaken.
+    # uitvoeren via function zodat deze makkelijk weer kan worden gebruikt bij het teruggaan van een subtaken naar het hoofdmenu.
+    if ($Button1.visible) {
+        subtakentonen
+    } else {
+        subtakenverbergen
+    }
+    Start-Sleep -Milliseconds 200
+
+ })
+$Button12.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Schakelen tussen de hoofd- en overige taken" )
+})
+$Form.controls.add($Button12)
+
+$Button11                         = New-Object system.Windows.Forms.Button
+$Button11.width                   = 60
+$Button11.height                  = 60
+$Button11.location                = New-Object System.Drawing.Point(164,50)
+$Button11.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-bestanden.png")
+$Button11.visible                = $false # deze knop is alleen zichtbaar als $subtaken = $true
+$Button11.Add_Click({ vensterverkenner })
+$Button11.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Bestanden van de homemappen bekijken, openen, verwijderen of verplaatsen." )
+})
+$Form.controls.add($Button11)
+
+$Button5                         = New-Object system.Windows.Forms.Button
+$Button5.width                   = 60
+$Button5.height                  = 60
+$Button5.location                = New-Object System.Drawing.Point(164,150)
+$Button5.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
+$Button5.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-log.png")
+$Button5.visible                = $false # deze knop is alleen zichtbaar als $subtaken = $true
+$Button5.Add_Click({ vensterlogbestand })
+$Button5.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "De logbestanden bekijken." )
+})
+$Form.controls.add($Button5)
+
+$Button6                         = New-Object system.Windows.Forms.Button
+$Button6.width                   = 60
+$Button6.height                  = 60
+$Button6.location                = New-Object System.Drawing.Point(398,50)
+$Button6.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-info.png")
+$Button6.visible                = $false # deze knop is alleen zichtbaar als $subtaken = $true
+$Button6.Add_Click({ informatieprogramma })
+$Button6.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Algemene informatie over het programma bekijken." )
+})
+$Form.controls.add($Button6)
 
 # declareren venster met uitleg over programma. verschijnt als de muis over de vraagteken gaat.
 

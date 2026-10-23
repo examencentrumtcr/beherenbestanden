@@ -4,9 +4,9 @@
 
 Dit project is gestart om te voorzien in de behoefte aan een hulpmiddel dat eenvoudig bestanden kan kopiëren naar meerdere computers.  
 Het kreeg de naam **"Beherenbestanden"** omdat het programma niet alleen bestanden kopieert, maar ook kan verwijderen en back-uppen.
-
-Later is de mogelijkheid toegevoegd om bestanden tussen mappen te verplaatsen.  
-Het project begon in 2013, oorspronkelijk geschreven in **DOS**. Sindsdien heeft het programma veel wijzigingen ondergaan.  
+Later zijn nog extra functionaliteiten toegevoegd aan het programma.
+Het project begon in 2013, oorspronkelijk geschreven in **DOS**. 
+Sindsdien heeft het programma veel wijzigingen ondergaan.  
 De belangrijkste update was de herschrijving in **PowerShell**.
 
 ### Hoofdfunctionaliteiten
@@ -14,12 +14,10 @@ De belangrijkste update was de herschrijving in **PowerShell**.
 - Een back-up maken van mappen
 
 ### Extra functionaliteiten
-- Bestanden in mappen verwijderen  
-- Bestanden tussen mappen verplaatsen of kopiëren  
-- Inhoud van mappen verkennen
-- Bestanden in mappen openen.
-- Standaard persoonlijke instellingen aanpassen  
-- Oude back-ups opruimen  
+- Bestanden in mappen bekijken, openen of verwijderen
+- Bestanden tussen mappen verplaatsen
+- Standaard instellingen van het programma aanpassen  
+- Oude back-ups verwijderen
 - Gebeurtenissen (logs) bekijken
 - Gebeurtenissen (logs) verwijderen bij de start van het programma    
 - Programmainfo, readme, changelog en licentie, tonen 
@@ -33,8 +31,10 @@ De belangrijkste update was de herschrijving in **PowerShell**.
 
 ## 2. Installatie
 
-Dit programma werkt op **Windows 10 of nieuwer** en vereist **PowerShell 5.1 of hoger**.
-Als het programma i.c.m. **PowerShell 7** moet werken dan is **windows 11** een vereiste. Zie ook sectie **bekende bugs**.
+Dit programma werkt op **Windows 11 of nieuwer** en vereist **PowerShell 7 of hoger**.
+Als het programma i.c.m. **Windows 10** moet werken dan kunnen er problemen ontstaan. Zie ook sectie **bekende bugs**.
+Verder is een account met schrijfrechten nog voor de SharePointsite van het RPC.
+Het programma gebruikt de SharePointsite om bestanden te downloaden en te backuppen.
 
 ### Methode 1: Installer (aanbevolen)
 - Download: [setup-beherenbestanden.zip](https://github.com/examencentrumtcr/beherenbestanden/tree/main/setup)
@@ -83,13 +83,14 @@ Zonder dit kan PowerShell een **Execution Policy-waarschuwing** tonen.
 - Als je een snelkoppeling hebt gemaakt → **dubbelklik erop**.  
 - Anders → klik met de rechtermuisknop op het `beherenbestanden.ps1` en kies  
   `Openen met > Windows PowerShell` of `Uitvoeren met PowerShell`.  
+- Er wordt gevraagd in te loggen bij de Sharepoint site van het RPC. 
+  Zonder een account met de juiste rechten start het script niet op.
 
 ---
 
 ## 5. Bestandenoverzicht
 
 - `Beherenbestanden.ps1` – Hoofdprogramma 
-- `Script_icoon.ico` – Programma-icoon  
 - `Snelkoppeling_maken.ps1` – Hulpmiddel om een snelkoppeling te maken  
 - `Wijzig_Executionpolicy_bypass.bat` – Hulpmiddel om PowerShell Execution Policy te wijzigen  
 - `Changelog.md` – Overzicht van wijzigingen per versie  
@@ -102,11 +103,8 @@ Zonder dit kan PowerShell een **Execution Policy-waarschuwing** tonen.
 ## 6. Licentie
 
 Dit project valt onder de **GNU General Public License v3.0**.  
-
 Beherenbestanden is vrije software: je mag het verspreiden en/of aanpassen onder de voorwaarden van de GPL, zoals gepubliceerd door de Free Software Foundation.  
-
 Het wordt verspreid **zonder enige garantie**; zelfs zonder de impliciete garantie van **Verkoopbaarheid** of **Geschiktheid voor een bepaald doel**.  
-
 Zie <https://www.gnu.org/licenses/> voor meer informatie.  
 
 ---
@@ -121,12 +119,14 @@ Als dit gebeurt:
 
 ✅ Dit probleem is opgelost vanaf **versie 4.2.2** (Zie changelog).
 
-- Het programma kan sinds versie 4.8.0. ook i.c.m. **PowerShell 7** of hoger werken.
-  Echter, onder **Windows 10** krijg je een app-licentie foutmelding na het automatisch installeren van **PowerShell 7**.
+- Het programma werkt sinds versie 5.0.0. alleen i.c.m. **PowerShell 7** of hoger.
+  Als **PowerShell 7** niet is geïnstalleerd dan zal het programma automatisch **PowerShell 7** installeren.
+  Echter, onder **Windows 10** krijg je een app-licentie foutmelding en start het programma niet op.
 
-➡️ Aangeraden wordt om de console van **PowerShell 7** te starten en te controleren of scripts uitgevoerd kunnen worden.
+➡️ Aangeraden wordt om de console van **PowerShell 7** te starten, te controleren of scripts uitgevoerd kunnen worden en dit te herstellen.
    Kunnen scripts uitgevoerd worden dan zal het programma daarna werken met **PowerShell 7**.
-   Krijg je nog steeds een foutmelding dan wordt aangeraden om het programma onder **PowerShell 5** uit te voeren.
+   Krijg je nog steeds een foutmelding dan betekent dit dat het systeem het uitvoeren van scripts tegenhoudt.
+   Dit probleem dient dan eerst opgelost te worden. Het programma werkt alleen met **PowerShell 7** of hoger.
 
 ---
 
