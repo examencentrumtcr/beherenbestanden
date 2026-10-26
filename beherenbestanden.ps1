@@ -42,8 +42,8 @@ $logmap = -join ("$startmap","\","log")
 
 $global:programma = @{
     versie = '5.0.0'
-    extralabel = '189.261021.sharepoint' # buildnummer + datum + eventuele branch
-    mode = 'beta' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    extralabel = '189.261026.sharepoint' # buildnummer + datum + eventuele branch
+    mode = 'alpha' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
     icoon = -join ($icoontjesmap, "\", "script_icoon.ico")
@@ -737,7 +737,8 @@ $algemeen=@{
     consolesluiten = 'Ja'
     controlevoorklaarzetten = 'Ja'
     websitemoppen = 'Apekool.nl'
-    nieuwelayout =  'Nee'
+    nieuwelayout =  'Ja'
+    voortgangweergeven = 'Ja'
 }
 $opschonen=@{
     dagenbewarenlogs = 365
@@ -1211,17 +1212,21 @@ function UploadFolderContentsRecursive {
 function toevoegentekstvenster ($tekst) {
     # deze functie voegt tekst toe aan venster "Objtekst2". 
     # de tekst wordt altijd onderaan toegevoegd en het venster wordt automatisch naar beneden gescrold.
-    $uitvoeren.objtekst2.Invoke([Action]{
-        $uitvoeren.objtekst2.AppendText($tekst + "`r`n")
-    })
+    # Alleen uitvoeren als de checkbox is aangevinkt
+    if ($uitvoeren.voortgang) {
+        $uitvoeren.objtekst2.Invoke([Action]{
+            $uitvoeren.objtekst2.AppendText($tekst + "`r`n")
+        })
+    }
 
 }
 
 ########## Function Scriptrun begint hieronder ##################################################
 
 # info geven in rechter venster
+$infotekst = -join ("De taak ", $uitvoeren.taak, " is gestart.")
 toevoegentekstvenster "`r`n**********************"
-toevoegentekstvenster "De taak is gestart"
+toevoegentekstvenster $infotekst
 
 # nodig voor afhandelen foutmeldingen
 $uitvoeren.foutmelding = $false
@@ -1262,8 +1267,6 @@ switch ($uitvoeren.taak) {
 
     #kopiëren bestanden naar homemappen van de kandidaten
     foreach ($rpcitem in $uitvoeren.listbox.selecteditems) {
-        # progressie laten zien op balk
-        $uitvoeren.progressbar.PerformStep()
         
         # teksten met meldingen voor het logbestand
         $foutmelding_log = "[ $rpcitem - FOUT ] : "
@@ -1312,6 +1315,8 @@ switch ($uitvoeren.taak) {
                 $uitvoeren.foutmelding = $true
                 toevoegentekstvenster "$_"
         } # einde catch
+        # progressie laten zien op balk
+        $uitvoeren.progressbar.PerformStep()
 
     } # einde foreach rpcitem
 
@@ -1341,16 +1346,14 @@ switch ($uitvoeren.taak) {
 
     # bronmap bepalen en in makkeljike variabele plaatsen. dit is de examenmap in sharepoint. 
     $bronmap =$uitvoeren.bronmap
-
-    # progressie laten zien op balk
-    $uitvoeren.progressbar.PerformStep()
-    <# Als er geen items zijn geselecteerd in de examenmap dan moet de gehele map worden gekopiërd naar $localPath
-     anders worden de geselecteerde items een voor een gekopieerd.
-    #>
+    
     # foutmelding van PowerShell naar logbestand
     $foutmelding_log = "[ Downloaden SharePoint FOUT ] : "
 
     toevoegentekstvenster "Downloaden bestanden."
+    <# Als er geen items zijn geselecteerd in de examenmap dan moet de gehele map worden gekopiërd naar $localPath
+     anders worden de geselecteerde items een voor een gekopieerd.
+    #>
     if ($uitvoeren.listview1.selecteditems.count -eq 0) {
         # uitvoeren als er niet is geklikt in het venster met mappen. Dit betekent dus de hele inhoud kopieëren.
         try { 
@@ -1406,14 +1409,13 @@ switch ($uitvoeren.taak) {
             } # einde foreach $folder
         }
         # write-host "Geselecteerde items toegevoegd aan lijst met te kopiëren items."
-    } # einde if $uitvoeren.listview1.selecteditems.count -eq 0
+    } # einde if $uitvoeren.listview1.selecteditems.count -eq 0 .... else ....
 
-     #kopiëren bestanden naar homemappen van de kandidaten
+    # progressie laten zien op balk
+    $uitvoeren.progressbar.PerformStep()
 
+    #kopiëren bestanden naar homemappen van de kandidaten
     foreach ($rpcitem in $uitvoeren.listbox.selecteditems) {
-        # progressie laten zien op balk
-        $uitvoeren.progressbar.PerformStep()
-
         # teksten met meldingen voor het logbestand
         $foutmelding_log = "[ $rpcitem - FOUT ] : "
 
@@ -1425,11 +1427,12 @@ switch ($uitvoeren.taak) {
 
         # kopieren geselecteerde mappen of bestanden  
         Copy-Item -path "$localPath\*" -destination "$doelmap" -recurse -Force -ErrorAction Stop
-        
+        # progressie laten zien op balk
+        $uitvoeren.progressbar.PerformStep()
     } # einde foreach $rpcitem
 
     # progressie laten zien op balk
-    $uitvoeren.progressbar.PerformStep()
+    # $uitvoeren.progressbar.PerformStep()
     # array legen. mss is dit niet nodig!
     $geselecteerdeitems.Clear()
     # geselecteerde rpc-nummers wissen. je moet dan opnieuw selecteren en kan niet meteen op bevestigen klikken.
@@ -1444,9 +1447,6 @@ switch ($uitvoeren.taak) {
     "wissen"   { 
         #wissen van bestanden in homemappen van de kandidaten
         foreach ($rpcitem in $uitvoeren.listbox.selecteditems) {
-            # progressie laten zien op balk
-            $uitvoeren.progressbar.PerformStep()
-
             # teksten met meldingen voor het logbestand
             $foutmelding_log = "[ $rpcitem - FOUT ] : "
             
@@ -1473,14 +1473,15 @@ switch ($uitvoeren.taak) {
                 "$foutmelding_log" + $_.exception.message | out-file "$logbestand" -Append
                 $uitvoeren.foutmelding = $true
                   } # einde catch
-            
-            } # einde foreach statement
+            # progressie laten zien op balk
+            $uitvoeren.progressbar.PerformStep()
 
+            } # einde foreach statement
                } # einde taak wissen
 
     "verplaatsen" {
         # er is maar een actie te doen dus...
-        $uitvoeren.progressbar.maximum = 1
+        $uitvoeren.progressbar.maximum = 3
 
         # teksten met meldingen voor het logbestand
         $foutmelding_log = "[ FOUT ] : "
@@ -1489,7 +1490,8 @@ switch ($uitvoeren.taak) {
         $bronmap = $uitvoeren.bronmap
         $doelmap = $uitvoeren.doelmap
 
-        # doelmap wordt geleegd voor het verplaatsen of kopiëren, als dit gekozen is.
+        # doelmap wordt geleegd voor het verplaatsen of kopiëren. 
+        # dit is nu altijd gekozen maar staat hier nog met een if-statement om eventueel nog te wijzigen.
         if ($uitvoeren.doelmaplegen -eq $true) {
             $error.clear()
             try {
@@ -1512,7 +1514,10 @@ switch ($uitvoeren.taak) {
                 $uitvoeren.progressbar.PerformStep()
                 break;
                   } # einde catch
-        }
+        } # einde if ($uitvoeren.doelmaplegen -eq $true)
+        
+        # progressie laten zien op balk
+        $uitvoeren.progressbar.PerformStep()
 
         # kopieren of verplaatsen
         $error.clear()
@@ -1523,6 +1528,9 @@ switch ($uitvoeren.taak) {
             # eerst kopiëren
             toevoegentekstvenster "Kopiëren van $bronmap naar $doelmap"
             Copy-Item -path "$bronmap" -destination "$doelmap" -recurse -ErrorAction Stop
+
+            # progressie laten zien op balk
+            $uitvoeren.progressbar.PerformStep()
 
             # verwijderen van bestanden als keuze is verplaatsen. alleen de inhoud van mijn documenten
             if ($uitvoeren.keuzeverplaatsen -eq "verplaatsen") {
@@ -1547,9 +1555,6 @@ switch ($uitvoeren.taak) {
     "opschonen"   { 
         #wissen van backups van homemappen van de kandidaten
         foreach ($rpcitem in $uitvoeren.listbox.items) {
-            # progressie laten zien op balk
-            $uitvoeren.progressbar.PerformStep()
-
             # teksten met meldingen voor het logbestand
             $foutmelding_log = "[ $rpcitem - FOUT ] : "
             
@@ -1569,9 +1574,10 @@ switch ($uitvoeren.taak) {
                 "$foutmelding_log" + $_.exception.message | out-file "$logbestand" -Append
                 $uitvoeren.foutmelding = $true
                   } # einde catch
-            
-            } # einde foreach statement
+            # progressie laten zien op balk
+            $uitvoeren.progressbar.PerformStep()
 
+            } # einde foreach statement
                } # einde taak wissen
 
 } # einde switch commando $uitvoeren.taak
@@ -1680,7 +1686,7 @@ if ($uitvoeren.taak -eq "opschonen") {
     $uitvoeren.progressbar.maximum = $listbox.items.count
     } elseif ($uitvoeren.taak -eq "kopiëren") {
     # plus 2 omdat er eerst een stap is voor het downloaden van de bestanden en, na het kopiëren van de bestanden, het leegmaken van tijdelijke map.
-    $uitvoeren.progressbar.maximum = $listbox.selecteditems.count +2
+    $uitvoeren.progressbar.maximum = $listbox.selecteditems.count +1
     } else {
     $uitvoeren.progressbar.maximum = $listbox.selecteditems.count
     }
@@ -1803,6 +1809,8 @@ if ($uitvoeren.foutmelding) {
 # knoppen zichtbaar maken
 $EndButton.show()
 $LogButton.show()
+# de checkbox niet klikbaar
+$voortgang.Visible = $false
 
 # alleen bij taak kopieren onderstaande knop zichtbaar maken
 if ($uitvoeren.taak -eq "kopiëren") {
@@ -1812,6 +1820,7 @@ if ($uitvoeren.taak -eq "kopiëren") {
     $Btnescape.BackColor = 'green'
     $Btnescape.show()
 } elseif ($uitvoeren.taak -in @("wissen", "verplaatsen")) {
+    # alleen bij taken wissen en verplaatsen onderstaande knop zichtbaar maken
     $Btnescape.size = New-Object System.Drawing.Size(200,40)
     # escape knop wordt nu terug knop
     $Btnescape.text= "Terug naar Verkenner"
@@ -1819,7 +1828,7 @@ if ($uitvoeren.taak -eq "kopiëren") {
     $Btnescape.show()  
 } else {
 # knop logbestand bekijken wordt nu naar links verplaatst om aan te sluiten met knop Terug.
-$LogButton.Location = New-Object System.Drawing.Size(160, 400)
+$LogButton.Location = New-Object System.Drawing.Size(160, 440)
 }
 
 $form2.show()
@@ -1846,11 +1855,11 @@ switch ($taak) {
     "backup"      { $titel = "Overzicht uit te voeren taak Back-up maken " }
     "kopiëren"    { $titel = "Overzicht uit te voeren taak Bestanden klaarzetten" }
     "wissen"      { $titel = "Overzicht uit te voeren taak Wissen" }
-    "verplaatsen" { $titel = "Overzicht uit te voeren taak Verplaatsen of kopiëren" }
+    "verplaatsen" { $titel = "Overzicht uit te voeren taak Verplaatsen" }
     "opschonen"   { $titel = "Overzicht uit te voeren taak Opschonen" }
 }
 
-$uitvoeren.Form3 = declareren_standaardvenster $titel 600 500
+$uitvoeren.Form3 = declareren_standaardvenster $titel 600 540
 
 $Description2                     = New-Object system.Windows.Forms.Label
 $Description2.AutoSize            = $false
@@ -1872,7 +1881,7 @@ $Description3.ForeColor           = 'blue'
 $Description3.hide()
 
 $StartButton = New-Object System.Windows.Forms.Button
-$StartButton.Location = New-Object System.Drawing.Size(10, 400)
+$StartButton.Location = New-Object System.Drawing.Size(10, 440)
 $StartButton.Size = New-Object System.Drawing.Size(120, 50)
 $StartButton.Text = "Start"
 $StartButton.height = 40
@@ -1884,6 +1893,7 @@ $StartButton.Add_click( {
     $uitvoeren.homemap=$homemapstudenten
     $uitvoeren.listbox = New-Object System.Windows.Forms.Listbox
     $uitvoeren.listbox = $listbox
+    $uitvoeren.voortgang = $voortgang.checked
 
     # doorgeven objtekst. dit is de venster waarin de voortgang wordt bijgehouden.
     $uitvoeren.objtekst2 = New-Object System.Windows.Forms.textbox
@@ -1913,13 +1923,20 @@ $StartButton.Add_click( {
         # bepalen doel-, bronmap en doelmaplegen
         $uitvoeren.bronmap = -join ($homemapstudenten,"\",$listbox.selecteditem,"\Mijn Documenten\*")
         $uitvoeren.doelmap = -join ($homemapstudenten,"\",$doelselectie.selecteditem,"\Mijn Documenten")
-        $uitvoeren.doelmaplegen=$doelmaplegen.checked
-        # keuze tussen kopieren of verplaatsen doorgeven
+
+        # De volgende 2 variabelen hebben nu standaard de gegeven waarden.
+        # dus de doelmap wordt altijd geleegd en alleen de keuze verplaatsen is mogelijk.
+        # Deze variabelen blijven bestaan om mogelijk in de toekomst de opties open te houden.
+        $uitvoeren.doelmaplegen=$true
+        $uitvoeren.keuzeverplaatsen = "verplaatsen" 
+        # keuze tussen kopieren of verplaatsen doorgeven. Dit is niet meer mogelijk.
+        <#
         if ($keuzeoptie1.Selectedindex -eq "1") { 
                     $uitvoeren.keuzeverplaatsen = "kopiëren" 
                     } else {
                     $uitvoeren.keuzeverplaatsen = "verplaatsen" 
                     }
+        #>
         }
 
         "opschonen" {
@@ -1935,7 +1952,7 @@ $StartButton.Add_click( {
     });
 
 $EndButton = New-Object System.Windows.Forms.Button
-$EndButton.Location = New-Object System.Drawing.Size(10, 400)
+$EndButton.Location = New-Object System.Drawing.Size(10, 440)
 $EndButton.Size = New-Object System.Drawing.Size(120, 50)
 $EndButton.Text = "Sluiten"
 $EndButton.height = 40
@@ -1946,7 +1963,7 @@ $EndButton.hide()
 
 $Btnescape = New-object System.Windows.Forms.Button 
 $Btnescape.text= "Terug"
-$Btnescape.location = New-Object System.Drawing.Size(160, 400)
+$Btnescape.location = New-Object System.Drawing.Size(160, 440)
 $Btnescape.size = New-Object System.Drawing.Size(120, 50)
 $Btnescape.height = 40
 $Btnescape.BackColor = 'red'
@@ -1954,7 +1971,7 @@ $Btnescape.ForeColor = 'white'
 $Btnescape.DialogResult = [System.Windows.Forms.DialogResult]::cancel
 
 $LogButton = New-Object System.Windows.Forms.Button
-$LogButton.Location = New-Object System.Drawing.Size(400, 400)
+$LogButton.Location = New-Object System.Drawing.Size(400, 440)
 $LogButton.Size = New-Object System.Drawing.Size(170, 50)
 $LogButton.Text = "Logbestand bekijken"
 $LogButton.height = 40
@@ -1987,17 +2004,22 @@ switch ($taak) {
     "kopiëren"    { $Description2.text = "U gaat bestanden of mappen klaarzetten op de volgende RPC-nummers." }
     "wissen"      { $Description2.text = "U gaat bestanden wissen van de volgende RPC-nummers." }
     "verplaatsen" { 
+                  $Description3.show() 
+                  $Description2.text = "U gaat bestanden verplaatsen van een RPC-nummer naar een andere." 
+                  $Description3.text = "De doelmap wordt voor het verplaatsen of kopiëren eerst geleegd."
+                  <# Bij taak verplaatsen is er geen keuze meer!! Dus alleen verplaatsen en altijd doelmap wissen!
                   if ($keuzeoptie1.Selectedindex -eq "1") { 
                     $Description2.text = "U gaat bestanden kopiëren van een RPC-nummer naar een andere." 
                     } else {
                     $Description2.text = "U gaat bestanden verplaatsen van een RPC-nummer naar een andere." 
                     }
-                  $Description3.show() 
+                  
                   if ($doelmaplegen.checked -eq $true) { 
                     $Description3.text = "De doelmap wordt voor het verplaatsen of kopiëren eerst geleegd."
                     } else {
                     $Description3.text = "De bestanden worden toegevoegd aan de bestanden in de doelmap."
                     }
+                  #>
                   }
     "opschonen"   { $Description2.text = "U gaat oude back-ups verwijderen." }
 } # einde switch taak
@@ -2023,6 +2045,22 @@ $objtekst2.ScrollBars = "Both"
 # $objtekst2.Visible = $false
 $objtekst2.BackColor  = 'white'
 $objtekst2.WordWrap = $false
+
+$voortgang = New-Object System.Windows.Forms.Checkbox 
+$voortgang.Location = New-Object System.Drawing.Point(20,390)
+$voortgang.Size = New-Object System.Drawing.Size(400,30)
+$voortgang.Text = "Voortgang van de taak weergeven in het rechter venster"
+$voortgang.Font = 'Microsoft Sans Serif,11'
+$voortgang.ForeColor = [System.Drawing.Color]::green
+$voortgang.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Geef aan je de voortgang van de taak wilt zien in het rechter venster." )
+})
+
+if (($global:init["algemeen"]["voortgangweergeven"]) -eq "Ja") {
+    $voortgang.checked = $true
+    } else {
+    $voortgang.checked = $false
+    }
 
 # geselecteerde rpc-nummers links weergeven
 # als taak is verplaatsen of opschonen heb je een andere inhoud dan bij overige taken
@@ -2106,7 +2144,7 @@ if ($taak -eq "kopiëren") {
         } # einde ($listview1.selecteditems.count -gt 0)
     } # einde ($taak -eq "kopiëren")
 
-$uitvoeren.Form3.Controls.AddRange(@($Description2, $Description3, $StartButton, $EndButton, $Btnescape, $LogButton, $Label, $objtekst1, $objtekst2 ))
+$uitvoeren.Form3.Controls.AddRange(@($Description2, $Description3, $voortgang, $StartButton, $EndButton, $Btnescape, $LogButton, $Label, $objtekst1, $objtekst2 ))
 
 # Toevoegen gebruik van escapetoets.
 # Function Add-EscapeClose kan hier niet gebruikt worden omdat deze niet in Runspace is gedefinieerd. Daarom wordt de code hier direct toegevoegd.
@@ -3914,7 +3952,7 @@ function vensterinstellingen {
 $form.Hide()
 
 # venster declareren
-$Form2 = declareren_standaardvenster "Instellingen wijzigen" 1000 510
+$Form2 = declareren_standaardvenster "Instellingen wijzigen" 1000 550
 
 $keuzeoptie1                     = New-Object system.Windows.Forms.ComboBox
 $keuzeoptie1.width               = 80
@@ -3950,13 +3988,26 @@ if ($global:init["algemeen"]["wissennabackup"] -eq "Ja") {
     $keuzeoptie2.Selectedindex = 1
     }
 
+$keuzeoptie3                     = New-Object system.Windows.Forms.ComboBox
+$keuzeoptie3.width               = 80
+$keuzeoptie3.autosize            = $true
+$keuzeoptie3.DropDownStyle       = "DropDownList"
+$keuzeoptie3.Font                = 'Microsoft Sans Serif,12'
+$keuzeoptie3.location = "450,215" 
+[void] $keuzeoptie3.Items.Add("Ja")
+[void] $keuzeoptie3.Items.Add("Nee")
+if ($global:init["algemeen"]["voortgangweergeven"] -eq "Ja") {
+    $keuzeoptie3.Selectedindex = 0
+    } else {
+    $keuzeoptie3.Selectedindex = 1
+    }
 
 $keuzeoptie4                     = New-Object system.Windows.Forms.ComboBox
 $keuzeoptie4.width               = 80
 $keuzeoptie4.autosize            = $true
 $keuzeoptie4.DropDownStyle       = "DropDownList"
 $keuzeoptie4.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie4.location = "450,215" 
+$keuzeoptie4.location = "450,255" 
 [void] $keuzeoptie4.Items.Add("Ja")
 [void] $keuzeoptie4.Items.Add("Nee")
 if ($global:init["opschonen"]["opschonenlogs"] -eq "Ja") {
@@ -3966,7 +4017,7 @@ if ($global:init["opschonen"]["opschonenlogs"] -eq "Ja") {
     }
 
 $keuzeoptie5 = New-Object System.Windows.Forms.TextBox 
-$keuzeoptie5.Location = New-Object System.Drawing.Size(450,255) 
+$keuzeoptie5.Location = New-Object System.Drawing.Size(450,295) 
 $keuzeoptie5.Size = New-Object System.Drawing.Size(80,60)
 $keuzeoptie5.MaxLength = 4
 $keuzeoptie5.Font = 'Microsoft Sans Serif,11'
@@ -4027,7 +4078,7 @@ $keuzeoptie9.width               = 80
 $keuzeoptie9.autosize            = $true
 $keuzeoptie9.DropDownStyle       = "DropDownList"
 $keuzeoptie9.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie9.location = "450,295" 
+$keuzeoptie9.location = "450,335" 
 [void] $keuzeoptie9.Items.Add("Ja")
 [void] $keuzeoptie9.Items.Add("Nee")
 if ($global:init["algemeen"]["consolesluiten"] -eq "Ja") {
@@ -4071,7 +4122,7 @@ $keuzeoptie13.width               = 80
 $keuzeoptie13.autosize            = $true
 $keuzeoptie13.DropDownStyle       = "DropDownList"
 $keuzeoptie13.Font                = 'Microsoft Sans Serif,12'
-$keuzeoptie13.location = "450,335" 
+$keuzeoptie13.location = "450,375" 
 [void] $keuzeoptie13.Items.Add("Ja")
 [void] $keuzeoptie13.Items.Add("Nee")
 if ($global:init["uitvoerennaopstarten"]["Controleopupdate"] -eq "Ja") {
@@ -4104,12 +4155,24 @@ $Description2.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Bepaal of de optie om homemappen te wissen standaard is geselecteerd bij het uitvoeren van een back-up." )
 })
 
+$Description3                     = New-Object system.Windows.Forms.Label
+$Description3.text                = "Tijdens het uitvoeren van een taak de voortgang weergegeven in het rechter venster."
+$Description3.AutoSize            = $false
+$Description3.width               = 400
+$Description3.height              = 40
+$Description3.location            = New-Object System.Drawing.Point(40,220)
+$Description3.Font                = 'Microsoft Sans Serif,11'
+$Description3.ForeColor = [System.Drawing.Color]::Blue
+$Description3.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Bepaal of tijdens het uitvoeren van een taak de voortgang wordt weergegeven in het rechter venster." )
+})
+
 $Description4                     = New-Object system.Windows.Forms.Label
 $Description4.text                = "Automatisch verwijderen oude logbestanden bij de start van het programma"
 $Description4.AutoSize            = $false
 $Description4.width               = 400
 $Description4.height              = 40
-$Description4.location            = New-Object System.Drawing.Point(40,220)
+$Description4.location            = New-Object System.Drawing.Point(40,260)
 $Description4.Font                = 'Microsoft Sans Serif,11'
 $Description4.ForeColor = [System.Drawing.Color]::Blue
 $Description4.add_MouseHover({
@@ -4121,7 +4184,7 @@ $Description5.text                = "Aantal dagen dat de logbestanden van het pr
 $Description5.AutoSize            = $false
 $Description5.width               = 400
 $Description5.height              = 40
-$Description5.location            = New-Object System.Drawing.Point(40,260)
+$Description5.location            = New-Object System.Drawing.Point(40,300)
 $Description5.Font                = 'Microsoft Sans Serif,11'
 $Description5.ForeColor = [System.Drawing.Color]::Blue
 $Description5.add_MouseHover({
@@ -4171,7 +4234,7 @@ $Description9.text                = "Console, venster met informatie over het sc
 $Description9.AutoSize            = $false
 $Description9.width               = 400
 $Description9.height              = 40
-$Description9.location            = New-Object System.Drawing.Point(40,300)
+$Description9.location            = New-Object System.Drawing.Point(40,340)
 $Description9.Font                = 'Microsoft Sans Serif,11'
 $Description9.ForeColor = [System.Drawing.Color]::Blue
 $Description9.add_MouseHover({
@@ -4207,7 +4270,7 @@ $Description13.text                = "Automatisch controleren en installeren van
 $Description13.AutoSize            = $false
 $Description13.width               = 400
 $Description13.height              = 40
-$Description13.location            = New-Object System.Drawing.Point(40,340)
+$Description13.location            = New-Object System.Drawing.Point(40,380)
 $Description13.Font                = 'Microsoft Sans Serif,11'
 $Description13.ForeColor = [System.Drawing.Color]::Blue
 $Description13.add_MouseHover({
@@ -4216,7 +4279,7 @@ $Description13.add_MouseHover({
 
 $Btnstandaard = New-object System.Windows.Forms.Button 
 $Btnstandaard.text= "Herstel de standaardinstellingen"
-$Btnstandaard.location = "430,390" 
+$Btnstandaard.location = "430,430" 
 $Btnstandaard.size = "250,30"  
 $Btnstandaard.BackColor = 'blue'
 $Btnstandaard.ForeColor = 'white'
@@ -4227,6 +4290,7 @@ $Btnstandaard.add_click({
     # alle opties krijgen hun standaard waarde. Er wordt nog niets bewaard!
     $keuzeoptie1.SelectedItem=$temp_init["algemeen"]["locatiekeuze"]
     $keuzeoptie2.SelectedItem=$temp_init["algemeen"]["wissennabackup"]
+    $keuzeoptie3.SelectedItem=$temp_init["algemeen"]["voortgangweergeven"]
     $keuzeoptie4.SelectedItem=$temp_init["opschonen"]["opschonenlogs"]
     $keuzeoptie5.Text=$temp_init["opschonen"]["dagenbewarenlogs"]
     $keuzeoptie6.SelectedItem=$temp_init["algemeen"]["afbeelding"]
@@ -4242,7 +4306,7 @@ $Btnstandaard.add_MouseHover({
 
 $Btnaccept = New-object System.Windows.Forms.Button 
 $Btnaccept.text= "Bewaren"
-$Btnaccept.location = "50,390" 
+$Btnaccept.location = "50,430" 
 $Btnaccept.size = "150,30"  
 $Btnaccept.BackColor = 'green'
 $Btnaccept.ForeColor = 'white'
@@ -4253,7 +4317,7 @@ $Btnaccept.add_MouseHover({
 
 $Btnescape = New-object System.Windows.Forms.Button 
 $Btnescape.text= "Terug"
-$Btnescape.location = "240,390" 
+$Btnescape.location = "240,430" 
 $Btnescape.size = "150,30"  
 $Btnescape.BackColor = 'red'
 $Btnescape.ForeColor = 'white'
@@ -4307,8 +4371,8 @@ Als u terug wilt zonder de instellingen te bewaren klikt u op Terug.
 U krijgt extra informatie over een instelling als de muiscursor op een tekst staat.
 " 
 
-$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie1, $keuzeoptie11, $keuzeoptie2, $keuzeoptie10, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie7, $keuzeoptie6, $keuzeoptie13,
-$description1, $description2, $description3, $description4, $description5, $description6, $description8, $description9, $description10, $description7, $Description11, $Description12, $Description13, 
+$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie1, $keuzeoptie11, $keuzeoptie2, $keuzeoptie10, $keuzeoptie3, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie7, $keuzeoptie6, $keuzeoptie13,
+$description1, $description2, $description3, $description4, $description5, $description6, $description8, $description9, $description10, $description7, $Description11, $Description13, 
 $Btnaccept, $Btnescape, $Btnstandaard, $Global:vraagtekenicoon, $gifbox2 ))
 
 Add-EscapeClose -Form $form2
@@ -4322,6 +4386,7 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
     # keuzes worden opgehaald en in variabelen gezet. Deze worden vervolgens in het globale init object gezet. Daarna worden deze bewaard in het persoonlijke init bestand van de gebruiker.
     $global:init["algemeen"]["locatiekeuze"]=$keuzeoptie1.Selecteditem
     $global:init["algemeen"]["wissennabackup"]=$keuzeoptie2.Selecteditem
+    $global:init["algemeen"]["voortgangweergeven"]=$keuzeoptie3.Selecteditem
     $global:init["opschonen"]["opschonenlogs"]=$keuzeoptie4.Selecteditem
     $global:init["algemeen"]["websitemoppen"]=$keuzeoptie7.Selecteditem
     $global:init["algemeen"]["consolesluiten"]=$keuzeoptie9.Selecteditem
@@ -5130,6 +5195,22 @@ param(
     $sender.Sort()
 } # einde SortListView
 
+Function Knoppenklikbaar {
+
+# bepalen of knop Wissen klikbaar moet zijn
+if ($listbox.selecteditems.count -gt 0) {
+        $Btwissen.Enabled= $true
+        } else {
+        $Btwissen.Enabled= $false
+}
+# bepalen of knop Verplaatsen zichtbaar moet zijn
+if (($listBox.selecteditems.count -eq 1) -and ($null -ne $doelselectie.selecteditem)) {
+    $Btnverplaatsen.Enabled= $true
+    } else {
+    $Btnverplaatsen.Enabled= $false
+}
+} # einde function Knoppenklikbaar
+
 # ----------- Start function VensterVerkenner -------------------------------
 
 # variabelen krijgen hier een verkorte naam tbv leesbaarheid en gebruik in andere functies
@@ -5196,15 +5277,18 @@ $listBox.add_SelectedIndexChanged( {
     $listView1.items.clear()
     # geselecteerde submappen van inhoud kandidatenmap legen
     geselecteerdebronmaplegen
-    # selecteert de gekozen map of submap
-    $selectie = Selecteermap
+    # geselecteerde doelmap legen
+    $doelselectie.selecteditem = $null
 
+    # selecteert de gekozen map of submap
     # alleen als 1 item is geselecteerd 
+    $selectie = Selecteermap
     if ( $listBox.selecteditems.count -eq 1) {
           # weergeven inhoud in rechter venster, inhoud geselecteerde map
           geselecteerdemap_vullen $selectie
 
           }  # einde $listView1.selecteditems.count -eq 1 
+    Knoppenklikbaar
      } ) # einde $listBox.add_SelectedIndexChanged
 
 # Standaard lijst met alle locaties maken, met standaardwaarden
@@ -5225,10 +5309,11 @@ $lijstlocaties.add_SelectedIndexChanged(
      $objtekst2.Clear()
      # geselecteerde submappen van inhoud kandidatenmap legen
      $geselecteerdebronmap.Clear()
+     # geselecteerde doelmap legen
+     $doelselectie.selecteditem = $null
+     Knoppenklikbaar
 
      } ) 
-
-
 
 $BtnOpnieuw                         = New-Object system.Windows.Forms.Button
 $BtnOpnieuw.width                   = 40
@@ -5397,6 +5482,7 @@ $Btwissen.location = "220,570"
 $Btwissen.size = "150,30"  
 $Btwissen.BackColor = 'blue'
 $Btwissen.ForeColor = 'white'
+$Btwissen.Enabled= $false
 # $Btwissen.DialogResult = [System.Windows.Forms.DialogResult]::cancel
 $Btwissen.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Ga terug naar het hoofdvenster." )
@@ -5416,6 +5502,7 @@ $Btwissen.Add_Click({
         $objtekst2.Clear()
         $doelselectie.selecteditem = $null
     }
+    Knoppenklikbaar
 }) # einde Btnverplaatsen.add_click
 
 $Btnverplaatsen = New-object System.Windows.Forms.Button 
@@ -5424,6 +5511,7 @@ $Btnverplaatsen.location = "390,570"
 $Btnverplaatsen.size = "200,30"  
 $Btnverplaatsen.BackColor = 'blue'
 $Btnverplaatsen.ForeColor = 'white'
+$Btnverplaatsen.Enabled= $false
 # $Btwissen.DialogResult = [System.Windows.Forms.DialogResult]::cancel
 $Btnverplaatsen.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Ga terug naar het hoofdvenster." )
@@ -5432,12 +5520,13 @@ $Form2.controls.add($Btnverplaatsen)
 
 $Btnverplaatsen.Add_Click({ 
   # alleen als 1 item is geselecteerd in de listbox
-    if ($listBox.selecteditems.count -eq 1) {
+    if (($listBox.selecteditems.count -eq 1) -and ($null -ne $doelselectie.selecteditem)){
        overzichttaken -taak "verplaatsen"
        $listBox.selecteditems.clear()
        $objtekst2.Clear()
        $doelselectie.selecteditem = $null
     }   
+    Knoppenklikbaar
 }) # einde Btnverplaatsen.add_click
 
 #  de selectie vd de doel rpc-nummer 
@@ -5452,6 +5541,14 @@ $doelselectie.add_MouseHover({
 })
 $doelselectie = lijstrpcnrsaanmaken $keuzelocatie $doelselectie
 $Form2.controls.add($doelselectie)
+
+$doelselectie.add_SelectedIndexChanged({
+    # als  bron en doel hetzelfde zijn dan deseleceteren
+    if ($doelselectie.selecteditem -eq $listbox.selecteditem) {
+        $doelselectie.selecteditem = $null
+    }
+    Knoppenklikbaar
+})
 
 # venster met uitleg over deze taak wordt gedeclareerd. 
 declareren_uitlegvenster "Uitleg over het venster Verkenner." 680 320 800 570 "Hier kunt u de bestanden van de homemappen van de kandidaten controleren en openen.
