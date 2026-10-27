@@ -1,10 +1,12 @@
 ﻿<# script om een snelkoppeling te maken van Beherenbestanden met de juiste opties
 
 Je kan de volgende parameters meegeven aan het script:
-    -auto : maakt automatisch een snelkoppeling.
-            Als deze parameter niet meegegeven wordt, dan wordt de gebruiker gevraagd of hij/zij een snelkoppeling wil maken naar PowerShell 7.
+    -auto : maakt automatisch een snelkoppeling met PowerShell 7.
+            Als deze parameter niet meegegeven wordt, dan wordt de gebruiker gevraagd of hij/zij een snelkoppeling wil maken met PowerShell 5.
     -pwsh5 : maakt automatisch een snelkoppeling naar PowerShell 5.1
-             Deze paramter moet alleen meegegeven worden als de parameter -auto ook meegegeven wordt.
+            Deze paramter moet alleen meegegeven worden als de parameter -auto ook meegegeven wordt.
+    -startmap : De map waar het programma staat. 
+            Standaard wordt het script uitgevoerd in dezelfde map en hoeft deze parameter niet gegeven te worden.
 #>
 
 # Declareren variabelen ----------------------------------------------------------

@@ -42,8 +42,8 @@ $logmap = -join ("$startmap","\","log")
 
 $global:programma = @{
     versie = '5.0.0'
-    extralabel = '189.261026.sharepoint' # buildnummer + datum + eventuele branch
-    mode = 'alpha' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    extralabel = '189.261027.sharepoint' # buildnummer + datum + eventuele branch
+    mode = 'beta' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
     icoon = -join ($icoontjesmap, "\", "script_icoon.ico")
@@ -5204,7 +5204,8 @@ if ($listbox.selecteditems.count -gt 0) {
         $Btwissen.Enabled= $false
 }
 # bepalen of knop Verplaatsen zichtbaar moet zijn
-if (($listBox.selecteditems.count -eq 1) -and ($null -ne $doelselectie.selecteditem)) {
+# if (($listBox.selecteditems.count -eq 1) -and ($null -ne $doelselectie.selecteditem)) {
+if ($listBox.selecteditems.count -eq 1) {
     $Btnverplaatsen.Enabled= $true
     } else {
     $Btnverplaatsen.Enabled= $false
