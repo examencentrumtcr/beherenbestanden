@@ -1,14 +1,36 @@
 :: Script om de Executionpolicy te wijzigen 
+:: Laatst gewijzigd op 27-10-2026
+:: Laatste wijziging: Werkt nu met PowerShell 7
 
 @echo off
-Echo De ExecutionPolicy wordt op ByPass gezet zodat PowerShell scripts zonder problemen kunnen werken.
+title PowerShell ExecutionPolicy wijzigen
 
-powershell -command "& {Set-ExecutionPolicy -ExecutionPolicy ByPass -scope currentuser -Force}"
+echo ==========================================
+echo   PowerShell ExecutionPolicy wijzigen
+echo ==========================================
+echo.
+echo De ExecutionPolicy wordt ingesteld op Bypass
+echo voor de huidige gebruiker.
+echo.
 
-Echo Uitgevoerd.
-Echo Dit is de nieuwe waarde :
+pwsh -NoProfile -Command "Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope CurrentUser -Force"
 
-powershell -command "& {Get-ExecutionPolicy }"
+if errorlevel 1 (
+    echo.
+    echo FOUT: De wijziging is mogelijk mislukt.
+    echo Controleer of Groepsbeleid de instelling blokkeert.
+    echo.
+    pause
+    exit /b 1
+)
 
-Echo.
+echo.
+echo De effectieve ExecutionPolicy is:
+pwsh -NoProfile -Command "Get-ExecutionPolicy"
+
+echo.
+echo Instellingen per scope:
+pwsh -NoProfile -Command "Get-ExecutionPolicy -List"
+
+echo.
 pause

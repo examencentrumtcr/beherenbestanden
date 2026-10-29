@@ -37,6 +37,8 @@ if (!(Test-Path $startmap)) {
 # samenvoegen installatiemap met hoofdprogramma. nodig voor aanmaken snelkoppeling
 $hoofdprog = -join ("$startmap","\","$hoofdprog")
 
+$icoonmap = -join ($startmap,'\png')
+
 ## Begin van het script -------------------------------------------------------------
 
 if (!($auto)) {
@@ -97,7 +99,7 @@ $WScriptObj = New-Object -ComObject ("WScript.Shell")
 $shortcut = $WscriptObj.CreateShortcut($ShortcutPath)
 $shortcut.TargetPath = $SourceFilePath
 $shortcut.Arguments = "-ExecutionPolicy Bypass -NoProfile -file " + '"' + "$hoofdprog" + '"' 
-$shortcut.IconLocation = "$startmap" + "\" + "script_icoon.ico"
+$shortcut.IconLocation = "$icoonmap" + "\script_icoon.ico"
 $shortcut.WorkingDirectory = "$startmap"
 $shortcut.Save()
 

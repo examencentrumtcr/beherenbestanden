@@ -41,9 +41,9 @@ $gifjesmap = -join ("$startmap","\","png")
 $logmap = -join ("$startmap","\","log")
 
 $global:programma = @{
-    versie = '5.0.0'
-    extralabel = '189.261027.sharepoint' # buildnummer + datum + eventuele branch
-    mode = 'beta' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    versie = '5.0.0.rc.1'
+    extralabel = '190.261029.sharepoint' # buildnummer + datum + eventuele branch
+    mode = 'rc' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
     icoon = -join ($icoontjesmap, "\", "script_icoon.ico")
@@ -263,10 +263,16 @@ $lokalemappen = @{
 if ($global:programma.mode -eq "alpha") {
         $global:beheer.examenmappen = $lokalemappen
         }
+
+# variabelen voor Sharepoint client id en app id. Deze zijn nodig voor het inlezen van bestanden uit Sharepoint. 
+$env:ENTRAID_CLIENT_ID = "db02e749-4ffc-4ba4-aa01-3691640f308b"
+$env:ENTRAID_APP_ID = "db02e749-4ffc-4ba4-aa01-3691640f308b"
+
 # Mappen in Sharepoint van team RPCPAL_55-TestRPC. Deze worden gebruikt bij het inlezen van bestanden uit Sharepoint.
 $global:Sharepoint = @{
     Organisatie = "https://o365zadkine.sharepoint.com"
     Team        = "/teams/RPCtestsiteexaminering"
+    clientid    = $env:ENTRAID_CLIENT_ID 
 }
 # Url kan pas worden gedefinieerd nadat de andere variabelen zijn gedefinieerd. Anders krijg je een foutmelding dat $global:Sharepoint.Team nog niet bestaat.
 $global:Sharepoint.Url = -join(
@@ -274,9 +280,7 @@ $global:Sharepoint.Url = -join(
     $global:Sharepoint.Team
 )
 
-# variabelen voor Sharepoint client id en app id. Deze zijn nodig voor het inlezen van bestanden uit Sharepoint. 
-$env:ENTRAID_CLIENT_ID = "db02e749-4ffc-4ba4-aa01-3691640f308b"
-$env:ENTRAID_APP_ID = "db02e749-4ffc-4ba4-aa01-3691640f308b"
+
 
 # Lijst met bestandsformaten die worden herkend als afbeelding. Deze worden gebruikt bij functies Bestanden kopieren en Verkenner.
 $global:bestandsformaten = @(
@@ -749,6 +753,7 @@ $uitvoerennaopstarten=@{
     controleopupdate = 'Ja'
     handmatigupdate = 'Nee'
     PS7snelkoppeling = 'Ja'
+    pnpupdate = 'Ja'
 }
 $Std_inst=@{
     algemeen  = $algemeen
@@ -1024,7 +1029,8 @@ function VerbindmetSharePoint {
        
 try {
     # Verbinden met SharePoint
-    Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive -ErrorAction Stop
+    # Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive -ErrorAction Stop
+    Connect-PnPOnline -Url $global:Sharepoint.Url -ClientId $global:Sharepoint.clientid -OSLogin -forceauthentication -validateconnection -ErrorAction Stop
 
     # Test de nieuwe verbinding
     Get-PnPWeb -ErrorAction Stop | Out-Null
@@ -1033,7 +1039,7 @@ try {
 }
 catch {
     # Loggen van fout
-    $melding = -join ("Verbinding met SharePoint mislukt.","`r`n", $($_.Exception.Message))
+    $melding = -join ("Verbinding met SharePoint mislukt.","`r`n", "Foutmelding : ", $($_.Exception.Message))
     Meldingnaarlogbestand -meldtekst $melding
     # melding geven met venster
     $melding = -join ("`r`n", $melding, "`r`n", "Een aantal taken kunnen nu niet uitgevoerd worden.")
@@ -5698,20 +5704,20 @@ Lees de informatie in de console en druk op OK om verder te gaan."
 # verbinden met Sharepoint ...........
 
 # Eerst powershell module importeren als deze niet aanwezig is
-if (!(Get-Module -name pnp.powershell -ListAvailable)) {
+if  ($global:init.uitvoerennaopstarten.pnpupdate -eq "Ja") {
     # zorgen dat modules uit deze repository worden vertrouwd
     Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
-    
     write-host "SharePoint module wordt geïnstalleerd."
-
-    Install-Module -Name pnp.powershell -Scope CurrentUser
-
+    Install-Module -Name pnp.powershell -Scope CurrentUser -RequiredVersion 3.4.1 -Force -skippublishercheck
     # voor de veiligheid dit weer terugzetten!
     Set-PSRepository -Name 'PSGallery' -InstallationPolicy untrusted
+
+    $global:init.uitvoerennaopstarten.pnpupdate = "Nee"
+    Bewareninstellingen
     }
 
 # dan verbinden ......
-Write-Host "Verbinden met SharePoint. Meld u aan via de default browser." -f Yellow
+Write-Host "Verbinden met SharePoint. Meld u aan via het inlogvenster." -f Yellow
 $null = VerbindmetSharePoint;
 
 #Overige controles en tijdelijke taken uitvoeren
@@ -5743,11 +5749,10 @@ if (($Global:init.uitvoerennaopstarten.PS7snelkoppeling -eq 'Ja') -and ($Global:
     $ShortcutPath = "$linkbureaublad\Beheren bestanden.lnk"
     $snelkoppeling_script = "snelkoppeling_maken.ps1"
 
-    # object aanmaken en bewaren. Alleen als er al een snelkoppeling is. 
+    # Snelkoppeling aanmaken dmv aanroepen script. Alleen als er al een snelkoppeling is. 
     if (Test-Path $ShortcutPath) {
         # write-host "Snelkoppeling op bureaublad wordt opnieuw aangemaakt."
         # Dit wordt ook gelogd. 
-        Meldingnaarlogbestand -meldtekst "Snelkoppeling op bureaublad is aangemaakt om met PowerShell 7 te starten." -type "MEDEDELING"
         & "$PSScriptRoot\$snelkoppeling_script" -auto
         
         # $lastexitcode bevat de errorcode van de laatst uitgevoerde code, in dit geval van snelkoppeling_maken.ps1
@@ -5755,6 +5760,8 @@ if (($Global:init.uitvoerennaopstarten.PS7snelkoppeling -eq 'Ja') -and ($Global:
             Meldingnaarlogbestand -meldtekst "Fout opgetreden bij het aanmaken van de snelkoppeling.
 Startmap = $startmap
 Bureaubladlink = $ShortcutPath" -type "FOUT"
+        } else {
+            Meldingnaarlogbestand -meldtekst "Snelkoppeling op bureaublad is aangemaakt om met PowerShell 7 te starten." -type "MEDEDELING"
         }
     } # einde if (Test-Path $ShortcutPath) 
 
