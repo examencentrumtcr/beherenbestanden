@@ -6,8 +6,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ## [5.0.0] - Development
 ### Nieuwe functies
-- Gebruiker moet inloggen bij de Sharepoint van RPCtestsiteexaminering om bestanden klaar te zetten en
-  een backup te maken.
+- Gebruiker moet inloggen bij de Sharepoint van het RPC om bepaalde taken uit te voeren.
 - Nieuwe functie **Bestanden** neemt de functies van **Verkenner**, **Wissen** en **Verplaatsen** over.
 
 ### Verwijderde functies
@@ -15,6 +14,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ### Bugfix
 - Probleem opgelost waarbij de map "Mijn Documenten" niet werd gevonden tijdens het klaarzetten van bestanden.
+- Probleem opgelost waarbij het sorteren van bestanden een foutmelding gaf.
 - Tabvolgorde van icoontjes hersteld. 
 
 ### Overige wijzigingen

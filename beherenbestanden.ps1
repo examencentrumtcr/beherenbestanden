@@ -43,7 +43,7 @@ $logmap = -join ("$startmap","\","log")
 $global:programma = @{
     versie = '5.0.0.rc.1'
     extralabel = '190.261029.sharepoint' # buildnummer + datum + eventuele branch
-    mode = 'rc' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    mode = 'alpha' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
     icoon = -join ($icoontjesmap, "\", "script_icoon.ico")
@@ -78,6 +78,7 @@ Add-Type -ReferencedAssemblies @(
     'System.Windows.Forms',
     'System'
 ) -TypeDefinition @"
+
 using System;
 using System.Collections;
 using System.Globalization;
@@ -99,30 +100,36 @@ public class ListViewItemComparer : IComparer
         ListViewItem itemX = (ListViewItem)x;
         ListViewItem itemY = (ListViewItem)y;
 
-        string a = itemX.SubItems[col].Text;
-        string b = itemY.SubItems[col].Text;
+        // Safely retrieve column values
+        string a = GetSubItemText(itemX, col);
+        string b = GetSubItemText(itemY, col);
 
         int result = 0;
 
-        // Kolom 1 = datum
+        // Column 1 = date
         if (col == 1)
         {
             DateTime da, db;
-            if (DateTime.TryParse(a, out da) && DateTime.TryParse(b, out db))
+
+            bool validA = DateTime.TryParse(a, out da);
+            bool validB = DateTime.TryParse(b, out db);
+
+            if (validA && validB)
                 result = DateTime.Compare(da, db);
             else
                 result = String.Compare(a, b, true);
         }
 
-        // Kolom 2 = grootte
+        // Column 2 = size
         else if (col == 2)
         {
             long sa = ParseSize(a);
             long sb = ParseSize(b);
+
             result = sa.CompareTo(sb);
         }
 
-        // Overige kolommen = tekst
+        // Other columns = text
         else
         {
             result = String.Compare(a, b, true);
@@ -134,21 +141,35 @@ public class ListViewItemComparer : IComparer
         return result;
     }
 
+    private string GetSubItemText(ListViewItem item, int column)
+    {
+        if (item == null || column < 0 || column >= item.SubItems.Count)
+            return "";
+
+        return item.SubItems[column].Text;
+    }
+
     private long ParseSize(string text)
     {
         if (String.IsNullOrWhiteSpace(text))
-            return -1; // lege grootte (mappen)
+            return -1;
 
-        text = text.Replace("kB", "").Replace("KB", "").Trim();
+        text = text.Replace("kB", "")
+                   .Replace("KB", "")
+                   .Trim();
 
         double value;
-        if (Double.TryParse(text, NumberStyles.Any, CultureInfo.CurrentCulture, out value))
+
+        if (Double.TryParse(text, NumberStyles.Any,
+            CultureInfo.CurrentCulture, out value))
             return (long)(value * 1024);
 
         return 0;
     }
 }
+
 "@
+
 
 # tijdelijke logbestand voor foutmeldingen
 $foutmeldingsbestand = -join ("$logmap","\","Foutmeldingen.txt")
@@ -1428,11 +1449,23 @@ switch ($uitvoeren.taak) {
         # doelmap bepalen. dit is een lokale variabele
         $doelmap = -join ($uitvoeren.homemap,'\',$rpcitem,'\Mijn Documenten')
     
-        # Weergeven in venster dat bestanden worden gekopieerd naar de homemap van de kandidaat.
-        toevoegentekstvenster "Kopiëren bestanden naar $rpcitem"
+        # controleren of doelmap en map mijn documenten bestaat. Anders wordt de catch getriggerd en heb je een foutmelding.
+        $error.clear()
+        try {
+            if (!(Test-Path $doelmap)) { throw "Map $doelmap niet gevonden."}
 
-        # kopieren geselecteerde mappen of bestanden  
-        Copy-Item -path "$localPath\*" -destination "$doelmap" -recurse -Force -ErrorAction Stop
+            # Weergeven in venster dat bestanden worden gekopieerd naar de homemap van de kandidaat.
+            toevoegentekstvenster "Kopiëren bestanden naar $rpcitem"
+            # kopieren geselecteerde mappen of bestanden  
+            Copy-Item -path "$localPath\*" -destination "$doelmap" -recurse -Force -ErrorAction Stop
+        } 
+        catch {
+            # foutmelding van PowerShell naar logbestand
+            "$foutmelding_log" + $_.exception.message | out-file "$logbestand" -Append
+            $uitvoeren.foutmelding = $true
+            toevoegentekstvenster "$_"
+        } # einde catch
+        
         # progressie laten zien op balk
         $uitvoeren.progressbar.PerformStep()
     } # einde foreach $rpcitem
@@ -1478,6 +1511,7 @@ switch ($uitvoeren.taak) {
                 # foutmelding van PowerShell naar logbestand
                 "$foutmelding_log" + $_.exception.message | out-file "$logbestand" -Append
                 $uitvoeren.foutmelding = $true
+                toevoegentekstvenster "$_"
                   } # einde catch
             # progressie laten zien op balk
             $uitvoeren.progressbar.PerformStep()
@@ -1501,7 +1535,7 @@ switch ($uitvoeren.taak) {
         if ($uitvoeren.doelmaplegen -eq $true) {
             $error.clear()
             try {
-                # extra test of de specifieke rpc-map wel bestaat
+                # extra controle of de specifieke rpc-map wel bestaat
                 if (!(Test-Path $doelmap)) { throw "Map $doelmap niet gevonden."}
                 toevoegentekstvenster  "Map $doelmap leegmaken"
                 # verwijderen van bestanden in doelmap
@@ -1528,7 +1562,7 @@ switch ($uitvoeren.taak) {
         # kopieren of verplaatsen
         $error.clear()
         try {
-            # extra test of de specifieke rpc-map wel bestaat
+            # extra controle of de specifieke rpc-map wel bestaat
             if (!(Test-Path $bronmap)) { throw "Map $bronmap niet gevonden."}
             
             # eerst kopiëren
@@ -5180,7 +5214,7 @@ Function geselecteerdemap_vullen ($selectie) {
 function SortListView {
 # Bestanden sorteren op de kolom waar je op klikt. Dit wordt bij functie Verkenner gebruikt.
 param(
-        [System.Windows.Forms.ListView]$sender,
+        [System.Windows.Forms.ListView]$senderlist,
         [int]$column
     )
 
@@ -5197,8 +5231,8 @@ param(
         $script:sortOrder = [System.Windows.Forms.SortOrder]::Ascending
     }
 
-    $sender.ListViewItemSorter = New-Object ListViewItemComparer($column, $script:sortOrder)
-    $sender.Sort()
+    $senderlist.ListViewItemSorter = New-Object ListViewItemComparer($column, $script:sortOrder)
+    $senderlist.Sort()
 } # einde SortListView
 
 Function Knoppenklikbaar {
@@ -6080,18 +6114,19 @@ $keuzeafbeelding = 'samenwerken.gif'
 $keuze_xas = 130
 $keuze_yas = 230
 
-# een match zoeken met de gekozen afbeelding in je persoonlijke instellingen
-$global:afbeeldingen.ForEach( {
-    if ($_.naam -eq $global:init["algemeen"]["afbeelding"]) {
-        $keuzeafbeelding = $_.bestand
-        }
-})
 $gifBox.Image    = [System.Drawing.Image]::FromFile("$gifjesmap\$keuzeafbeelding")
 $gifBox.location = New-Object System.Drawing.Point($keuze_xas,$keuze_yas)
 $gifBox.AutoSize = $false
 $gifbox.Size     = "440,250" 
 $gifbox.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Zoom
-# $gifbox.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Centerimage
+
+# een match zoeken met de gekozen afbeelding in je persoonlijke instellingen
+$global:afbeeldingen.ForEach( {
+    if ($_.naam -eq $global:init["algemeen"]["afbeelding"]) {
+        $keuzeafbeelding = $_.bestand
+        $gifBox.Image    = [System.Drawing.Image]::FromFile("$gifjesmap\$keuzeafbeelding")
+        }
+})
 
 $gifBox.add_click( { Venstermetgrap } )
 $gifBox.add_MouseHover({
