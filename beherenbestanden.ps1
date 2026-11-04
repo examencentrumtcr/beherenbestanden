@@ -42,8 +42,8 @@ $logmap = -join ("$startmap","\","log")
 
 $global:programma = @{
     versie = '5.0.0.rc.1'
-    extralabel = '190.261029.sharepoint' # buildnummer + datum + eventuele branch
-    mode = 'alpha' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    extralabel = '190.261104.sharepoint' # buildnummer + datum + eventuele branch
+    mode = 'rc' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
     icoon = -join ($icoontjesmap, "\", "script_icoon.ico")
@@ -272,7 +272,6 @@ $global:beheer = @{
     examenmappen      = $examenmappen
     locaties          = $locaties
     opschonen         = $opschonen
-    dagenbewarenbackup = 730
     }
 
 # lokale mappen worden gebruikt als programma.mode is alpha.
@@ -429,7 +428,7 @@ function Toonofverbergconsole($mode) {
     # the Windows Terminal window will be just minimized rather than hidden.
     $hwnd = $TerminalProcess.MainWindowHandle
     if ($hwnd -ne [System.IntPtr]::Zero) {
-      # afsluiten terminal. Met $null zie je ook geen resultaat op he scherm. dus het woord "true" verschijnt niet.  
+      # afsluiten terminal. Met $null zie je ook geen resultaat op het scherm. dus het woord "true" verschijnt niet.  
       $null = $ShowWindowAsync::ShowWindowAsync($hwnd, $mode) 
       
     } else {
@@ -768,6 +767,7 @@ $algemeen=@{
 $opschonen=@{
     dagenbewarenlogs = 365
     opschonenlogs = 'Ja'
+    dagenbewarenbackup = 700
 }
 $uitvoerennaopstarten=@{
     updateinfo = 'Ja'
@@ -775,6 +775,7 @@ $uitvoerennaopstarten=@{
     handmatigupdate = 'Nee'
     PS7snelkoppeling = 'Ja'
     pnpupdate = 'Ja'
+    forceernieuwelayout = 'ja'
 }
 $Std_inst=@{
     algemeen  = $algemeen
@@ -4411,7 +4412,7 @@ Als u terug wilt zonder de instellingen te bewaren klikt u op Terug.
 U krijgt extra informatie over een instelling als de muiscursor op een tekst staat.
 " 
 
-$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie1, $keuzeoptie11, $keuzeoptie2, $keuzeoptie10, $keuzeoptie3, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie7, $keuzeoptie6, $keuzeoptie13,
+$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie1, $keuzeoptie11, $keuzeoptie2, $keuzeoptie10, $keuzeoptie3, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie13, $keuzeoptie7, $keuzeoptie6, 
 $description1, $description2, $description3, $description4, $description5, $description6, $description8, $description9, $description10, $description7, $Description11, $Description13, 
 $Btnaccept, $Btnescape, $Btnstandaard, $Global:vraagtekenicoon, $gifbox2 ))
 
@@ -4599,7 +4600,7 @@ $objTextBox1.Location = New-Object System.Drawing.Size(380,13)
 $objTextBox1.Size = New-Object System.Drawing.Size(55,50)
 $objTextBox1.MaxLength = 4
 $objTextBox1.Font = 'Microsoft Sans Serif,11'
-$objTextBox1.Text=$Global:beheer.dagenbewarenbackup
+$objTextBox1.Text=$Global:init.opschonen.dagenbewarenbackup
 $objTextBox1.Add_TextChanged({
     $this.Text = $this.Text -replace '\D'
 })
@@ -5246,9 +5247,11 @@ if ($listbox.selecteditems.count -gt 0) {
 # bepalen of knop Verplaatsen zichtbaar moet zijn
 # if (($listBox.selecteditems.count -eq 1) -and ($null -ne $doelselectie.selecteditem)) {
 if ($listBox.selecteditems.count -eq 1) {
-    $Btnverplaatsen.Enabled= $true
+    $Btnverplaatsen.Enabled = $true
+    $doelselectie.Enabled = $true
     } else {
     $Btnverplaatsen.Enabled= $false
+    $doelselectie.Enabled = $false
 }
 } # einde function Knoppenklikbaar
 
@@ -5526,7 +5529,7 @@ $Btwissen.ForeColor = 'white'
 $Btwissen.Enabled= $false
 # $Btwissen.DialogResult = [System.Windows.Forms.DialogResult]::cancel
 $Btwissen.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Ga terug naar het hoofdvenster." )
+    $global:tooltip1.SetToolTip($this, "Verwijder de bestanden van de geselecteerde RPC-map." )
 })
 $Form2.controls.add($Btwissen)
     
@@ -5555,7 +5558,7 @@ $Btnverplaatsen.ForeColor = 'white'
 $Btnverplaatsen.Enabled= $false
 # $Btwissen.DialogResult = [System.Windows.Forms.DialogResult]::cancel
 $Btnverplaatsen.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Ga terug naar het hoofdvenster." )
+    $global:tooltip1.SetToolTip($this, "Verplaats de bestanden van de geselecteerde RPC-map naar de gekozen doelmap." )
 })
 $Form2.controls.add($Btnverplaatsen)
 
@@ -5577,8 +5580,9 @@ $doelselectie.autosize            = $true
 $doelselectie.DropDownStyle       = "DropDownList"
 $doelselectie.Font                = 'Microsoft Sans Serif,12'
 $doelselectie.location = "600,570" 
+$doelselectie.Enabled= $false
 $doelselectie.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Selecteer het rpc-nummer waar de bestanden naar toe moeten." )
+    $global:tooltip1.SetToolTip($this, "Selecteer het RPC-map waar de bestanden naar toe moeten." )
 })
 $doelselectie = lijstrpcnrsaanmaken $keuzelocatie $doelselectie
 $Form2.controls.add($doelselectie)
@@ -5592,7 +5596,7 @@ $doelselectie.add_SelectedIndexChanged({
 })
 
 # venster met uitleg over deze taak wordt gedeclareerd. 
-declareren_uitlegvenster "Uitleg over het venster Verkenner." 680 320 800 570 "Hier kunt u de bestanden van de homemappen van de kandidaten controleren en openen.
+declareren_uitlegvenster "Uitleg over het venster Verkenner." 850 380 800 570 "Hier kunt u de bestanden van de homemappen van de kandidaten controleren, openen, wissen of verplaatsen.
 
 Eventueel kunt u eerst kiezen om de standaardlocatie te wijzigen.
 Links kiest u vervolgens het RPC-nummer van de betreffende homemap.
@@ -5600,8 +5604,10 @@ Rechts ziet u dan de mappen en bestanden van de homemap.
 
 U kunt op een map dubbelklikken om de inhoud weer te geven.
 U kunt op een bestand dubbelklikken om deze te openen met het standaardprogramma voor dit type bestand.
-Met het terug-icoontje gaat u een map terug.
-Met het home-icoontje gaat u terug naar het begin.
+Met het terug-icoontje gaat u een map terug en met het home-icoontje gaat u terug naar het begin.
+
+Een homemap wissen doet u door eerst een RPC-nummer te selecteren en vervolgens op de knop Wissen te klikken.
+De inhoud van een homemap verplaatsen doet u door eerst een RPC-nummer te selecteren, vervolgens een doel-RPC-nummer te selecteren (de knop rechts van Verplaatsen naar ->) en daarna op de knop Verplaatsen naar -> te klikken.
 
 Door op de rode knop onderaan te klikken gaat u terug naar het hoofdscherm." 
 $Form2.controls.add($Global:vraagtekenicoon)
@@ -5752,6 +5758,7 @@ if  ($global:init.uitvoerennaopstarten.pnpupdate -eq "Ja") {
 
 # dan verbinden ......
 Write-Host "Verbinden met SharePoint. Meld u aan via het inlogvenster." -f Yellow
+Write-Host "Een moment geduld a.u.b." -f Yellow
 $null = VerbindmetSharePoint;
 
 #Overige controles en tijdelijke taken uitvoeren
@@ -5772,7 +5779,11 @@ if (test-path -path "$startmap\readme.txt") { Remove-Item "$startmap\readme.txt"
 if (test-path -path "$startmap\changelog.txt") { Remove-Item "$startmap\changelog.txt" }  
 # verwijderen beheren.ico vanaf versie 4.8.0
 if (test-path -path "$startmap\beheren.ico") { Remove-Item "$startmap\beheren.ico" }
-
+# verwijderen icoontjes vanaf versie 5.0.0
+if (test-path -path "$icoontjesmap\icon verplaatsen.png") { Remove-Item "$icoontjesmap\icon verplaatsen.png" }
+if (test-path -path "$icoontjesmap\icon wissen.png") { Remove-Item "$icoontjesmap\icon wissen.png" }
+if (test-path -path "$icoontjesmap\icoon-verkenner.png") { Remove-Item "$icoontjesmap\icoon-verkenner.png" }
+if (test-path -path "$startmap\script_icoon.ico") { Remove-Item "$startmap\script_icoon.ico" }
 
 # Opnieuw snelkoppeling maken omdat programma alleen met PowerShell 7 kan werken. Eenmalig uitvoeren.
 if (($Global:init.uitvoerennaopstarten.PS7snelkoppeling -eq 'Ja') -and ($Global:programma.mode -eq "release")) {
@@ -5803,6 +5814,14 @@ Bureaubladlink = $ShortcutPath" -type "FOUT"
     $Global:init.uitvoerennaopstarten.PS7snelkoppeling='Nee'
     Bewareninstellingen
 } # einde if ($Global:init.uitvoerennaopstarten.PS7snelkoppeling -eq 'Ja')
+
+# De nieuwe layout van het venster als standaard instellen. Alleen bij release versie.
+if (($Global:init.uitvoerennaopstarten.forceernieuwelayout -eq 'Ja') -and ($Global:programma.mode -eq "release")) {
+    $Global:init.uitvoerennaopstarten.forceernieuwelayout = 'Nee'
+    $Global:init.algemeen.nieuwelayout = 'Ja'
+    Bewareninstellingen
+    write-host "De layout van het venster is gewijzigd naar de nieuwe layout."
+}
 
 # Einde controles en tijdelijke taken uitvoeren
 
@@ -6052,7 +6071,7 @@ Add-EscapeClose -Form $Form_uitlegprog
 
 $uitlegprogtekst                     = New-Object system.Windows.Forms.Label
 $uitlegprogtekst.text                = "Met dit programma kunnen bestanden op meerdere pc's in een netwerk worden beheerd.
-De twee belangrijkste taken van dit programma worden met een groene icoontje weergegeven.
+De twee belangrijkste taken van dit programma worden met een groen icoontje weergegeven.
 Met het groene icoontje 
     - 'Bestanden klaarzetten' worden bestanden en volledige mappen overgezet naar 
        de geselecteerde homemappen van de kandidaten,
@@ -6061,18 +6080,17 @@ Met het groene icoontje
 
 De overige taken worden met een zwartwit icoontje weergegeven.
 Met deze icoontjes kan je de volgende taken uitvoeren :
-    - de bestanden in de homemappen van de kandidaten bekijken of openen,
+    - de bestanden in de homemappen van de kandidaten bekijken, openen, wissen of verplaatsen,
     - de logbestanden van de uitgevoerde taken bekijken,
     - algemene informatie over het programma lezen,
     - het programma afsluiten,
-    - de bestanden van een homemap verplaatsten of kopiëren naar een andere homemap,
-    - de bestanden van de geselecteerde homemappen wissen,
+    - Het programma updaten naar een nieuwe versie,
     - de persoonlijke keuzes voor het programma instellen,    
     - oude back-ups verwijderen.
 
 Als je gekozen hebt voor de nieuwe layout dan zijn de zwartwitte icoontjes niet meer zichtbaar in het
 hoofdvenster, maar worden deze zichtbaar als je op het icoontje met de drie streepjes klikt.
-Je gaat weer terug naar het hoofdvenster door op het huis-icoontje te klikken.
+Je gaat weer terug naar het hoofdvenster door weer op dit icoontje te klikken.
 
 Informatie over een taak kan verkregen worden door met de muiscursor over een object te gaan.
 "
@@ -6178,9 +6196,11 @@ $form.add_Shown({
         # Na elke update or bij nieuwe installatie is er een venster met informatie over de update. Deze wordt alleen 1 keer getoond.
         $null = venstermetvraag -titel "Informatie over uitgevoerde update" -vraag "`r`nHet programma heeft een update uitgevoerd en heeft nu versie $versie.`r`n
 De belangrijkste wijzigingen zijn: 
-- Het probleem van onjuiste programma icoon voor snelkoppeling is opgelost.
-- De snelkoppeling kan worden ingesteld om te werken met PowerShell 7.
-- Het probleem dat Powershell 7 niet werd geïnstalleerd als je dit bij Instellingen wijzigt is opgelost." -schuifbalk -bredevenster
+- Gebruiker moet inloggen bij de Sharepoint van het RPC om bepaalde taken uit te voeren.
+- Nieuwe functie Bestanden neemt de functies van Verkenner, Wissen en Verplaatsen over.
+- De mogelijkheid om bestanden tussen mappen te kopiëren is verwijderd.
+- De voortgang van een taak kan weergegeven worden.
+- Script werkt nu alleen met PowerShell 7.0 of hoger." -schuifbalk -bredevenster
 
         # Deze vraag niet meer stellen -> Waarde op nee zetten en bewaren
         $Global:init.uitvoerennaopstarten.updateinfo='Nee'
