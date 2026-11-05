@@ -41,8 +41,8 @@ $gifjesmap = -join ("$startmap","\","png")
 $logmap = -join ("$startmap","\","log")
 
 $global:programma = @{
-    versie = '5.0.0.rc.1'
-    extralabel = '190.261104.sharepoint' # buildnummer + datum + eventuele branch
+    versie = '5.0.0.rc.2'
+    extralabel = '191.261105' # buildnummer + datum + eventuele branch
     mode = 'rc' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
