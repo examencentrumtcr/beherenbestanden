@@ -42,11 +42,15 @@ $logmap = -join ("$startmap","\","log")
 
 $global:programma = @{
     versie = '5.0.0.rc.2'
-    extralabel = '191.261105' # buildnummer + datum + eventuele branch
+    extralabel = '191.261109' # buildnummer + datum + eventuele branch
     mode = 'rc' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
     icoon = -join ($icoontjesmap, "\", "script_icoon.ico")
+    # de 3 bestanden met info voor venster informatieprogramma
+    readmebestand='readme.md'
+    changelogbestand='changelog.md'
+    licensebestand='license'
 }
 
 $scriptnaam = $global:programma.naam
@@ -178,11 +182,6 @@ $foutmeldingsbestand = -join ("$logmap","\","Foutmeldingen.txt")
    Zie ook functie gebruikersinstellingen onder sectie "Functions" #>
 $Global:init=@{}
 
-# de 3 bestanden met info voor venster informatieprogramma
-$readmebestand="readme.md"
-$changelogbestand="changelog.md"
-$licensebestand="license"
-
 # nodig voor werken met hashtabels. zie functies uitvoerentaken en overzichttaken
 $uitvoeren = [hashtable]::Synchronized(@{})
 
@@ -223,11 +222,13 @@ $global:afbeeldingen = @(
 
 # Websites met moppen
 $Global:Moppen = @(
+    <# uitgeschakeld omdat de website aangeeft "Server Error" en het geblokkeerd wordt door interne IT
     [PSCustomObject]@{
         naam = 'Appspot.com'
         url = 'https://official-joke-api.appspot.com/jokes/random'
         taal = 'Engels'
     },
+    #>
     [PSCustomObject]@{
         naam = 'Apekool.nl'
         url = 'http://api.apekool.nl/services/jokes/getjoke.php' 
@@ -271,7 +272,7 @@ $examenmappen = @{
 $global:beheer = @{
     examenmappen      = $examenmappen
     locaties          = $locaties
-    opschonen         = $opschonen
+    # opschonen         = $opschonen
     }
 
 # lokale mappen worden gebruikt als programma.mode is alpha.
@@ -402,6 +403,42 @@ $global:bestandsformaten = @(
 
 # functions ---------------------------------------------------------------------------------
 # hieronder de kleine functies die door andere functies gebruikt worden ---------------------
+
+function gebruikersinstellingen {
+# hier worden de standaardinstellingen gedeclareerd die gebruikers kunnen wijzigen
+
+$algemeen=@{
+    locatiekeuze = 'PAL'
+    wissennabackup = 'Ja'
+    gebruiker = ''
+    afbeelding = 'Samenwerken'
+    consolesluiten = 'Ja'
+    controlevoorklaarzetten = 'Ja'
+    websitemoppen = 'Apekool.nl'
+    nieuwelayout =  'Ja'
+    voortgangweergeven = 'Ja'
+}
+$opschonen=@{
+    dagenbewarenlogs = 365
+    opschonenlogs = 'Ja'
+    dagenbewarenbackups = 730
+}
+$uitvoerennaopstarten=@{
+    updateinfo = 'Ja'
+    controleopupdate = 'Ja'
+    handmatigupdate = 'Nee'
+    PS7snelkoppeling = 'Ja'
+    pnpupdate = 'Ja'
+    forceernieuwelayout = 'ja'
+}
+$Std_inst=@{
+    algemeen  = $algemeen
+    opschonen = $opschonen
+    uitvoerennaopstarten = $uitvoerennaopstarten
+}
+
+return $Std_inst
+}
 
 function Toonofverbergconsole($mode) {
   
@@ -750,43 +787,6 @@ $uitvoer = -join ("$startmap","\gebruiker_",$invoer,".ini")
 return $uitvoer
 }
 
-function gebruikersinstellingen {
-# hier worden de standaardinstellingen gedeclareerd die gebruikers kunnen wijzigen
-
-$algemeen=@{
-    locatiekeuze = 'PAL'
-    wissennabackup = 'Ja'
-    gebruiker = ''
-    afbeelding = 'Samenwerken'
-    consolesluiten = 'Ja'
-    controlevoorklaarzetten = 'Ja'
-    websitemoppen = 'Apekool.nl'
-    nieuwelayout =  'Ja'
-    voortgangweergeven = 'Ja'
-}
-$opschonen=@{
-    dagenbewarenlogs = 365
-    opschonenlogs = 'Ja'
-    dagenbewarenbackup = 700
-}
-$uitvoerennaopstarten=@{
-    updateinfo = 'Ja'
-    controleopupdate = 'Ja'
-    handmatigupdate = 'Nee'
-    PS7snelkoppeling = 'Ja'
-    pnpupdate = 'Ja'
-    forceernieuwelayout = 'ja'
-}
-$Std_inst=@{
-    algemeen  = $algemeen
-    opschonen = $opschonen
-    uitvoerennaopstarten = $uitvoerennaopstarten
-}
-
-return $Std_inst
-}
-
-
 Function Inlezengebruikersinstellingen {
 
 # Bepalen van de persoonlijke initialisatiebestand.
@@ -955,7 +955,7 @@ return 1
 
 Function Bepaalicoontjenr ($controlemap, $bestand) {
 
-# Bepaal welke icoontje moet worden weergeven afhankelijk van type, map of bestand. 
+# Bepaal welke icoontje moet worden weergeven afhankelijk van type: map of bestand. 
 # Wordt gebruikt bij functies Bestanden kopieren en Verkenner. Straks alleen bij Verkenner dus kan de functie verplaatst worden.....
 # De nummering is afhankelijk van de volgorde van aanmaken bij functie Declareericoontjes. 
 # een map heeft als nummer 0. Deze is als eerst gedeclareerd. zie functie Declareericoontjes.
@@ -1564,7 +1564,7 @@ switch ($uitvoeren.taak) {
         $error.clear()
         try {
             # extra controle of de specifieke rpc-map wel bestaat
-            if (!(Test-Path $bronmap)) { throw "Map $bronmap niet gevonden."}
+            if (!(Test-Path $bronmap)) { throw "Map $bronmap niet gevonden of map is leeg."}
             
             # eerst kopiëren
             toevoegentekstvenster "Kopiëren van $bronmap naar $doelmap"
@@ -1768,12 +1768,12 @@ if ($uitvoeren.taak -eq "kopiëren") {
     } elseif ($uitvoeren.taak -eq "backup") {
     if ($wissennabackup.checked -eq $true) { "De bestanden worden na de back-up gewist." | out-file $logbestand -Append }
     } elseif ($uitvoeren.taak -eq "verplaatsen") {
-    if ($keuzeoptie1.Selectedindex -eq "1") { 
-        "U gaat bestanden kopiëren van een rpc-nummer naar een andere." | out-file $logbestand -Append
-        } else {
+    if ($uitvoeren.keuzeverplaatsen -eq "verplaatsen" ) { 
         "U gaat bestanden verplaatsen van een rpc-nummer naar een andere." | out-file $logbestand -Append
+        } else {
+        "U gaat bestanden kopiëren van een rpc-nummer naar een andere." | out-file $logbestand -Append
         }
-     if ($doelmaplegen.checked -eq $true) { 
+     if ($uitvoeren.doelmaplegen -eq $true) { 
         "De doelmap wordt voor het verplaatsen of kopiëren eerst geleegd." | out-file $logbestand -Append
                     } else {
         "De bestanden worden toegevoegd aan de bestanden in de doelmap." | out-file $logbestand -Append
@@ -1864,7 +1864,7 @@ if ($uitvoeren.taak -eq "kopiëren") {
     # alleen bij taken wissen en verplaatsen onderstaande knop zichtbaar maken
     $Btnescape.size = New-Object System.Drawing.Size(200,40)
     # escape knop wordt nu terug knop
-    $Btnescape.text= "Terug naar Verkenner"
+    $Btnescape.text= "Terug naar Bestanden"
     $Btnescape.BackColor = 'green'
     $Btnescape.show()  
 } else {
@@ -2241,7 +2241,6 @@ param(
 
   try { 
   $Sharepointinhoud = Get-PnPFolderItem -FolderSiteRelativeUrl $sharepointmap  
-
   }
   catch {
   # melding loggen
@@ -3962,7 +3961,7 @@ if (test-path -path "$backupzip") { Remove-Item "$backupzip" }
 Write-Host -f Yellow "Het programma heeft een update uitgevoerd en heeft nu de versie $updateto.
 Het programma wordt opnieuw opgestart  ..."
 
-Meldingnaarlogbestand -meldtekst "Het programma heeft een update uitgevoerd en heeft nu de versie $updateto." -type "MEDEDELING"
+Meldingnaarlogbestand -meldtekst "Het programma heeft een update uitgevoerd en heeft nu versie $updateto." -type "MEDEDELING"
 
 Start-Sleep -Seconds 5
 
@@ -3993,7 +3992,7 @@ function vensterinstellingen {
 $form.Hide()
 
 # venster declareren
-$Form2 = declareren_standaardvenster "Instellingen wijzigen" 1000 550
+$Form2 = declareren_standaardvenster "Instellingen wijzigen" 1000 570
 
 $keuzeoptie1                     = New-Object system.Windows.Forms.ComboBox
 $keuzeoptie1.width               = 80
@@ -4156,7 +4155,15 @@ if ($global:init["algemeen"]["nieuwelayout"] -eq "Ja") {
     $keuzeoptie11.Selectedindex = 1
     }
 
-# Keuze PowerShell 7 start is verwijderd. Dit was keuzeoptie12
+$keuzeoptie12 = New-Object System.Windows.Forms.TextBox 
+$keuzeoptie12.Location = New-Object System.Drawing.Size(450,420) 
+$keuzeoptie12.Size = New-Object System.Drawing.Size(80,60)
+$keuzeoptie12.MaxLength = 4
+$keuzeoptie12.Font = 'Microsoft Sans Serif,11'
+$keuzeoptie12.Text=$Global:init["opschonen"]["dagenbewarenbackups"]
+$keuzeoptie12.Add_TextChanged({
+    $this.Text = $this.Text -replace '\D'
+})
 
 $keuzeoptie13                     = New-Object system.Windows.Forms.ComboBox
 $keuzeoptie13.width               = 80
@@ -4173,7 +4180,7 @@ if ($global:init["uitvoerennaopstarten"]["Controleopupdate"] -eq "Ja") {
     }
 
 $Description1                     = New-Object system.Windows.Forms.Label
-$Description1.text                = "Standaard locatie"
+$Description1.text                = "Standaard locatie :"
 $Description1.AutoSize            = $false
 $Description1.width               = 400
 $Description1.height              = 30
@@ -4185,7 +4192,7 @@ $Description1.add_MouseHover({
 })
 
 $Description2                     = New-Object system.Windows.Forms.Label
-$Description2.text                = "Homemap kandidaten wissen na uitvoeren van een back-up"
+$Description2.text                = "Homemap kandidaten wissen na uitvoeren van een back-up."
 $Description2.AutoSize            = $false
 $Description2.width               = 410
 $Description2.height              = 30
@@ -4209,7 +4216,7 @@ $Description3.add_MouseHover({
 })
 
 $Description4                     = New-Object system.Windows.Forms.Label
-$Description4.text                = "Automatisch verwijderen oude logbestanden bij de start van het programma"
+$Description4.text                = "Automatisch verwijderen oude logbestanden bij de start van het programma."
 $Description4.AutoSize            = $false
 $Description4.width               = 400
 $Description4.height              = 40
@@ -4221,7 +4228,7 @@ $Description4.add_MouseHover({
 })
 
 $Description5                     = New-Object system.Windows.Forms.Label
-$Description5.text                = "Aantal dagen dat de logbestanden van het programma bewaard blijven"
+$Description5.text                = "Aantal dagen dat de logbestanden van het programma bewaard blijven."
 $Description5.AutoSize            = $false
 $Description5.width               = 400
 $Description5.height              = 40
@@ -4233,7 +4240,7 @@ $Description5.add_MouseHover({
 })
 
 $Description6                     = New-Object system.Windows.Forms.Label
-$Description6.text                = "Afbeelding in het hoofdvenster"
+$Description6.text                = "Afbeelding in het hoofdvenster :"
 $Description6.AutoSize            = $false
 $Description6.width               = 400
 $Description6.height              = 40
@@ -4241,12 +4248,12 @@ $Description6.location            = New-Object System.Drawing.Point(560,60)
 $Description6.Font                = 'Microsoft Sans Serif,11'
 $Description6.ForeColor = [System.Drawing.Color]::Blue
 $Description6.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Wijzigen van albeelding in hoofdmenu" )
+    $global:tooltip1.SetToolTip($this, "Wijzigen van albeelding in hoofdmenu." )
 })
 
 
 $Description7                     = New-Object system.Windows.Forms.Label
-$Description7.text                = "Website met moppen"
+$Description7.text                = "Website met moppen :"
 $Description7.AutoSize            = $false
 $Description7.width               = 400
 $Description7.height              = 40
@@ -4259,7 +4266,7 @@ $Description7.add_MouseHover({
 
 
 $Description8                     = New-Object system.Windows.Forms.Label
-$Description8.text                = "Jouw naam"
+$Description8.text                = "Jouw naam :"
 $Description8.AutoSize            = $false
 $Description8.width               = 400
 $Description8.height              = 40
@@ -4306,6 +4313,18 @@ $Description11.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Bepaal of je het nieuwe layout in het hoofdvenster wil tonen." )
 })
 
+$Description12                     = New-Object system.Windows.Forms.Label
+$Description12.text                = "Aantal dagen dat de backups van het programma bewaard blijven."
+$Description12.AutoSize            = $false
+$Description12.width               = 400
+$Description12.height              = 40
+$Description12.location            = New-Object System.Drawing.Point(40,420)
+$Description12.Font                = 'Microsoft Sans Serif,11'
+$Description12.ForeColor = [System.Drawing.Color]::Blue
+$Description12.add_MouseHover({
+    $global:tooltip1.SetToolTip($this, "Bepaal tot hoeveel dagen de backups bewaard blijven bij de taak opschonen van backups." )
+})
+
 $Description13                     = New-Object system.Windows.Forms.Label
 $Description13.text                = "Automatisch controleren en installeren van updates bij het opstarten van het programma."
 $Description13.AutoSize            = $false
@@ -4320,7 +4339,7 @@ $Description13.add_MouseHover({
 
 $Btnstandaard = New-object System.Windows.Forms.Button 
 $Btnstandaard.text= "Herstel de standaardinstellingen"
-$Btnstandaard.location = "430,430" 
+$Btnstandaard.location = "430,470" 
 $Btnstandaard.size = "250,30"  
 $Btnstandaard.BackColor = 'blue'
 $Btnstandaard.ForeColor = 'white'
@@ -4339,6 +4358,7 @@ $Btnstandaard.add_click({
     $keuzeoptie9.SelectedItem=$temp_init["algemeen"]["consolesluiten"]
     $keuzeoptie10.SelectedItem=$temp_init["algemeen"]["controlevoorklaarzetten"]
     $keuzeoptie11.SelectedItem=$temp_init["algemeen"]["nieuwelayout"]
+    $keuzeoptie12.Text=$temp_init["opschonen"]["dagenbewarenbackups"]
     $keuzeoptie13.SelectedItem=$temp_init["uitvoerennaopstarten"]["Controleopupdate"]
 }) # einde Btnstandaard.add_click
 $Btnstandaard.add_MouseHover({
@@ -4347,7 +4367,7 @@ $Btnstandaard.add_MouseHover({
 
 $Btnaccept = New-object System.Windows.Forms.Button 
 $Btnaccept.text= "Bewaren"
-$Btnaccept.location = "50,430" 
+$Btnaccept.location = "50,470" 
 $Btnaccept.size = "150,30"  
 $Btnaccept.BackColor = 'green'
 $Btnaccept.ForeColor = 'white'
@@ -4358,7 +4378,7 @@ $Btnaccept.add_MouseHover({
 
 $Btnescape = New-object System.Windows.Forms.Button 
 $Btnescape.text= "Terug"
-$Btnescape.location = "240,430" 
+$Btnescape.location = "240,470" 
 $Btnescape.size = "150,30"  
 $Btnescape.BackColor = 'red'
 $Btnescape.ForeColor = 'white'
@@ -4384,7 +4404,7 @@ foreach ($afbeelding in $global:afbeeldingen) {
 }
 $gifbox2.Image    = [System.Drawing.Image]::FromFile("$gifjesmap\$keuzeafbeelding")
 $gifbox2.location = New-Object System.Drawing.Point(570,80)
-$gifbox2.Size     = "370,320"
+$gifbox2.Size     = "370,380"
 $gifbox2.SizeMode = [System.Windows.Forms.PictureBoxSizeMode]::Zoom
 $gifbox2.add_click({
     if ($keuzeoptie6.Selectedindex -eq 6) {
@@ -4399,7 +4419,7 @@ $gifbox2.add_MouseHover({
 
 
 # venster met uitleg over deze taak wordt gedeclareerd. hieronder worden enkele variabelen aangepast aan deze taakvenster
-declareren_uitlegvenster "Uitleg over het venster Instellingen." 680 300 950 410 "
+declareren_uitlegvenster "Uitleg over het venster Instellingen." 680 300 950 470 "
 Wijzig hier de standaard instellingen van het programma. 
 Je kan de voorkeuren die standaard zijn ingesteld bij een taak wijzigen,
 enkele beheerinstellingen wijzigen en de layout aanpassen.
@@ -4412,8 +4432,8 @@ Als u terug wilt zonder de instellingen te bewaren klikt u op Terug.
 U krijgt extra informatie over een instelling als de muiscursor op een tekst staat.
 " 
 
-$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie1, $keuzeoptie11, $keuzeoptie2, $keuzeoptie10, $keuzeoptie3, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie13, $keuzeoptie7, $keuzeoptie6, 
-$description1, $description2, $description3, $description4, $description5, $description6, $description8, $description9, $description10, $description7, $Description11, $Description13, 
+$Form2.Controls.AddRange(@($keuzeoptie8, $keuzeoptie1, $keuzeoptie11, $keuzeoptie2, $keuzeoptie10, $keuzeoptie3, $keuzeoptie4, $keuzeoptie5, $keuzeoptie9, $keuzeoptie13, $keuzeoptie12, $keuzeoptie7, $keuzeoptie6, 
+$description1, $description2, $description3, $description4, $description5, $description6, $description8, $description9, $description10, $description7, $Description11, $Description12, $Description13, 
 $Btnaccept, $Btnescape, $Btnstandaard, $Global:vraagtekenicoon, $gifbox2 ))
 
 Add-EscapeClose -Form $form2
@@ -4447,6 +4467,13 @@ if ($result -eq [system.windows.forms.dialogResult]::yes) {
         [int32]$getal1=$keuzeoptie5.Text
         # alleen als getal1 groter of gelijk is aan 0 is wordt de wijging doorgevoerd
         if ($getal1 -ge 0) { $global:init["opschonen"]["dagenbewarenlogs"]=$getal1 }
+    }
+    # Controle of het ingevoerd getal voor "aantal dagen bewaren backups" klopt
+    if (!($keuzeoptie12.Text -eq "" )) {
+        # eventueel de nullen ervoor weghalen
+        [int32]$getal3=$keuzeoptie12.Text
+        # alleen als getal3 groter of gelijk is aan 0 is wordt de wijging doorgevoerd
+        if ($getal3 -ge 0) { $global:init["opschonen"]["dagenbewarenbackups"]=$getal3 }
     }
     # afbeelding in hoofdmenu wordt aangepast
     $global:init["algemeen"]["afbeelding"]=$keuzeoptie6.Selecteditem
@@ -4600,7 +4627,7 @@ $objTextBox1.Location = New-Object System.Drawing.Size(380,13)
 $objTextBox1.Size = New-Object System.Drawing.Size(55,50)
 $objTextBox1.MaxLength = 4
 $objTextBox1.Font = 'Microsoft Sans Serif,11'
-$objTextBox1.Text=$Global:init.opschonen.dagenbewarenbackup
+$objTextBox1.Text=$Global:init.opschonen.dagenbewarenbackups
 $objTextBox1.Add_TextChanged({
     $this.Text = $this.Text -replace '\D'
 })
@@ -4808,9 +4835,9 @@ $objtekst3.ScrollBars = "Both"
 $objtekst3.BackColor  = 'white'
 
 # tijdelijke variabelen benoemen
-$tempreadmebestand="$startmap\$readmebestand"
-$tempchangelogbestand="$startmap\$changelogbestand"
-$templicensebestand="$startmap\$licensebestand"
+$tempreadmebestand    =-join ($startmap,"\",$global:programma.readmebestand)
+$tempchangelogbestand =-join ($startmap,"\",$global:programma.changelogbestand)
+$templicensebestand   =-join ($startmap,"\",$global:programma.licensebestand)
 
 # inhoud bestand inlezen van het Changelog-document en in het venster plaatsen
 # deze manier maakt dat het laden van het bestand en laten zien in het venster sneller gaat
@@ -5009,11 +5036,13 @@ try {
         $tekst = [System.Web.HttpUtility]::HtmlDecode($tekst)
         $reload.Enabled = $true
           }
+         <# Uitgeschakeld omdat de website aangeeft "Server Error" en het geblokkeerd wordt door interne IT
         'Appspot.com' {
         $quote = Invoke-RestMethod -Method Get -Uri 'https://official-joke-api.appspot.com/jokes/random' -erroraction Stop
         $tekst = $quote.setup + "`r`n" + $quote.punchline
         $reload.Enabled = $true
           }
+          #>
         'Icanhazdadjoke.com' {
         $Header = @{'Accept' = 'application/json' }
         $quote = (Invoke-RestMethod -Method Get -Uri 'https://icanhazdadjoke.com/' -Headers $Header -UseBasicParsing).joke
@@ -5186,7 +5215,7 @@ function Venstervullen ($pad) {
     }
     catch {
         # melding loggen en weergeven
-        $melding = -join ("Venster Verkenner wordt gevuld : ", "`n", $_.exception.message )
+        $melding = -join ("Venster Bestanden wordt gevuld : ", "`n", $_.exception.message )
         Meldingnaarlogbestand -meldtekst $melding
     }
 
@@ -5596,7 +5625,7 @@ $doelselectie.add_SelectedIndexChanged({
 })
 
 # venster met uitleg over deze taak wordt gedeclareerd. 
-declareren_uitlegvenster "Uitleg over het venster Verkenner." 850 380 800 570 "Hier kunt u de bestanden van de homemappen van de kandidaten controleren, openen, wissen of verplaatsen.
+declareren_uitlegvenster "Uitleg over het venster Bestanden." 850 380 800 570 "Hier kunt u de bestanden van de homemappen van de kandidaten controleren, openen, wissen of verplaatsen.
 
 Eventueel kunt u eerst kiezen om de standaardlocatie te wijzigen.
 Links kiest u vervolgens het RPC-nummer van de betreffende homemap.
@@ -5821,6 +5850,15 @@ if (($Global:init.uitvoerennaopstarten.forceernieuwelayout -eq 'Ja') -and ($Glob
     $Global:init.algemeen.nieuwelayout = 'Ja'
     Bewareninstellingen
     write-host "De layout van het venster is gewijzigd naar de nieuwe layout."
+}
+
+# Controle of bij de website voor moppen voor 'Appspot.com' is gekozen. Als dit zo is, dan wordt dit aangepast naar een andere waarde.
+# De website Appspot.com is niet meer beschikbaar en kan niet meer worden gebruikt. Daarom wordt dit automatisch aangepast naar Apekool.nl.
+# Dit is van toepassing vanaf versie 5.0.0 
+if ($Global:init.algemeen.websitemoppen -eq 'Appspot.com') {
+    $Global:init.algemeen.websitemoppen = 'Apekool.nl'
+    Bewareninstellingen
+    write-host "De website voor moppen is aangepast naar de juiste waarde."
 }
 
 # Einde controles en tijdelijke taken uitvoeren
@@ -6084,8 +6122,8 @@ Met deze icoontjes kan je de volgende taken uitvoeren :
     - de logbestanden van de uitgevoerde taken bekijken,
     - algemene informatie over het programma lezen,
     - het programma afsluiten,
-    - Het programma updaten naar een nieuwe versie,
-    - de persoonlijke keuzes voor het programma instellen,    
+    - het programma updaten,
+    - de standaard keuzes voor het programma instellen,    
     - oude back-ups verwijderen.
 
 Als je gekozen hebt voor de nieuwe layout dan zijn de zwartwitte icoontjes niet meer zichtbaar in het
@@ -6196,11 +6234,11 @@ $form.add_Shown({
         # Na elke update or bij nieuwe installatie is er een venster met informatie over de update. Deze wordt alleen 1 keer getoond.
         $null = venstermetvraag -titel "Informatie over uitgevoerde update" -vraag "`r`nHet programma heeft een update uitgevoerd en heeft nu versie $versie.`r`n
 De belangrijkste wijzigingen zijn: 
-- Gebruiker moet inloggen bij de Sharepoint van het RPC om bepaalde taken uit te voeren.
+- Inloggen bij de Sharepoint van het RPC om bepaalde taken uit te voeren is verplicht.
 - Nieuwe functie Bestanden neemt de functies van Verkenner, Wissen en Verplaatsen over.
 - De mogelijkheid om bestanden tussen mappen te kopiëren is verwijderd.
 - De voortgang van een taak kan weergegeven worden.
-- Script werkt nu alleen met PowerShell 7.0 of hoger." -schuifbalk -bredevenster
+- Script schakelt nu altijd over naar een PowerShell versie 7 of hoger." -schuifbalk -bredevenster
 
         # Deze vraag niet meer stellen -> Waarde op nee zetten en bewaren
         $Global:init.uitvoerennaopstarten.updateinfo='Nee'

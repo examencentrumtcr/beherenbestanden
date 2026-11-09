@@ -6,11 +6,11 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ## [5.0.0] - Development
 ### Nieuwe functies
-- Gebruiker moet inloggen bij de Sharepoint van het RPC om bepaalde taken uit te voeren.
+- Inloggen bij de Sharepoint van het RPC om bepaalde taken uit te voeren is verplicht.
 - Nieuwe functie **Bestanden** neemt de functies van **Verkenner**, **Wissen** en **Verplaatsen** over.
 
 ### Verwijderde functies
-- De mogelijkheid om bestanden tussen mappen te kopiëren is verwijderd.
+- De mogelijkheid om bestanden te kopiëren naar een andere map is verwijderd.
 
 ### Bugfix
 - Probleem opgelost waarbij de map "Mijn Documenten" niet werd gevonden tijdens het klaarzetten van bestanden.
@@ -20,8 +20,9 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 ### Overige wijzigingen
 - De functie **Updaten** is nu op te starten via het hoofdscherm.
 - De voortgang van een taak kan weergegeven worden.
-- Script werkt nu alleen met PowerShell 7.0 of hoger.
+- Script schakelt nu altijd over naar een PowerShell versie 7 of hoger.
 - De nieuwe layout, met alleen 2 knoppen in het hoofdvenster, is de standaard geworden.
+- De standaard aantal dagen dat backups bewaard worden is in te stellen.
 - Controle netwerkmappen gewijzigd. Alleen controleren als het nodig is.
 - Het updateproces kan getest worden met een testmap in SharePoint.
 - Code geoptimaliseerd en opgeschoond. 

@@ -7,7 +7,7 @@ Het kreeg de naam **"Beherenbestanden"** omdat het programma niet alleen bestand
 Later zijn nog extra functionaliteiten toegevoegd aan het programma.
 Het project begon in 2013, oorspronkelijk geschreven in **DOS**. 
 Sindsdien heeft het programma veel wijzigingen ondergaan.  
-De belangrijkste update was de herschrijving in **PowerShell**.
+De belangrijkste wijziging was de herschrijving in **PowerShell**.
 
 ### Hoofdfunctionaliteiten
 - Bestanden kopiëren naar mappen  
@@ -19,19 +19,18 @@ De belangrijkste update was de herschrijving in **PowerShell**.
 - Standaard instellingen van het programma aanpassen  
 - Oude back-ups verwijderen
 - Gebeurtenissen (logs) bekijken
-- Gebeurtenissen (logs) verwijderen bij de start van het programma    
 - Programmainfo, readme, changelog en licentie, tonen 
 - Een grapje ophalen van een website (Er zijn 3 websites waaruit te kiezen is) 
-- Handmatig of automatisch het programma updaten
 
 ### Functionaliteiten die automatisch worden uitgevoerd
-- Gebeurtenissen (logs) in een bestand bijhouden
+- Gebeurtenissen (logs) bijhouden en oude gebeurtenissen verwijderen.
+- Het programma updaten bij de start. Dit is ook op commando uit te voeren.
 
 ---
 
 ## 2. Installatie
 
-Dit programma werkt op **Windows 11 of nieuwer** en vereist **PowerShell 7 of hoger**.
+Dit programma werkt op **Windows 10 of nieuwer** en vereist **PowerShell 7 of hoger**.
 Als het programma i.c.m. **Windows 10** moet werken dan kunnen er problemen ontstaan. Zie ook sectie **bekende bugs**.
 Verder is een account met schrijfrechten nog voor de SharePointsite van het RPC.
 Het programma gebruikt de SharePointsite om bestanden te downloaden en te backuppen.
@@ -84,6 +83,7 @@ Zonder dit kan PowerShell een **Execution Policy-waarschuwing** tonen.
 - Anders → klik met de rechtermuisknop op het `beherenbestanden.ps1` en kies  
   `Openen met > Windows PowerShell` of `Uitvoeren met PowerShell`.  
 - Er wordt gevraagd in te loggen bij de Sharepoint site van het RPC. 
+  Bij gebruik van een vaste pc in het netwerk van de organisatie gaat het aanmelden automatisch.
   Zonder een account met de juiste rechten start het script niet op.
 
 ---
@@ -121,7 +121,7 @@ Als dit gebeurt:
 
 - Het programma werkt sinds versie 5.0.0. alleen i.c.m. **PowerShell 7** of hoger.
   Als **PowerShell 7** niet is geïnstalleerd dan zal het programma automatisch **PowerShell 7** installeren.
-  Echter, onder **Windows 10** krijg je een app-licentie foutmelding en start het programma niet op.
+  Echter, onder **Windows 10** kan je een app-licentie foutmelding krijgen en start het programma niet op.
 
 ➡️ Aangeraden wordt om de console van **PowerShell 7** te starten, te controleren of scripts uitgevoerd kunnen worden en dit te herstellen.
    Kunnen scripts uitgevoerd worden dan zal het programma daarna werken met **PowerShell 7**.
