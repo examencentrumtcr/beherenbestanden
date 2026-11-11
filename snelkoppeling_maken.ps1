@@ -1,18 +1,21 @@
 ﻿<# script om een snelkoppeling te maken van Beherenbestanden met de juiste opties
 
 Je kan de volgende parameters meegeven aan het script:
-    -auto : maakt automatisch een snelkoppeling.
-            Als deze parameter niet meegegeven wordt, dan wordt de gebruiker gevraagd of hij/zij een snelkoppeling wil maken naar PowerShell 7.
-    -pwsh7 : maakt automatisch een snelkoppeling naar PowerShell 7.0
-             Deze paramter moet alleen meegegeven worden als de parameter -auto ook meegegeven wordt.
+    -auto : maakt automatisch een snelkoppeling met PowerShell 7.
+            Als deze parameter niet meegegeven wordt, dan wordt de gebruiker gevraagd of hij/zij een snelkoppeling wil maken met PowerShell 5.
+    -pwsh5 : maakt automatisch een snelkoppeling naar PowerShell 5.1
+            Deze paramter moet alleen meegegeven worden als de parameter -auto ook meegegeven wordt.
+    -startmap : De map waar het programma staat. 
+            Standaard wordt het script uitgevoerd in dezelfde map en hoeft deze parameter niet gegeven te worden.
 #>
 
 # Declareren variabelen ----------------------------------------------------------
 param (
     [switch]$auto,
-    [switch]$pwsh7,
-    [string]$startmap="$env:USERPROFILE\beherenbestanden"
+    [switch]$pwsh5,
+    [string]$startmap=(Split-Path -Parent $PSCommandPath)
 )
+# $startmap=Split-Path -Parent $PSCommandPath
 
 # controleren van startmap van het programma. Eerst de exitcode op 0 zetten zodat deze zeker 0 is!
 $global:LASTEXITCODE = 0
@@ -34,14 +37,16 @@ if (!(Test-Path $startmap)) {
 # samenvoegen installatiemap met hoofdprogramma. nodig voor aanmaken snelkoppeling
 $hoofdprog = -join ("$startmap","\","$hoofdprog")
 
+$icoonmap = -join ($startmap,'\png')
+
 ## Begin van het script -------------------------------------------------------------
 
 if (!($auto)) {
     # als er geen parameter auto is meegegeven, dan wordt de gebruiker gevraagd of hij/zij een snelkoppeling wil maken naar PowerShell 7.
     write-host " ***************************************************************"
     write-host "Dit script maakt een snelkoppeling naar het programma Beherenbestanden met de juiste opties."
-    write-host "Standaard wordt de snelkoppeling gemaakt voor PowerShell 5."
-    Write-Host "Wilt u echter kiezen voor PowerShell 7? (j/n) [standaard: n]: " -NoNewline
+    write-host "Standaard wordt de snelkoppeling gemaakt voor PowerShell 7 of hoger."
+    Write-Host "Wilt u echter kiezen voor PowerShell 5? (j/n) [standaard: n]: " -NoNewline
 
     do {
         $key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
@@ -57,20 +62,20 @@ if (!($auto)) {
     while ($keuze -notin @('j','n'))
     Write-Host $keuze
 
-} elseif ($pwsh7) {
-    # auto parameter is meegegeven en de parameter pwsh7 ook, dan wordt automatisch een snelkoppeling gemaakt naar PowerShell 7.
+} elseif ($pwsh5) {
+    # auto parameter is meegegeven en de parameter pwsh5 ook, dan wordt automatisch een snelkoppeling gemaakt naar PowerShell 5.
     $keuze = "j"
     write-host "Script Snelkoppeling_maken.ps1 wordt uitgevoerd."
-    write-host "Er wordt automatisch een snelkoppeling gemaakt naar PowerShell 7."
+    write-host "Er wordt automatisch een snelkoppeling gemaakt naar PowerShell 5."
 } else {
-    # auto parameter is meegegeven, maar de parameter pwsh7 niet, dan wordt automatisch een snelkoppeling gemaakt naar PowerShell 5.
+    # auto parameter is meegegeven, maar de parameter pwsh5 niet, dan wordt automatisch een snelkoppeling gemaakt naar PowerShell 7.
     $keuze = "n"
     write-host "Script Snelkoppeling_maken.ps1 wordt uitgevoerd."
-    write-host "Er wordt automatisch een snelkoppeling gemaakt naar PowerShell 5."
+    write-host "Er wordt automatisch een snelkoppeling gemaakt naar PowerShell 7."
 }
 
 # Locatie van de executeable van Powershell 5 of 7, afhankelijk van de gemaakte keuze van de gebruiker.
-if ( $keuze -eq "j" -or $keuze -eq "J" ) {
+if ( $keuze -eq "n" -or $keuze -eq "N" ) {
         # Locatie van de executeable van Powershell 7 in een windows 64bit systeem. 
         try {
             $locatiePSexe = (Get-Command pwsh -ErrorAction Stop).Source
@@ -94,7 +99,7 @@ $WScriptObj = New-Object -ComObject ("WScript.Shell")
 $shortcut = $WscriptObj.CreateShortcut($ShortcutPath)
 $shortcut.TargetPath = $SourceFilePath
 $shortcut.Arguments = "-ExecutionPolicy Bypass -NoProfile -file " + '"' + "$hoofdprog" + '"' 
-$shortcut.IconLocation = "$startmap" + "\" + "script_icoon.ico"
+$shortcut.IconLocation = "$icoonmap" + "\script_icoon.ico"
 $shortcut.WorkingDirectory = "$startmap"
 $shortcut.Save()
 

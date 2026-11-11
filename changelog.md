@@ -4,6 +4,31 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
+## [5.0.0] - 2026-11-11
+### Nieuwe functies
+- Inloggen bij de Sharepoint van het RPC om bepaalde taken uit te voeren is verplicht.
+- Nieuwe functie **Bestanden** neemt de functies van **Verkenner**, **Wissen** en **Verplaatsen** over.
+
+### Verwijderde functies
+- De mogelijkheid om bestanden te kopiëren naar een andere map is verwijderd.
+
+### Bugfix
+- Probleem opgelost waarbij de map "Mijn Documenten" niet werd gevonden tijdens het klaarzetten van bestanden.
+- Probleem opgelost waarbij het sorteren van bestanden een foutmelding gaf.
+- Tabvolgorde van icoontjes hersteld. 
+
+### Overige wijzigingen
+- De functie **Updaten** is nu op te starten via het hoofdscherm.
+- De voortgang van een taak kan weergegeven worden.
+- Script schakelt nu altijd over naar een PowerShell versie 7 of hoger.
+- De nieuwe layout, met alleen 2 knoppen in het hoofdvenster, is de standaard geworden.
+- Website 'Appspot.com' uit de keuzelijst van moppen is vervangen door 'JokeApi.dev'.
+- De standaard aantal dagen dat back-ups bewaard worden is in te stellen.
+- Netwerkmappen worden nu alleen gecontroleerd als toegang nodig is.
+- Het updateproces kan getest worden met een testmap in SharePoint.
+- Code geoptimaliseerd en opgeschoond. 
+- Readme aangepast aan wijzigingen.
+
 ## [4.8.1] - 2026-07-15
 ### Bugfixes
 - Icoontje van snelkoppeling op het bureaublad verwees naar het verkeerde bestand. 
@@ -56,7 +81,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ### Overige wijzigingen
 - In de programma code wijzigingen aangebracht in hoe met bepaalde fases wordt omgegaan.
--  Van 2 functies, console openen en -sluiten, 1 gemaakt.
+- Van 2 functies, console openen en -sluiten, 1 gemaakt.
 - Bij de **Moppenbot** heb je de keuze uit moppen van 3 websites.
 - Het is mogelijk om het aantal dagen dat de logbestanden bewaard blijven op 0 te zetten.
 - Het programma wordt nu geüpdatet vanuit een repository in Github.
