@@ -4,7 +4,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [5.0.0] - Development
+## [5.0.0] - 2026-11-11
 ### Nieuwe functies
 - Inloggen bij de Sharepoint van het RPC om bepaalde taken uit te voeren is verplicht.
 - Nieuwe functie **Bestanden** neemt de functies van **Verkenner**, **Wissen** en **Verplaatsen** over.
@@ -22,8 +22,9 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 - De voortgang van een taak kan weergegeven worden.
 - Script schakelt nu altijd over naar een PowerShell versie 7 of hoger.
 - De nieuwe layout, met alleen 2 knoppen in het hoofdvenster, is de standaard geworden.
-- De standaard aantal dagen dat backups bewaard worden is in te stellen.
-- Controle netwerkmappen gewijzigd. Alleen controleren als het nodig is.
+- Website 'Appspot.com' uit de keuzelijst van moppen is vervangen door 'JokeApi.dev'.
+- De standaard aantal dagen dat back-ups bewaard worden is in te stellen.
+- Netwerkmappen worden nu alleen gecontroleerd als toegang nodig is.
 - Het updateproces kan getest worden met een testmap in SharePoint.
 - Code geoptimaliseerd en opgeschoond. 
 - Readme aangepast aan wijzigingen.

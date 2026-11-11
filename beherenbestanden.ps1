@@ -41,9 +41,9 @@ $gifjesmap = -join ("$startmap","\","png")
 $logmap = -join ("$startmap","\","log")
 
 $global:programma = @{
-    versie = '5.0.0.rc.2'
-    extralabel = '191.261109' # buildnummer + datum + eventuele branch
-    mode = 'rc' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    versie = '5.0.0'
+    extralabel = '192.261111' # buildnummer + datum + eventuele branch
+    mode = 'release' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
     icoon = -join ($icoontjesmap, "\", "script_icoon.ico")
@@ -57,7 +57,7 @@ $scriptnaam = $global:programma.naam
 write-host ""
 write-host "** Programma $scriptnaam " -f Green
 write-host "** Versie is "$global:programma.versie -f Green
-write-host "** Werkt met PowerShell versie "$PSVersionTable.PSVersion -f Green
+write-host "** Opgestart met PowerShell versie "$PSVersionTable.PSVersion -f Green
 write-host ""
 write-host "Initialiseren van het programma."
 
@@ -229,6 +229,11 @@ $Global:Moppen = @(
         taal = 'Engels'
     },
     #>
+    [PSCustomObject]@{
+        naam = 'Jokeapi.dev'
+        url = 'https://v2.jokeapi.dev/joke/Any'
+        taal = 'Engels'
+    },
     [PSCustomObject]@{
         naam = 'Apekool.nl'
         url = 'http://api.apekool.nl/services/jokes/getjoke.php' 
@@ -426,7 +431,7 @@ $opschonen=@{
 $uitvoerennaopstarten=@{
     updateinfo = 'Ja'
     controleopupdate = 'Ja'
-    handmatigupdate = 'Nee'
+    forceerupdate = 'Nee'
     PS7snelkoppeling = 'Ja'
     pnpupdate = 'Ja'
     forceernieuwelayout = 'ja'
@@ -3810,7 +3815,7 @@ $foutmeldingbegin = "Uitvoeren van een update :
 $updateto = "0.0.0" 
 
 # controleren of ingesteld is om handmatig een update te forceren.
-$forceerupdate = $Global:init.uitvoerennaopstarten.handmatigupdate
+$forceerupdate = $Global:init.uitvoerennaopstarten.forceerupdate
 
 # zip-bestand met update op lokale pc
 $zip_download = -join ("$startmap","\","updatebestand.zip")
@@ -3970,7 +3975,7 @@ Start-Sleep -Seconds 5
 $Global:init.uitvoerennaopstarten.updateinfo='Ja'
 
 # zorgen dat na de update niet nog een keer geforceerd een update wordt uitgevoerd. Hiervoor wordt een waarde in het init bestand aangepast.
-$global:init.uitvoerennaopstarten.handmatigupdate = "Nee"
+$global:init.uitvoerennaopstarten.forceerupdate = "Nee"
 
 Bewareninstellingen
 # $gebruikersbestand = bepaalinitnaamgebruiker
@@ -4248,7 +4253,7 @@ $Description6.location            = New-Object System.Drawing.Point(560,60)
 $Description6.Font                = 'Microsoft Sans Serif,11'
 $Description6.ForeColor = [System.Drawing.Color]::Blue
 $Description6.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Wijzigen van albeelding in hoofdmenu." )
+    $global:tooltip1.SetToolTip($this, "Wijzigen van albeelding in het hoofdvenster." )
 })
 
 
@@ -4261,7 +4266,7 @@ $Description7.location            = New-Object System.Drawing.Point(560,20)
 $Description7.Font                = 'Microsoft Sans Serif,11'
 $Description7.ForeColor = [System.Drawing.Color]::Blue
 $Description7.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bepaal welke website standaard de moppen genereerd." )
+    $global:tooltip1.SetToolTip($this, "Bepaal van welke website de moppen worden gegenereerd." )
 })
 
 
@@ -4278,7 +4283,7 @@ $Description8.add_MouseHover({
 })
 
 $Description9                     = New-Object system.Windows.Forms.Label
-$Description9.text                = "Console, venster met informatie over het script, verbergen als het hoofdvenster wordt getoond."
+$Description9.text                = "Verberg de console, dit is het venster met uitvoer van het script, als het hoofdvenster wordt getoond."
 $Description9.AutoSize            = $false
 $Description9.width               = 400
 $Description9.height              = 40
@@ -4314,7 +4319,7 @@ $Description11.add_MouseHover({
 })
 
 $Description12                     = New-Object system.Windows.Forms.Label
-$Description12.text                = "Aantal dagen dat de backups van het programma bewaard blijven."
+$Description12.text                = "Aantal dagen dat de back-ups van het programma bewaard blijven."
 $Description12.AutoSize            = $false
 $Description12.width               = 400
 $Description12.height              = 40
@@ -4322,7 +4327,7 @@ $Description12.location            = New-Object System.Drawing.Point(40,420)
 $Description12.Font                = 'Microsoft Sans Serif,11'
 $Description12.ForeColor = [System.Drawing.Color]::Blue
 $Description12.add_MouseHover({
-    $global:tooltip1.SetToolTip($this, "Bepaal tot hoeveel dagen de backups bewaard blijven bij de taak opschonen van backups." )
+    $global:tooltip1.SetToolTip($this, "Bepaal tot hoeveel dagen de back-ups bewaard blijven bij de taak opschonen van back-ups." )
 })
 
 $Description13                     = New-Object system.Windows.Forms.Label
@@ -5049,6 +5054,15 @@ try {
         $tekst = $quote
         $reload.Enabled = $true
           }
+        'Jokeapi.dev' {
+        $quote = Invoke-RestMethod -Uri "https://v2.jokeapi.dev/joke/Any" -Method Get
+        if ($quote.type -eq "twopart") {
+            $tekst = -join ( $quote.setup, "`r`n", $quote.delivery)
+        } else {
+            $tekst = $quote.joke
+        }
+        $reload.Enabled = $true
+          }
         Default { 
         $tekst = 'Kies een website met moppen bij de keuzelijst hieronder.'
         $reload.Enabled = $false 
@@ -5301,7 +5315,7 @@ $global:listBox = lijstrpcnrsaanmaken $keuzelocatie $global:listBox
 # De hoofdmenu onzichtbaar maken
 $form.Hide()
 
-$Form2 = declareren_standaardvenster "Bestanden van homemappen van de kandidaten controleren en openen" 900 670;
+$Form2 = declareren_standaardvenster "Bestanden bekijken, openen, wissen of verplaatsen" 900 670;
 
 $Description2                     = New-Object system.Windows.Forms.Label
 $Description2.text                = "RPC-nummers"
@@ -5759,8 +5773,8 @@ Inlezengebruikersinstellingen;
 updateuitvoeren;
 
 # deze waarde wordt alleen op Ja gezet bij venster Instellingen als de gebruiker heeft gekozen om een update uit te voeren. Handmatig dus.
-if ($global:init.uitvoerennaopstarten.handmatigupdate -eq "Ja") {
-    $global:init.uitvoerennaopstarten.handmatigupdate = "Nee"
+if ($global:init.uitvoerennaopstarten.forceerupdate -eq "Ja") {
+    $global:init.uitvoerennaopstarten.forceerupdate = "Nee"
     Bewareninstellingen
     Write-host "De handmatige controle op een update is uitgevoerd."
     $null = venstermetvraag -titel "Updatecontrole" -vraag "
@@ -5775,12 +5789,11 @@ Lees de informatie in de console en druk op OK om verder te gaan."
 # Eerst powershell module importeren als deze niet aanwezig is
 if  ($global:init.uitvoerennaopstarten.pnpupdate -eq "Ja") {
     # zorgen dat modules uit deze repository worden vertrouwd
+    write-host "SharePoint module wordt geïnstalleerd. Een moment geduld a.u.b." -f Yellow
     Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
-    write-host "SharePoint module wordt geïnstalleerd."
     Install-Module -Name pnp.powershell -Scope CurrentUser -RequiredVersion 3.4.1 -Force -skippublishercheck
     # voor de veiligheid dit weer terugzetten!
     Set-PSRepository -Name 'PSGallery' -InstallationPolicy untrusted
-
     $global:init.uitvoerennaopstarten.pnpupdate = "Nee"
     Bewareninstellingen
     }
@@ -5815,6 +5828,7 @@ if (test-path -path "$icoontjesmap\icoon-verkenner.png") { Remove-Item "$icoontj
 if (test-path -path "$startmap\script_icoon.ico") { Remove-Item "$startmap\script_icoon.ico" }
 
 # Opnieuw snelkoppeling maken omdat programma alleen met PowerShell 7 kan werken. Eenmalig uitvoeren.
+# Dit is van toepassing vanaf versie 5.0.0 
 if (($Global:init.uitvoerennaopstarten.PS7snelkoppeling -eq 'Ja') -and ($Global:programma.mode -eq "release")) {
 
     # Maken van snelkoppeling
@@ -5845,11 +5859,12 @@ Bureaubladlink = $ShortcutPath" -type "FOUT"
 } # einde if ($Global:init.uitvoerennaopstarten.PS7snelkoppeling -eq 'Ja')
 
 # De nieuwe layout van het venster als standaard instellen. Alleen bij release versie.
+# Dit is van toepassing vanaf versie 5.0.0 
 if (($Global:init.uitvoerennaopstarten.forceernieuwelayout -eq 'Ja') -and ($Global:programma.mode -eq "release")) {
     $Global:init.uitvoerennaopstarten.forceernieuwelayout = 'Nee'
     $Global:init.algemeen.nieuwelayout = 'Ja'
     Bewareninstellingen
-    write-host "De layout van het venster is gewijzigd naar de nieuwe layout."
+    write-host "De nieuwe layout van het venster is als standaard ingesteld."
 }
 
 # Controle of bij de website voor moppen voor 'Appspot.com' is gekozen. Als dit zo is, dan wordt dit aangepast naar een andere waarde.
@@ -5858,7 +5873,7 @@ if (($Global:init.uitvoerennaopstarten.forceernieuwelayout -eq 'Ja') -and ($Glob
 if ($Global:init.algemeen.websitemoppen -eq 'Appspot.com') {
     $Global:init.algemeen.websitemoppen = 'Apekool.nl'
     Bewareninstellingen
-    write-host "De website voor moppen is aangepast naar de juiste waarde."
+    write-host "De keuze voor de website voor moppen is aangepast naar Apekool.nl."
 }
 
 # Einde controles en tijdelijke taken uitvoeren
@@ -6003,7 +6018,7 @@ Weet je zeker dat je versie $nieuweversie wilt installeren?
 Het programma zal opnieuw opgestart worden." -knopok "Ja" -knopterug "Nee"
         if ($result -eq 'OK') {
             # instellen dat het programma gaat updaten na herstart
-            $global:init["uitvoerennaopstarten"]["handmatigupdate"] = "Ja"
+            $global:init["uitvoerennaopstarten"]["forceerupdate"] = "Ja"
             Bewareninstellingen
             # huidige proces vh programma afsluiten
             $form.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
@@ -6236,7 +6251,7 @@ $form.add_Shown({
 De belangrijkste wijzigingen zijn: 
 - Inloggen bij de Sharepoint van het RPC om bepaalde taken uit te voeren is verplicht.
 - Nieuwe functie Bestanden neemt de functies van Verkenner, Wissen en Verplaatsen over.
-- De mogelijkheid om bestanden tussen mappen te kopiëren is verwijderd.
+- De mogelijkheid om bestanden te kopiëren naar een andere map is verwijderd.
 - De voortgang van een taak kan weergegeven worden.
 - Script schakelt nu altijd over naar een PowerShell versie 7 of hoger." -schuifbalk -bredevenster
 
