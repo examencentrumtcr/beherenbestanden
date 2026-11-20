@@ -43,7 +43,7 @@ $logmap = -join ("$startmap","\","log")
 $global:programma = @{
     versie = '5.0.1'
     extralabel = '193.261118' # buildnummer + datum + eventuele branch
-    mode = 'alpha' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    mode = 'beta' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
     icoon = -join ($icoontjesmap, "\", "script_icoon.ico")
@@ -1073,6 +1073,8 @@ catch {
     switch -Regex ($_.Exception.Message) {
         "cancel" {
             Write-host "Aanmelden is geannuleerd."
+            $melding = "`r`n$melding"
+            $null = venstermetvraag -titel "Geen verbinding met SharePoint." -vraag $melding "OK"
             return $false
         }
 
@@ -6324,11 +6326,9 @@ $form.add_Shown({
         # Na elke update or bij nieuwe installatie is er een venster met informatie over de update. Deze wordt alleen 1 keer getoond.
         $null = venstermetvraag -titel "Informatie over uitgevoerde update" -vraag "`r`nHet programma heeft een update uitgevoerd en heeft nu versie $versie.`r`n
 De belangrijkste wijzigingen zijn: 
-- Inloggen bij de Sharepoint van het RPC om bepaalde taken uit te voeren is verplicht.
-- Nieuwe functie Bestanden neemt de functies van Verkenner, Wissen en Verplaatsen over.
-- De mogelijkheid om bestanden te kopiëren naar een andere map is verwijderd.
-- De voortgang van een taak kan weergegeven worden.
-- Script schakelt nu altijd over naar een PowerShell versie 7 of hoger." -schuifbalk -bredevenster
+- Probleem opgelost waarbij het verbinden met SharePoint soms een foutmelding gaf.
+- Probleem opgelost waarbij de knoppen op de hoofdvenster niet goed werden weergegeven.
+- Updateproces aangepast om 'release candidate' versies te installeren." -schuifbalk -bredevenster
 
         # Deze vraag niet meer stellen -> Waarde op nee zetten en bewaren
         $Global:init.uitvoerennaopstarten.updateinfo='Nee'
