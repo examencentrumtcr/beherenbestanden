@@ -4,6 +4,16 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
+## [5.0.1] - Development
+
+### Bugfix
+- Probleem opgelost waarbij het verbinden met SharePoint, als er meerdere accounts aanwezig zijn, een foutmelding gaf.
+- Probleem opgelost waarbij de knoppen op de hoofdvenster niet goed werden weergegeven.
+
+### Overige wijzigingen
+- Updateproces aangepast om 'release candidate' versies te installeren.
+- Script Wijzig_Executionpolicy_bypass.bat aangepast om onder PowerShell 5.1 en 7 te werken. 
+
 ## [5.0.0] - 2026-11-11
 ### Nieuwe functies
 - Inloggen bij de Sharepoint van het RPC om bepaalde taken uit te voeren is verplicht.
@@ -23,7 +33,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 - Script schakelt nu altijd over naar een PowerShell versie 7 of hoger.
 - De nieuwe layout, met alleen 2 knoppen in het hoofdvenster, is de standaard geworden.
 - Website 'Appspot.com' uit de keuzelijst van moppen is vervangen door 'JokeApi.dev'.
-- De standaard aantal dagen dat back-ups bewaard worden is in te stellen.
+- De standaard aantal dagen dat backups bewaard worden is in te stellen.
 - Netwerkmappen worden nu alleen gecontroleerd als toegang nodig is.
 - Het updateproces kan getest worden met een testmap in SharePoint.
 - Code geoptimaliseerd en opgeschoond. 

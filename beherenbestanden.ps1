@@ -41,9 +41,9 @@ $gifjesmap = -join ("$startmap","\","png")
 $logmap = -join ("$startmap","\","log")
 
 $global:programma = @{
-    versie = '5.0.0'
-    extralabel = '192.261111' # buildnummer + datum + eventuele branch
-    mode = 'release' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    versie = '5.0.1'
+    extralabel = '193.261118' # buildnummer + datum + eventuele branch
+    mode = 'alpha' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
     icoon = -join ($icoontjesmap, "\", "script_icoon.ico")
@@ -1057,22 +1057,50 @@ function VerbindmetSharePoint {
 try {
     # Verbinden met SharePoint
     # Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive -ErrorAction Stop
-    Connect-PnPOnline -Url $global:Sharepoint.Url -ClientId $global:Sharepoint.clientid -OSLogin -forceauthentication -validateconnection -ErrorAction Stop
+    Connect-PnPOnline -Url $global:Sharepoint.Url -ClientId $global:Sharepoint.clientid -OSLogin -forceauthentication -validateconnection -Tenant "o365zadkine.onmicrosoft.com" -ErrorAction Stop
+    # Connect-PnPOnline -Url $global:Sharepoint.Url -ClientId $global:Sharepoint.ClientId -Tenant "o365zadkine.onmicrosoft.com" -ErrorAction Stop
 
     # Test de nieuwe verbinding
     Get-PnPWeb -ErrorAction Stop | Out-Null
-
+    Write-host "Aanmelden is gelukt."
     return $true
 }
 catch {
     # Loggen van fout
-    $melding = -join ("Verbinding met SharePoint mislukt.","`r`n", "Foutmelding : ", $($_.Exception.Message))
+    $melding = -join ("1e poging om te verbinden met SharePoint mislukt.","`r`n", "Foutmelding : ", $($_.Exception.Message))
+    Meldingnaarlogbestand -meldtekst $melding
+    Write-host $melding -f Yellow
+    switch -Regex ($_.Exception.Message) {
+        "cancel" {
+            Write-host "Aanmelden is geannuleerd."
+            return $false
+        }
+
+        default {
+            Write-host "Er wordt een 2e poging gedaan..."
+        }
+    } # einde switch
+}
+# Inloggen met -OSlogin is niet gelukt. Nu andere methode proberen
+try {
+    # Verbinden met SharePoint
+    Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive -ErrorAction Stop
+
+    # Test de nieuwe verbinding
+    Get-PnPWeb -ErrorAction Stop | Out-Null
+    Write-host "Aanmelden is gelukt."
+    return $true
+}
+catch {
+    # Loggen van fout
+    $melding = -join ("2e poging om te verbinden met SharePoint mislukt.","`r`n", "Foutmelding : ", $($_.Exception.Message))
     Meldingnaarlogbestand -meldtekst $melding
     # melding geven met venster
     $melding = -join ("`r`n", $melding, "`r`n", "Een aantal taken kunnen nu niet uitgevoerd worden.")
     $null = venstermetvraag -titel "Geen verbinding met SharePoint." -vraag $melding "OK"
     return $false
 }
+
 } # einde function VerbindmetSharePoint
 
 function ControleerverbindingSharePoint {
@@ -1441,7 +1469,7 @@ switch ($uitvoeren.taak) {
                 } # einde if $folder.Name -eq $item[0].text
             } # einde foreach $folder
         }
-        # write-host "Geselecteerde items toegevoegd aan lijst met te kopiëren items."
+        
     } # einde if $uitvoeren.listview1.selecteditems.count -eq 0 .... else ....
 
     # progressie laten zien op balk
@@ -3506,10 +3534,7 @@ $filterjaar.add_SelectedIndexChanged({
     # Inlezen logs en in array plaatsen
     Inlezenlogs | Sort-Object -Descending | ForEach-Object {
         $datumlog = bepaaldatumuitlognaam "$_"
-        #test
-        # Write-Host "filterjaar: $($filterjaar.selecteditem) - datumlog: $datumlog"
-
-        if ($datumlog -like "*$($filterjaar.SelectedItem)*") { 
+          if ($datumlog -like "*$($filterjaar.SelectedItem)*") { 
             [void] $listbox2.Items.Add($datumlog)
         }
     }
@@ -3651,8 +3676,7 @@ $form.show()
 function controleerupdate {
 
     param (
-        [string]$tedownloadenbestand,
-        [string]$updateto
+        [switch]$rc
     )
     # controleren of er een update is. Dit gebeurt door de website te controleren op de laatste versie en deze te vergelijken met de huidige versie.
     # Er wordt alleen parameters doorgegeven die nodig zijn voor deze controle. 
@@ -3712,13 +3736,13 @@ $updateto = "0.0.0"
 
 # dit is de url van de github repository. Hier wordt bepaald of de release of release candidate wordt gedownload.
 $url = $global:programma.github 
-if ($global:programma.mode -eq "release") {
-        $url = -join ($url,"release")
-        } elseif ($global:programma.mode -eq "rc") {
-        $url = -join ($url,"prerelease")
-        } else {
-        $url = -join ($url,"test")
-        }
+if ($rc) {
+    $url = -join ($url,"prerelease")
+} elseif ("release","rc" -contains($global:programma.mode)) {
+    $url = -join ($url,"release")
+} else {
+    $url = -join ($url,"test")
+}
 
 # inhoud van de map in github ophalen
 try {
@@ -3766,7 +3790,6 @@ foreach ($item in $response) {
 
 # Als er geen update is gevonden, melding geven en loggen
 if ($updateto -eq "0.0.0") {
-        # Write-Host "" -f Red
         $fout = $true
         $melding = -join ($foutmeldingbegin, "Er is geen update gevonden in de GitHub repository: $url
 Neem contact op met de eigenaar van $url"  ) 
@@ -3809,6 +3832,8 @@ $programmanaam = $global:programma.naam
 # Eerste regel van elke foutmelding
 $foutmeldingbegin = "Uitvoeren van een update :
 "
+# dit is de url van de github repository.
+$url = $global:programma.github 
 
 # Standaard waarde. Als er geen update is gevonden, dan blijft deze waarde 0.0.0. 
 # Let op, dit betekent dat er een probleem is met de update.
@@ -3834,7 +3859,7 @@ if ($forceerupdate -eq "Nee") {
     return
     }
 
-    # alleen starten als je dit bij instelling hebt staan. Dit is om te voorkomen dat er onbedoeld een update wordt uitgevoerd.
+    # alleen starten als je dit bij instelling op automatisch hebt staan. Dit is om te voorkomen dat er onbedoeld een update wordt uitgevoerd.
     if ($global:init["uitvoerennaopstarten"]["Controleopupdate"] -ne "Ja") {
     Write-Host "Controle op updates is uitgeschakeld. Er wordt geen update uitgevoerd." -ForegroundColor Yellow
     return
@@ -3875,8 +3900,14 @@ catch {
 # Info geven
 write-host "Controleren op een update."
 
-# function controleerupdate uitvoeren en resultaat in variabele plaatsen
-$resultaatcontrole = controleerupdate 
+# function controleerupdate uitvoeren en resultaat in variabele plaatsen. 
+# Hier kiezen om de standaard release of de release candidate te checken.
+if ($forceerupdate -eq "rc") {
+    $resultaatcontrole = controleerupdate -rc
+    } else {
+    $resultaatcontrole = controleerupdate 
+    }
+
 if ($resultaatcontrole.fout) {
     # er is een fout opgetreden bij het controleren op een update. De foutmelding wordt hier gelogd en weergegeven.
     Meldingnaarlogbestand -meldtekst $resultaatcontrole.melding
@@ -3944,7 +3975,7 @@ catch {
     # foutmelding weergeven en stoppen
     
     $melding = -join ($foutmeldingbegin, "Het updaten is niet gelukt omdat er iets fout ging bij het uitpakken van de nieuwe bestanden. 
-Neem contact op met de eigenaar van $url" )
+Neem contact op met de eigenaar van ", $url )
     Meldingnaarlogbestand -meldtekst $melding
     write-host $melding -f Red
     Start-Sleep -Seconds 8
@@ -5773,7 +5804,7 @@ Inlezengebruikersinstellingen;
 updateuitvoeren;
 
 # deze waarde wordt alleen op Ja gezet bij venster Instellingen als de gebruiker heeft gekozen om een update uit te voeren. Handmatig dus.
-if ($global:init.uitvoerennaopstarten.forceerupdate -eq "Ja") {
+if ($global:init.uitvoerennaopstarten.forceerupdate -ne "Nee") {
     $global:init.uitvoerennaopstarten.forceerupdate = "Nee"
     Bewareninstellingen
     Write-host "De handmatige controle op een update is uitgevoerd."
@@ -5799,7 +5830,7 @@ if  ($global:init.uitvoerennaopstarten.pnpupdate -eq "Ja") {
     }
 
 # dan verbinden ......
-Write-Host "Verbinden met SharePoint. Meld u aan via het inlogvenster." -f Yellow
+Write-Host "Verbinden met SharePoint. Mogelijk moet u zich aanmelden via een inlogvenster." -f Yellow
 Write-Host "Een moment geduld a.u.b." -f Yellow
 $null = VerbindmetSharePoint;
 
@@ -5839,7 +5870,7 @@ if (($Global:init.uitvoerennaopstarten.PS7snelkoppeling -eq 'Ja') -and ($Global:
 
     # Snelkoppeling aanmaken dmv aanroepen script. Alleen als er al een snelkoppeling is. 
     if (Test-Path $ShortcutPath) {
-        # write-host "Snelkoppeling op bureaublad wordt opnieuw aangemaakt."
+    
         # Dit wordt ook gelogd. 
         & "$PSScriptRoot\$snelkoppeling_script" -auto
         
@@ -5899,7 +5930,7 @@ if ($global:programma.mode -eq 'release') {
     }
 
 $Form                            = New-Object system.Windows.Forms.Form
-$Form.ClientSize                 = New-Object System.Drawing.Point(700,480) #575
+$Form.ClientSize                 = New-Object System.Drawing.Point(700,480) 
 $Form.text                       = $koptekst
 $Form.TopMost                    = $false
 $Form.StartPosition              = 'CenterScreen'
@@ -5924,7 +5955,7 @@ $uitleg1.width               = 160
 $uitleg1.height              = 20
 $uitleg1.location            = New-Object System.Drawing.Point(168, 215)
 $uitleg1.Font                = 'Microsoft Sans Serif,11'
-$uitleg1.ForeColor = [System.Drawing.Color]::Blue
+$uitleg1.ForeColor           = [System.Drawing.Color]::Blue
 $Form.controls.add($uitleg1)
 
 
@@ -5935,7 +5966,7 @@ $uitleg2.width               = 160
 $uitleg2.height              = 20
 $uitleg2.location            = New-Object System.Drawing.Point(402, 215)
 $uitleg2.Font                = 'Microsoft Sans Serif,11'
-$uitleg2.ForeColor = [System.Drawing.Color]::blue
+$uitleg2.ForeColor           = [System.Drawing.Color]::blue
 $Form.controls.add($uitleg2)
 
 $Button1                         = New-Object system.Windows.Forms.Button
@@ -5943,8 +5974,8 @@ $Button1.width                   = 160
 $Button1.height                  = 160
 $Button1.location                = New-Object System.Drawing.Point(164,50)
 $Button1.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
-$Button1.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icon bestanden klaarzetten.png")
-$Button1.BackColor = [System.Drawing.Color]::green
+$Button1.Image                   = [System.Drawing.Image]::FromFile("$icoontjesmap\icon bestanden klaarzetten.png")
+$Button1.BackColor               = [System.Drawing.Color]::green
 $Button1.Add_Click({ vensterkopieren })
 $Button1.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Bestanden klaarzetten voor de geselecteerde homemappen van de kandidaten" )
@@ -5956,8 +5987,8 @@ $Button2.width                   = 160
 $Button2.height                  = 160
 $Button2.location                = New-Object System.Drawing.Point(376,50)
 $Button2.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
-$Button2.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icon backup maken.png")
-$Button2.BackColor = [System.Drawing.Color]::green
+$Button2.Image                   = [System.Drawing.Image]::FromFile("$icoontjesmap\icon backup maken.png")
+$Button2.BackColor               = [System.Drawing.Color]::green
 $Button2.Add_Click({ vensterbackup })
 $Button2.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Back-up maken van de geselecteerde homemappen van de kandidaten." )
@@ -5968,11 +5999,11 @@ $Form.controls.add($Button2)
 
 
 $Button9                         = New-Object system.Windows.Forms.Button
-$Button9.width                   = 60
-$Button9.height                  = 60
+$Button9.Size                    = New-Object System.Drawing.Size(60,60)
 $Button9.location                = New-Object System.Drawing.Point(398,150)
 $Button9.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
-$Button9.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-settings.png")
+$Button9.BackgroundImage         = [System.Drawing.Image]::FromFile("$icoontjesmap\icoon-settings.png")
+$Button9.BackgroundImageLayout   = 'Zoom'
 $Button9.visible                 = $false # deze knop is alleen zichtbaar als subtaken worden weergeven
 $Button9.Add_Click({ vensterinstellingen })
 $Button9.add_MouseHover({
@@ -5981,22 +6012,23 @@ $Button9.add_MouseHover({
 $Form.controls.add($Button9)
 
 $Button10                         = New-Object system.Windows.Forms.Button
-$Button10.width                   = 60
-$Button10.height                  = 60
+$Button10.Size                    = New-Object System.Drawing.Size(60,60)
 $Button10.location                = New-Object System.Drawing.Point(510,50)
-$Button10.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-clean.png")
-$Button10.visible                = $false # deze knop is alleen zichtbaar als subtaken worden weergeven
+$Button10.BackgroundImage         = [System.Drawing.Image]::FromFile("$icoontjesmap\icoon-clean.png")
+$Button10.BackgroundImageLayout   = 'Zoom'
+$Button10.visible                 = $false # deze knop is alleen zichtbaar als subtaken worden weergeven
 $Button10.Add_Click({ vensteropschonen })
 $Button10.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "Oude back-ups verwijderen." )
 })
 $Form.controls.add($Button10)
 
-$Button8  = New-Object system.Windows.Forms.Button
-$Button8.Location = New-Object System.Drawing.Size(388,150) 
-$Button8.Size = New-Object System.Drawing.Size(60,60)
-$Button8.Image = [System.Drawing.Image]::FromFile("$icoontjesmap\icoon-updaten.png")
-$Button8.visible = $false # deze knop is alleen zichtbaar als $subtaken = $true
+$Button8                          = New-Object system.Windows.Forms.Button
+$Button8.Location                 = New-Object System.Drawing.Size(388,150) 
+$Button8.Size                     = New-Object System.Drawing.Size(60,60)
+$Button8.BackgroundImage          = [System.Drawing.Image]::FromFile("$icoontjesmap\icoon-updaten.png")
+$Button8.BackgroundImageLayout    = 'Zoom'
+$Button8.visible                  = $false # deze knop is alleen zichtbaar als $subtaken = $true
 $Button8.Add_Click({ 
      # function controleerupdate uitvoeren en resultaat in variabele plaatsen
     $resultaatcontrole = controleerupdate 
@@ -6006,10 +6038,50 @@ $Button8.Add_Click({
         $null = venstermetvraag -titel "Fout tijdens de controle op een update" -vraag "
 Er is iets mis gegaan bij het uitvoeren van de controle op een update.
 Controleer het logboek voor meer informatie over de foutmelding." -knopok "OK" 
+
         } elseif (($resultaatcontrole.updateto -eq "gelijk") -or ($resultaatcontrole.updateto -eq "hoger")) {
-        $null = venstermetvraag -titel "Geen update gevonden" -vraag "
-Er is geen update beschikbaar.
-Het programma heeft de laatste versie geïnstalleerd." -knopok "OK" 
+        $controleoprc = venstermetvraag -titel "Geen update gevonden" -vraag "
+Het programma heeft de laatste versie geïnstalleerd.
+Wilt u controleren of er een 'Release Candidate' beschikbaar is?" -knopok "Ja" -knopterug "Nee"
+
+        # Als er op Ja is geklikt controleren op release candidate versie
+        if ($controleoprc -eq 'OK') {
+            # opnieuw controleren maar nu op een rc-versie.
+            $resultaatcontrole = controleerupdate -rc
+            if ($resultaatcontrole.fout) {
+                Meldingnaarlogbestand -meldtekst $resultaatcontrole.melding
+                $null = venstermetvraag -titel "Fout tijdens de controle op een 'Release Candidate'" -vraag "
+Er is iets mis gegaan bij het uitvoeren van de controle op een update.
+Controleer het logboek voor meer informatie over de foutmelding." -knopok "OK" 
+
+            } elseif (($resultaatcontrole.updateto -eq "gelijk") -or ($resultaatcontrole.updateto -eq "hoger")) {   
+                $null = venstermetvraag -titel "Geen 'Release Candidate' gevonden" -vraag "
+Er is geen 'Release Candidate' gevonden.
+Het programma is helemaal up to date." -knopok "OK" 
+
+            } else {
+            $nieuweversie = $resultaatcontrole.updateto
+            $result = venstermetvraag -titel "'Release Candidate' installeren?" -vraag "
+Een 'Release Candidate' van het programma is beschikbaar.
+Weet je zeker dat je versie $nieuweversie wilt installeren?
+Het programma zal opnieuw opgestart worden." -knopok "Ja" -knopterug "Nee"
+
+            if ($result -eq 'OK') {
+            # instellen dat het programma gaat updaten na herstart en een rc-versie installeert.
+            $global:init["uitvoerennaopstarten"]["forceerupdate"] = "rc"
+            Bewareninstellingen
+            # huidige proces vh programma afsluiten
+            $form.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
+
+            # opnieuw opstarten
+            $pwsh7_locatie = (Get-Command pwsh).Source
+            Start-Pwsh7 $pwsh7_locatie
+            # return
+            }
+            } # einde if ($resultaatcontrole.fout) .. elseif .. else ..
+
+        } # einde if ($controleoprc -eq 'OK')
+
         } else {
         $nieuweversie = $resultaatcontrole.updateto
         $result = venstermetvraag -titel "Update installeren?" -vraag "
@@ -6041,7 +6113,9 @@ $Button7.width                   = 60
 $Button7.height                  = 60
 $Button7.location                = New-Object System.Drawing.Point(52,50)
 $Button7.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
-$Button7.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-stoppen.png")
+$Button7.BackgroundImage         = [System.Drawing.Image]::FromFile("$icoontjesmap\icoon-stoppen.png")
+$Button7.BackgroundImageLayout   = 'Zoom'
+
 $Button7.Add_Click({ 
     # $result = programmaafsluiten
     $result = venstermetvraag -titel "Stoppen?" -vraag "`r`nWilt u het programma stoppen?" -knopok "Stoppen" -knopterug "Terug"
@@ -6057,10 +6131,11 @@ $Button7.add_MouseHover({
 })
 $Form.controls.add($Button7)
 
-$Button12 = New-Object system.Windows.Forms.Button
-$Button12.Location = New-Object System.Drawing.Size(52,150) 
-$Button12.Size = New-Object System.Drawing.Size(60,60)
-$Button12.Image = [System.Drawing.Image]::FromFile("$icoontjesmap\icoon-opties.png")
+$Button12                       = New-Object system.Windows.Forms.Button
+$Button12.Location              = New-Object System.Drawing.Size(52,150) 
+$Button12.Size                  = New-Object System.Drawing.Size(60,60)
+$Button12.BackgroundImage       = [System.Drawing.Image]::FromFile("$icoontjesmap\icoon-opties.png")
+$Button12.BackgroundImageLayout = 'Zoom'
 $Button12.Add_Click({ 
     # switchen tussen de hoofdvenster en venster met subtaken.
     # uitvoeren via function zodat deze makkelijk weer kan worden gebruikt bij het teruggaan van een subtaken naar het hoofdmenu.
@@ -6077,11 +6152,11 @@ $Button12.add_MouseHover({
 })
 $Form.controls.add($Button12)
 
-$Button11                         = New-Object system.Windows.Forms.Button
-$Button11.width                   = 60
-$Button11.height                  = 60
-$Button11.location                = New-Object System.Drawing.Point(164,50)
-$Button11.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-bestanden.png")
+$Button11                        = New-Object system.Windows.Forms.Button
+$Button11.Size                   = New-Object System.Drawing.Size(60,60)
+$Button11.location               = New-Object System.Drawing.Point(164,50)
+$Button11.BackgroundImage        =[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-bestanden.png")
+$Button11.BackgroundImageLayout  = 'Zoom'
 $Button11.visible                = $false # deze knop is alleen zichtbaar als $subtaken = $true
 $Button11.Add_Click({ vensterverkenner })
 $Button11.add_MouseHover({
@@ -6090,12 +6165,12 @@ $Button11.add_MouseHover({
 $Form.controls.add($Button11)
 
 $Button5                         = New-Object system.Windows.Forms.Button
-$Button5.width                   = 60
-$Button5.height                  = 60
+$Button5.Size                    = New-Object System.Drawing.Size(60,60)
 $Button5.location                = New-Object System.Drawing.Point(164,150)
 $Button5.Font                    = New-Object System.Drawing.Font('Microsoft Sans Serif',12)
-$Button5.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-log.png")
-$Button5.visible                = $false # deze knop is alleen zichtbaar als $subtaken = $true
+$Button5.BackgroundImage         = [System.Drawing.Image]::FromFile("$icoontjesmap\icoon-log.png")
+$Button5.BackgroundImageLayout   = 'Zoom'
+$Button5.visible                 = $false # deze knop is alleen zichtbaar als $subtaken = $true
 $Button5.Add_Click({ vensterlogbestand })
 $Button5.add_MouseHover({
     $global:tooltip1.SetToolTip($this, "De logbestanden bekijken." )
@@ -6103,10 +6178,10 @@ $Button5.add_MouseHover({
 $Form.controls.add($Button5)
 
 $Button6                         = New-Object system.Windows.Forms.Button
-$Button6.width                   = 60
-$Button6.height                  = 60
+$Button6.Size                    = New-Object System.Drawing.Size(60,60)
 $Button6.location                = New-Object System.Drawing.Point(398,50)
-$Button6.Image=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-info.png")
+$Button6.BackgroundImage=[System.Drawing.Image]::FromFile("$icoontjesmap\icoon-info.png")
+$Button6.BackgroundImageLayout   = 'Zoom'
 $Button6.visible                = $false # deze knop is alleen zichtbaar als $subtaken = $true
 $Button6.Add_Click({ informatieprogramma })
 $Button6.add_MouseHover({
