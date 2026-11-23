@@ -41,8 +41,8 @@ $gifjesmap = -join ("$startmap","\","png")
 $logmap = -join ("$startmap","\","log")
 
 $global:programma = @{
-    versie = '5.0.1'
-    extralabel = '195.261123' # buildnummer + datum + eventuele branch
+    versie = '5.0.1.rc.2'
+    extralabel = '196.261123' # buildnummer + datum + eventuele branch
     mode = 'rc' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
@@ -1068,7 +1068,7 @@ try {
 }
 catch {
     # Loggen van fout
-    $melding = -join ("1e poging om te verbinden met SharePoint mislukt.","`r`n", "Foutmelding : ", $($_.Exception.Message))
+    $melding = -join ("Niet gelukt om te verbinden met SharePoint.","`r`n", "Foutmelding : ", $($_.Exception.Message))
     # Hier geen melding naar logboek anders heb je dit na elke opstart.
     # Meldingnaarlogbestand -meldtekst $melding
     Write-host $melding -f Yellow
@@ -1097,7 +1097,7 @@ try {
 }
 catch {
     # Loggen van fout
-    $melding = -join ("2e poging om te verbinden met SharePoint mislukt.","`r`n", "Foutmelding : ", $($_.Exception.Message))
+    $melding = -join ("Niet gelukt om te verbinden met SharePoint. 2 pogingen gedaan.","`r`n", "Foutmelding : ", $($_.Exception.Message))
     Meldingnaarlogbestand -meldtekst $melding
     # melding geven met venster
     $melding = -join ("`r`n", $melding, "`r`n", "Een aantal taken kunnen nu niet uitgevoerd worden.")
@@ -4577,6 +4577,7 @@ $objTextBox1.Text=$getal1.Tostring()
 $tellerbackups = 0
 # hier wordt er ingelezen, aantal te verwijderen mappen bepaald en venster gevuld.
 $listBox.items.clear()
+# Weergeven in het venster dat mappen worden ingelezen. Deze tekst verdwijnt weer.
 [void]$listbox.Items.Add("Mappen worden ingelezen.")
 [void]$listbox.Items.Add("Een moment geduld a.u.b....")
 
@@ -4601,6 +4602,8 @@ try {
         [void]$listbox.Items.Add($folder["FileLeafRef"])
         }
     } # einde foreach
+    # De melding die wordt weergegeven als er geen mappen zijn gevonden.
+    $melding = "Er zijn geen mappen gevonden"
 }
 catch {
   # melding loggen
@@ -4609,8 +4612,10 @@ catch {
 }
 
 # Knop Bevestigen laten zien als er mappen zijn om te verwijderen
-if ($tellerbackups -eq 0 ) { $Btnaccept.Enabled=$false }
-      else { $Btnaccept.Enabled=$true }
+if ($tellerbackups -eq 0 ) { 
+    $Btnaccept.Enabled=$false 
+    [void]$listbox.Items.Add($melding)
+    } else { $Btnaccept.Enabled=$true }
 }
 # einde function inlezenmappen
 
