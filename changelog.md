@@ -8,10 +8,10 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ### Bugfix
 - Probleem opgelost waarbij het verbinden met SharePoint, als er meerdere accounts aanwezig zijn, een foutmelding gaf.
-- Probleem opgelost waarbij de knoppen op de hoofdvenster niet goed werden weergegeven.
+- Probleem opgelost waarbij de knoppen op het hoofdvenster niet goed werden weergegeven.
 
 ### Overige wijzigingen
-- Updateproces aangepast om 'release candidate' versies te installeren.
+- Als het programma up to date is, kan je kiezen om een 'release candidate' versie te installeren.
 - Script Wijzig_Executionpolicy_bypass.bat aangepast om onder PowerShell 5.1 en 7 te werken. 
 
 ## [5.0.0] - 2026-11-11
@@ -28,7 +28,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 - Tabvolgorde van icoontjes hersteld. 
 
 ### Overige wijzigingen
-- De functie **Updaten** is nu op te starten via het hoofdscherm.
+- De functie **Updaten** is nu op te starten via het hoofdvenster.
 - De voortgang van een taak kan weergegeven worden.
 - Script schakelt nu altijd over naar een PowerShell versie 7 of hoger.
 - De nieuwe layout, met alleen 2 knoppen in het hoofdvenster, is de standaard geworden.
@@ -148,7 +148,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 - Console-venster error opgelost door overbodige code te verwijderen.  
 
 ### Overige wijzigingen
-- Hoofdscherm aangepast: alleen belangrijkste functies hebben grote iconen.  
+- Hoofdvenster aangepast: alleen belangrijkste functies hebben grote iconen.  
 - Consistente kleuren en teksten voor knoppen.  
 - Tool **netwerkschijvencontroleren.exe** verwijderd bij start.  
 - Venster **Verkenner** toont meer bestandsinfo (datum, grootte).  
@@ -160,7 +160,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 ## [4.6.0] - 2024-11-06
 ### Nieuwe functies
 - Functie **Verkenner** toegevoegd om studentmappen te bekijken.  
-- Afbeelding in hoofdscherm kan gewijzigd worden (8 keuzes).  
+- Afbeelding in het hoofdvenster kan gewijzigd worden (8 keuzes).  
 
 ### Overige wijzigingen
 - Mop-functie uitgebreid met schuine moppen (uit).  

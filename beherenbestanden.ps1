@@ -42,8 +42,8 @@ $logmap = -join ("$startmap","\","log")
 
 $global:programma = @{
     versie = '5.0.1'
-    extralabel = '193.261118' # buildnummer + datum + eventuele branch
-    mode = 'beta' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    extralabel = '195.261123' # buildnummer + datum + eventuele branch
+    mode = 'rc' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
     icoon = -join ($icoontjesmap, "\", "script_icoon.ico")
@@ -299,6 +299,7 @@ $global:Sharepoint = @{
     Organisatie = "https://o365zadkine.sharepoint.com"
     Team        = "/teams/RPCtestsiteexaminering"
     clientid    = $env:ENTRAID_CLIENT_ID 
+    Tenant      = "o365zadkine.onmicrosoft.com"
 }
 # Url kan pas worden gedefinieerd nadat de andere variabelen zijn gedefinieerd. Anders krijg je een foutmelding dat $global:Sharepoint.Team nog niet bestaat.
 $global:Sharepoint.Url = -join(
@@ -1057,10 +1058,10 @@ function VerbindmetSharePoint {
 try {
     # Verbinden met SharePoint
     # Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive -ErrorAction Stop
-    Connect-PnPOnline -Url $global:Sharepoint.Url -ClientId $global:Sharepoint.clientid -OSLogin -forceauthentication -validateconnection -Tenant "o365zadkine.onmicrosoft.com" -ErrorAction Stop
+    Connect-PnPOnline -Url $global:Sharepoint.Url -ClientId $global:Sharepoint.clientid -OSLogin -forceauthentication -validateconnection -Tenant $global:Sharepoint.Tenant -ErrorAction Stop
     # Connect-PnPOnline -Url $global:Sharepoint.Url -ClientId $global:Sharepoint.ClientId -Tenant "o365zadkine.onmicrosoft.com" -ErrorAction Stop
 
-    # Test de nieuwe verbinding
+    # Controleer de nieuwe verbinding
     Get-PnPWeb -ErrorAction Stop | Out-Null
     Write-host "Aanmelden is gelukt."
     return $true
@@ -1068,7 +1069,8 @@ try {
 catch {
     # Loggen van fout
     $melding = -join ("1e poging om te verbinden met SharePoint mislukt.","`r`n", "Foutmelding : ", $($_.Exception.Message))
-    Meldingnaarlogbestand -meldtekst $melding
+    # Hier geen melding naar logboek anders heb je dit na elke opstart.
+    # Meldingnaarlogbestand -meldtekst $melding
     Write-host $melding -f Yellow
     switch -Regex ($_.Exception.Message) {
         "cancel" {
@@ -1088,7 +1090,7 @@ try {
     # Verbinden met SharePoint
     Connect-PnPOnline -Url $global:Sharepoint.Url -Interactive -ErrorAction Stop
 
-    # Test de nieuwe verbinding
+    # Controleer de nieuwe verbinding
     Get-PnPWeb -ErrorAction Stop | Out-Null
     Write-host "Aanmelden is gelukt."
     return $true
@@ -1305,10 +1307,10 @@ switch ($uitvoeren.taak) {
     # datum en tijdstip van vandaag in variabele plaatsen. nodig om de backup-mapnaam te bepalen.
     $datumvandaag = get-date -Format "yyyy-MM-dd__HH-mm-ss"
 
-    # variabele voor test met sharepoint.
+    # variabele voor sharepoint.
     [string]$Sharepointmap = $uitvoeren.doelmap
 
-    # test of sharepoint map bestaat en aanmaken
+    # Controleer of sharepoint map bestaat en aanmaken
     toevoegentekstvenster "Aanmaken SharePointmap."
     try {
         # controleren of de map bestaat. Als dit niet het geval is, wordt de map aangemaakt.
@@ -1343,7 +1345,7 @@ switch ($uitvoeren.taak) {
         # errors leeg maken
         $error.clear()
         try {
-                # extra test of de specifieke rpc-map wel bestaat. Anders wordt de catch getriggerd en heb je een foutmelding.
+                # extra controle of de specifieke rpc-map wel bestaat. Anders wordt de catch getriggerd en heb je een foutmelding.
                 if (!(Test-Path $bronmap)) { throw "Map $bronmap niet gevonden."}
 
                 toevoegentekstvenster  "Backup maken van $rpcitem"
@@ -1531,7 +1533,7 @@ switch ($uitvoeren.taak) {
 
             $error.clear()
             try {
-                # extra test of de specifieke rpc-map en submap wel bestaat
+                # extra controles of de specifieke rpc-map en submap wel bestaat
                 if (!(Test-Path $doelmap)) { throw "Map $doelmap niet gevonden."}
                 if (!(Test-Path $doelmaproot)) { throw "Map $doelmaproot niet gevonden."}
 
@@ -4575,6 +4577,8 @@ $objTextBox1.Text=$getal1.Tostring()
 $tellerbackups = 0
 # hier wordt er ingelezen, aantal te verwijderen mappen bepaald en venster gevuld.
 $listBox.items.clear()
+[void]$listbox.Items.Add("Mappen worden ingelezen.")
+[void]$listbox.Items.Add("Een moment geduld a.u.b....")
 
 # backupmap krijgt hier een verkorte naam tbv leesbaarheid
 $backupmap = $global:beheer.examenmappen.backupmap
@@ -4587,6 +4591,7 @@ try {
     $folders = Get-PnPListItem -List "Documenten" -FolderServerRelativeUrl $zoekfolder -PageSize 1000 -Fields "FileRef","FileLeafRef","Created","FSObjType" | Where-Object {
         ($_.FieldValues["FileRef"].Substring(0, $_.FieldValues["FileRef"].LastIndexOf("/"))) -eq $zoekfolder
     }
+    $listBox.items.clear()
     foreach ($folder in $folders) {
         if (
         $folder["FSObjType"] -eq 1 -and
