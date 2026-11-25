@@ -41,8 +41,8 @@ $gifjesmap = -join ("$startmap","\","png")
 $logmap = -join ("$startmap","\","log")
 
 $global:programma = @{
-    versie = '5.0.1.rc.2'
-    extralabel = '196.261123' # buildnummer + datum + eventuele branch
+    versie = '5.0.1.rc.3'
+    extralabel = '197.261125' # buildnummer + datum + eventuele branch
     mode = 'rc' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
@@ -436,6 +436,7 @@ $uitvoerennaopstarten=@{
     PS7snelkoppeling = 'Ja'
     pnpupdate = 'Ja'
     forceernieuwelayout = 'ja'
+    inforcversie = 'ja' 
 }
 $Std_inst=@{
     algemeen  = $algemeen
@@ -1667,13 +1668,14 @@ toevoegentekstvenster "**********************"
 
 function uitvoerentaken {
 # hier worden de 5 belangrijkste taken uitgevoerd.
-
 # controleren of mappen bestaan - afhankelijk van de taak
-# map uitvoeren.homemap wordt in ieder geval gecontroleerd
+# map uitvoeren.homemap wordt behalve bij opschonen gecontroleerd
 
-if (!(Netwerkmapaanwezig -netwerkmap $global:beheer.examenmappen.homemapstudenten)) { 
+if ($uitvoeren.taak -ne "opschonen") {
+    if (!(Netwerkmapaanwezig -netwerkmap $global:beheer.examenmappen.homemapstudenten)) { 
     return; 
-} 
+    } 
+}
 
 if ($uitvoeren.taak -eq "kopiëren") {
     if (!( ControleerverbindingSharePoint -controlemap $global:beheer.examenmappen.digitalebestanden )) {
@@ -3921,8 +3923,8 @@ if ($resultaatcontrole.fout) {
 } elseif (($resultaatcontrole.updateto -eq "gelijk") -or ($resultaatcontrole.updateto -eq "hoger")) {
     # er is geen update nodig, omdat de huidige versie gelijk is aan de update versie. Melding loggen en weergeven.
     write-host $resultaatcontrole.melding 
-    $melding = -join ("Controle op een update:","`r`n",$resultaatcontrole.melding )
-    Meldingnaarlogbestand -meldtekst $melding -type "MEDEDELING"
+    # $melding = -join ("Controle op een update:","`r`n",$resultaatcontrole.melding )
+    # Meldingnaarlogbestand -meldtekst $melding -type "MEDEDELING"
     #Start-Sleep -Seconds 3
     return
 } 
@@ -5830,15 +5832,19 @@ Lees de informatie in de console en druk op OK om verder te gaan."
 # verbinden met Sharepoint ...........
 
 # Eerst powershell module importeren als deze niet aanwezig is
-if  ($global:init.uitvoerennaopstarten.pnpupdate -eq "Ja") {
+$Controleversie='3.4.1'
+Write-Host "Controle op juiste SharePoint module. " -NoNewline
+if (Get-Module Pnp.PowerShell -ListAvailable | Where-Object { $_.Version -ge [version]$Controleversie }) {
+    Write-Host "SharePoint module is aanwezig en up to date."
+} else {
+    write-host "SharePoint module PnP.powershell versie $controleversie is niet aanwezig of niet up to date en wordt nu geïnstalleerd." -f Yellow
+    write-host "Een moment geduld a.u.b." -f Yellow
     # zorgen dat modules uit deze repository worden vertrouwd
-    write-host "SharePoint module wordt geïnstalleerd. Een moment geduld a.u.b." -f Yellow
     Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
-    Install-Module -Name pnp.powershell -Scope CurrentUser -RequiredVersion 3.4.1 -Force -skippublishercheck
+    Install-Module -Name pnp.powershell -Scope CurrentUser -RequiredVersion $controleversie -Force -skippublishercheck
     # voor de veiligheid dit weer terugzetten!
     Set-PSRepository -Name 'PSGallery' -InstallationPolicy untrusted
-    $global:init.uitvoerennaopstarten.pnpupdate = "Nee"
-    Bewareninstellingen
+    Meldingnaarlogbestand -meldtekst "SharePoint module PnP.powershell versie $controleversie is geïnstalleerd." -type "MEDEDELING" 
     }
 
 # dan verbinden ......
@@ -6323,9 +6329,23 @@ $form.add_Shown({
     start-sleep -Milliseconds 100
     $form.Topmost = $false
 
-    # Als het programma in testfase is, dan venster tonen met melding
+    # Als het programma niet in releasefase is, dan venster tonen met melding
     $mode=$global:programma.mode
-    if ($global:programma.mode -ne 'release') {
+    if (($global:programma.mode -eq 'rc') -and ($Global:init.uitvoerennaopstarten.inforcversie -eq 'Ja') ) {
+
+        # Deze vraag niet meer stellen -> Waarde op nee zetten en bewaren
+        $Global:init.uitvoerennaopstarten.inforcversie='Nee'
+        Bewareninstellingen
+        $null = venstermetvraag -titel "Dit is een Release Candidate" -vraag "`r`nLET OP : Dit is een Release Candidate van het programma.
+
+Dit betekent dat het programma nog niet in productieversie is.
+U kunt het programma normaal gebruiken maar houd er rekening mee dat niet alle
+onderdelen volledig getest zijn.
+Eventuele fouten of opmerkingen kunt u doorgeven aan de programmeur.
+Zodra de productieversie beschikbaar is kunt u deze m.b.v. een update installeren.
+Als automatische update aan staat wordt dit automatisch uitgevoerd." -bredevenster
+
+    } elseif ("alpha","beta","test" -contains($global:programma.mode)) {
         $null = venstermetvraag -titel "Programma is nog in testfase" -vraag "`r`nLET OP : Programma is nog in testfase $mode.`r`nGebruik het programma nu alleen voor testdoeleinden."
     }
 

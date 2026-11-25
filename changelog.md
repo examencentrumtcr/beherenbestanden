@@ -4,7 +4,7 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [5.0.1] - Release Candidate 2
+## [5.0.1] - Release Candidate 3
 
 ### Bugfix
 - Probleem opgelost waarbij het verbinden met SharePoint, als er meerdere accounts aanwezig zijn, een foutmelding gaf.
