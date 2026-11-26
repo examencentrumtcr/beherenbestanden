@@ -41,9 +41,9 @@ $gifjesmap = -join ("$startmap","\","png")
 $logmap = -join ("$startmap","\","log")
 
 $global:programma = @{
-    versie = '5.0.1.rc.3'
-    extralabel = '197.261125' # buildnummer + datum + eventuele branch
-    mode = 'rc' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
+    versie = '5.0.1'
+    extralabel = '198.261126' # buildnummer + datum + eventuele branch
+    mode = 'release' # alpha, beta, rc of release. Afhankelijk van welke fase je zit of wat je wil testen.
     naam = 'Beherenbestanden'
     github = "https://api.github.com/repos/examencentrumtcr/beherenbestanden/contents/"
     icoon = -join ($icoontjesmap, "\", "script_icoon.ico")
@@ -1069,13 +1069,13 @@ try {
 }
 catch {
     # Loggen van fout
-    $melding = -join ("Niet gelukt om te verbinden met SharePoint.","`r`n", "Foutmelding : ", $($_.Exception.Message))
+    $melding = -join ("Niet gelukt om te verbinden met SharePoint. Foutmelding : ", $($_.Exception.Message))
     # Hier geen melding naar logboek anders heb je dit na elke opstart.
     # Meldingnaarlogbestand -meldtekst $melding
     Write-host $melding -f Yellow
     switch -Regex ($_.Exception.Message) {
         "cancel" {
-            Write-host "Aanmelden is geannuleerd."
+            # Write-host "Aanmelden is geannuleerd."
             $melding = "`r`n$melding"
             $null = venstermetvraag -titel "Geen verbinding met SharePoint." -vraag $melding "OK"
             return $false
@@ -3904,7 +3904,7 @@ catch {
  }
 
 # Info geven
-write-host "Controleren op een update."
+write-host "Controleren op een update. " -NoNewline
 
 # function controleerupdate uitvoeren en resultaat in variabele plaatsen. 
 # Hier kiezen om de standaard release of de release candidate te checken.

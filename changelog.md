@@ -4,14 +4,14 @@ Alle belangrijke wijzigingen in **Beherenbestanden.ps1** worden hieronder bijgeh
 
 ---
 
-## [5.0.1] - Release Candidate 3
+## [5.0.1] - 2026-11-26
 
 ### Bugfix
-- Probleem opgelost waarbij het verbinden met SharePoint, als er meerdere accounts aanwezig zijn, een foutmelding gaf.
+- Probleem opgelost waarbij het verbinden met SharePoint soms een foutmelding gaf.
 - Probleem opgelost waarbij de knoppen op het hoofdvenster niet goed werden weergegeven.
 
 ### Overige wijzigingen
-- Als het programma up to date is, kan je kiezen om een 'release candidate' versie te installeren.
+- Mogelijk gemaakt om een 'release candidate' versie te installeren.
 - Script Wijzig_Executionpolicy_bypass.bat aangepast om onder PowerShell 5.1 en 7 te werken. 
 
 ## [5.0.0] - 2026-11-11
